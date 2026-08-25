@@ -1,0 +1,53 @@
+import type { SemanticRole } from "./types";
+
+export const roleLabels: Record<SemanticRole, string> = {
+  cover: "封面",
+  title: "主标题",
+  subtitle: "副标题",
+  author_info: "作者信息",
+  abstract_heading: "摘要标题",
+  abstract_body: "摘要正文",
+  keywords: "关键词",
+  heading_1: "一级标题",
+  heading_2: "二级标题",
+  heading_3: "三级标题",
+  heading_4: "四级标题",
+  body: "正文",
+  blockquote: "引用",
+  list_item: "列表项",
+  figure_caption: "图题",
+  table_caption: "表题",
+  bibliography_heading: "参考文献标题",
+  bibliography_entry: "参考文献条目",
+  appendix_heading: "附录标题",
+  appendix_body: "附录正文",
+  header: "页眉",
+  footer: "页脚",
+  unknown: "待确认",
+};
+
+export const roles = Object.keys(roleLabels) as SemanticRole[];
+
+export const errorLabels: Record<string, string> = {
+  INVALID_DOCX: "文件不是有效的 DOCX 文档。",
+  DOCX_CORRUPTED: "DOCX 文件结构已损坏。",
+  FILE_TOO_LARGE: "文件超过当前大小限制。",
+  LLM_NOT_CONFIGURED: "尚未配置兼容模型，请使用结构化规则。",
+  SEMANTIC_ANALYSIS_NOT_CONFIGURED: "智能分析需要先配置兼容模型；仍可使用确定性分析。",
+  SEMANTIC_ANALYSIS_TIMEOUT: "智能语义分析超时，请重试或使用确定性分析。",
+  SEMANTIC_ANALYSIS_INVALID: "模型未返回有效的文档结构，请重试或人工修正角色。",
+  TEXT_EMPTY: "请先粘贴需要排版的纯文本。",
+  TEXT_TOO_LARGE: "纯文本超过当前大小限制。",
+  REQUIREMENT_PARSE_FAILED: "模型未能生成有效的格式规则。",
+  ANALYSIS_SOURCE_MISMATCH: "分析结果与当前源文档不匹配，请重新分析。",
+  OUTPUT_VALIDATION_FAILED: "输出未通过格式验证，请查看审计报告。",
+  CONTENT_INTEGRITY_FAILED: "检测到未授权内容变化，输出已阻止。",
+  AUTO_LAYOUT_INTEGRITY_FAILED: "自动排版触及了受保护内容，输出已阻止并保留源文件。",
+  FORMATTING_SPEC_CONFLICT: "排版规则中存在互斥的段落设置，请重新编译规则后再试。",
+  TABLE_FORMAT_VALIDATION_FAILED: "表格整体属性不符合当前规则。",
+  TABLE_FONT_VALIDATION_FAILED: "表格内字体或字号不符合当前规则。",
+  TABLE_CELL_ALIGNMENT_FAILED: "表格单元格垂直对齐不符合当前规则。",
+  TABLE_HEADER_REPEAT_MISSING: "跨页表格未设置重复表头。",
+  TABLE_ROW_SPLIT_RULE_MISSING: "表格行仍可能被跨页拆分。",
+  PROTECTED_PACKAGE_PART_CHANGED: "批注、脚注、尾注或自定义 XML 发生了未授权变化。",
+};

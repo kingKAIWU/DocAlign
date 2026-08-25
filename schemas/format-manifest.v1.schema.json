@@ -1,0 +1,138 @@
+{
+  "$defs": {
+    "FormatManifestSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "requirement_count": {
+          "title": "Requirement Count",
+          "type": "integer"
+        },
+        "by_category": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "title": "By Category",
+          "type": "object"
+        },
+        "auto_applicable_count": {
+          "default": 0,
+          "title": "Auto Applicable Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "requirement_count"
+      ],
+      "title": "FormatManifestSummary",
+      "type": "object"
+    },
+    "ManifestRequirement": {
+      "additionalProperties": false,
+      "properties": {
+        "requirement_id": {
+          "title": "Requirement Id",
+          "type": "string"
+        },
+        "category": {
+          "enum": [
+            "style",
+            "section",
+            "table",
+            "numbering",
+            "header_footer"
+          ],
+          "title": "Category",
+          "type": "string"
+        },
+        "target": {
+          "title": "Target",
+          "type": "string"
+        },
+        "property_path": {
+          "title": "Property Path",
+          "type": "string"
+        },
+        "expected": {
+          "title": "Expected"
+        },
+        "source_part": {
+          "title": "Source Part",
+          "type": "string"
+        },
+        "evidence": {
+          "title": "Evidence",
+          "type": "string"
+        },
+        "confidence": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "auto_applicable": {
+          "default": false,
+          "title": "Auto Applicable",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "requirement_id",
+        "category",
+        "target",
+        "property_path",
+        "expected",
+        "source_part",
+        "evidence",
+        "confidence"
+      ],
+      "title": "ManifestRequirement",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "format-manifest.v1",
+      "default": "format-manifest.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "document_id": {
+      "title": "Document Id",
+      "type": "string"
+    },
+    "source_filename": {
+      "title": "Source Filename",
+      "type": "string"
+    },
+    "source_sha256": {
+      "title": "Source Sha256",
+      "type": "string"
+    },
+    "requirements": {
+      "items": {
+        "$ref": "#/$defs/ManifestRequirement"
+      },
+      "title": "Requirements",
+      "type": "array"
+    },
+    "summary": {
+      "$ref": "#/$defs/FormatManifestSummary"
+    },
+    "warnings": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Warnings",
+      "type": "array"
+    }
+  },
+  "required": [
+    "document_id",
+    "source_filename",
+    "source_sha256",
+    "summary"
+  ],
+  "title": "FormatManifest",
+  "type": "object"
+}

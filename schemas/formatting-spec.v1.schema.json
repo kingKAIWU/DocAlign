@@ -1,0 +1,1138 @@
+{
+  "$defs": {
+    "Alignment": {
+      "enum": [
+        "left",
+        "center",
+        "right",
+        "justify"
+      ],
+      "title": "Alignment",
+      "type": "string"
+    },
+    "AutoLayoutSpec": {
+      "additionalProperties": false,
+      "description": "Deterministic structural layout applied before role-based formatting.\n\nStructural edits are deliberately conservative: only plain body paragraphs may be split,\nand every split is followed by a fresh local role analysis and content-integrity check.",
+      "properties": {
+        "enabled": {
+          "default": false,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "split_body_paragraphs": {
+          "default": true,
+          "title": "Split Body Paragraphs",
+          "type": "boolean"
+        },
+        "split_on_manual_breaks": {
+          "default": true,
+          "title": "Split On Manual Breaks",
+          "type": "boolean"
+        },
+        "target_body_chars": {
+          "default": 280,
+          "maximum": 2000,
+          "minimum": 80,
+          "title": "Target Body Chars",
+          "type": "integer"
+        },
+        "max_body_chars": {
+          "default": 480,
+          "maximum": 4000,
+          "minimum": 120,
+          "title": "Max Body Chars",
+          "type": "integer"
+        }
+      },
+      "title": "AutoLayoutSpec",
+      "type": "object"
+    },
+    "DocumentFormattingSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "page": {
+          "$ref": "#/$defs/PageFormattingSpec"
+        }
+      },
+      "title": "DocumentFormattingSpec",
+      "type": "object"
+    },
+    "FigureFormattingSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "center_image_only_paragraphs": {
+          "default": false,
+          "title": "Center Image Only Paragraphs",
+          "type": "boolean"
+        }
+      },
+      "title": "FigureFormattingSpec",
+      "type": "object"
+    },
+    "FontSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "east_asia": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "East Asia"
+        },
+        "ascii": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ascii"
+        },
+        "high_ansi": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "High Ansi"
+        },
+        "complex_script": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Complex Script"
+        },
+        "size_pt": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "maximum": 200,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Size Pt"
+        },
+        "bold": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Bold"
+        },
+        "italic": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Italic"
+        },
+        "underline": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Underline"
+        },
+        "color_hex": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Color Hex"
+        }
+      },
+      "title": "FontSpec",
+      "type": "object"
+    },
+    "ForcePolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "properties": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/FormattingProperty"
+          },
+          "title": "Properties"
+        }
+      },
+      "title": "ForcePolicy",
+      "type": "object"
+    },
+    "FormattingBehavior": {
+      "additionalProperties": false,
+      "properties": {
+        "preserve_inline_emphasis": {
+          "default": true,
+          "title": "Preserve Inline Emphasis",
+          "type": "boolean"
+        },
+        "preserve_hyperlinks": {
+          "default": true,
+          "title": "Preserve Hyperlinks",
+          "type": "boolean"
+        },
+        "preserve_fields": {
+          "default": true,
+          "title": "Preserve Fields",
+          "type": "boolean"
+        },
+        "preserve_equations": {
+          "default": true,
+          "title": "Preserve Equations",
+          "type": "boolean"
+        },
+        "preserve_unknown_xml": {
+          "default": true,
+          "title": "Preserve Unknown Xml",
+          "type": "boolean"
+        },
+        "normalize_direct_paragraph_formatting": {
+          "default": true,
+          "title": "Normalize Direct Paragraph Formatting",
+          "type": "boolean"
+        },
+        "normalize_direct_run_formatting": {
+          "default": true,
+          "title": "Normalize Direct Run Formatting",
+          "type": "boolean"
+        },
+        "preserve_right_aligned_signatures": {
+          "default": false,
+          "title": "Preserve Right Aligned Signatures",
+          "type": "boolean"
+        },
+        "apply_to_unknown_roles": {
+          "default": false,
+          "title": "Apply To Unknown Roles",
+          "type": "boolean"
+        },
+        "unknown_role_fallback": {
+          "$ref": "#/$defs/SemanticRole",
+          "default": "body"
+        },
+        "validation_passes": {
+          "default": 2,
+          "maximum": 3,
+          "minimum": 1,
+          "title": "Validation Passes",
+          "type": "integer"
+        },
+        "auto_repair": {
+          "default": true,
+          "title": "Auto Repair",
+          "type": "boolean"
+        }
+      },
+      "title": "FormattingBehavior",
+      "type": "object"
+    },
+    "FormattingProperty": {
+      "enum": [
+        "font.east_asia",
+        "font.ascii",
+        "font.high_ansi",
+        "font.complex_script",
+        "font.size_pt",
+        "font.bold",
+        "font.italic",
+        "font.underline",
+        "font.color_hex",
+        "paragraph.alignment",
+        "paragraph.line_spacing",
+        "paragraph.space_before_pt",
+        "paragraph.space_after_pt",
+        "paragraph.first_line_indent_pt",
+        "paragraph.left_indent_pt",
+        "paragraph.right_indent_pt"
+      ],
+      "title": "FormattingProperty",
+      "type": "string"
+    },
+    "HeaderFooterFormattingSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "font": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FontSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "paragraph": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ParagraphSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "HeaderFooterFormattingSpec",
+      "type": "object"
+    },
+    "LineSpacingMode": {
+      "enum": [
+        "single",
+        "multiple",
+        "exact",
+        "at_least"
+      ],
+      "title": "LineSpacingMode",
+      "type": "string"
+    },
+    "LineSpacingSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "$ref": "#/$defs/LineSpacingMode"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value"
+        }
+      },
+      "required": [
+        "mode"
+      ],
+      "title": "LineSpacingSpec",
+      "type": "object"
+    },
+    "Orientation": {
+      "enum": [
+        "portrait",
+        "landscape"
+      ],
+      "title": "Orientation",
+      "type": "string"
+    },
+    "PageFormattingSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "size": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PageSize"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "orientation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Orientation"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "margin_top_mm": {
+          "anyOf": [
+            {
+              "maximum": 100,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Margin Top Mm"
+        },
+        "margin_bottom_mm": {
+          "anyOf": [
+            {
+              "maximum": 100,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Margin Bottom Mm"
+        },
+        "margin_left_mm": {
+          "anyOf": [
+            {
+              "maximum": 100,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Margin Left Mm"
+        },
+        "margin_right_mm": {
+          "anyOf": [
+            {
+              "maximum": 100,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Margin Right Mm"
+        },
+        "header_distance_mm": {
+          "anyOf": [
+            {
+              "maximum": 100,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Header Distance Mm"
+        },
+        "footer_distance_mm": {
+          "anyOf": [
+            {
+              "maximum": 100,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Footer Distance Mm"
+        },
+        "preserve_existing_landscape_sections": {
+          "default": true,
+          "title": "Preserve Existing Landscape Sections",
+          "type": "boolean"
+        },
+        "force_orientation_all_sections": {
+          "default": false,
+          "title": "Force Orientation All Sections",
+          "type": "boolean"
+        }
+      },
+      "title": "PageFormattingSpec",
+      "type": "object"
+    },
+    "PageNumberSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "default": false,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "location": {
+          "const": "footer",
+          "default": "footer",
+          "title": "Location",
+          "type": "string"
+        },
+        "alignment": {
+          "$ref": "#/$defs/Alignment",
+          "default": "center"
+        },
+        "number_format": {
+          "const": "decimal",
+          "default": "decimal",
+          "title": "Number Format",
+          "type": "string"
+        },
+        "start_at": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Start At"
+        }
+      },
+      "title": "PageNumberSpec",
+      "type": "object"
+    },
+    "PageSize": {
+      "enum": [
+        "A4",
+        "LETTER"
+      ],
+      "title": "PageSize",
+      "type": "string"
+    },
+    "ParagraphSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "alignment": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Alignment"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "line_spacing": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LineSpacingSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "space_before_pt": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Space Before Pt"
+        },
+        "space_after_pt": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Space After Pt"
+        },
+        "first_line_indent_pt": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "First Line Indent Pt"
+        },
+        "hanging_indent_pt": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Hanging Indent Pt"
+        },
+        "left_indent_pt": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Left Indent Pt"
+        },
+        "right_indent_pt": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Right Indent Pt"
+        },
+        "keep_with_next": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Keep With Next"
+        },
+        "keep_lines_together": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Keep Lines Together"
+        },
+        "page_break_before": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Page Break Before"
+        },
+        "widow_orphan_control": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Widow Orphan Control"
+        }
+      },
+      "title": "ParagraphSpec",
+      "type": "object"
+    },
+    "RoleFormattingSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "font": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FontSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "paragraph": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ParagraphSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "style_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Style Name"
+        },
+        "force": {
+          "$ref": "#/$defs/ForcePolicy"
+        }
+      },
+      "title": "RoleFormattingSpec",
+      "type": "object"
+    },
+    "SemanticRole": {
+      "enum": [
+        "cover",
+        "title",
+        "subtitle",
+        "author_info",
+        "abstract_heading",
+        "abstract_body",
+        "keywords",
+        "heading_1",
+        "heading_2",
+        "heading_3",
+        "heading_4",
+        "body",
+        "blockquote",
+        "list_item",
+        "figure_caption",
+        "table_caption",
+        "bibliography_heading",
+        "bibliography_entry",
+        "appendix_heading",
+        "appendix_body",
+        "header",
+        "footer",
+        "unknown"
+      ],
+      "title": "SemanticRole",
+      "type": "string"
+    },
+    "SpecSource": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "$ref": "#/$defs/SpecSourceType",
+          "default": "structured"
+        },
+        "preset_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Preset Id"
+        },
+        "instruction_hash": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Instruction Hash"
+        },
+        "compiler_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Compiler Version"
+        },
+        "provider": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provider"
+        },
+        "model": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model"
+        },
+        "assumptions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Assumptions",
+          "type": "array"
+        }
+      },
+      "title": "SpecSource",
+      "type": "object"
+    },
+    "SpecSourceType": {
+      "enum": [
+        "system",
+        "preset",
+        "natural_language",
+        "structured",
+        "merged"
+      ],
+      "title": "SpecSourceType",
+      "type": "string"
+    },
+    "TableFormattingSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "alignment": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Alignment"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "width_policy": {
+          "$ref": "#/$defs/TableWidthPolicy",
+          "default": "preserve"
+        },
+        "fixed_width_mm": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fixed Width Mm"
+        },
+        "cell_vertical_alignment": {
+          "anyOf": [
+            {
+              "enum": [
+                "top",
+                "center",
+                "bottom"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Cell Vertical Alignment"
+        },
+        "font": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FontSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "paragraph": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ParagraphSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "grid_borders": {
+          "default": false,
+          "title": "Grid Borders",
+          "type": "boolean"
+        },
+        "repeat_header_row": {
+          "default": false,
+          "title": "Repeat Header Row",
+          "type": "boolean"
+        },
+        "prevent_row_split": {
+          "default": false,
+          "title": "Prevent Row Split",
+          "type": "boolean"
+        },
+        "adaptive_column_widths": {
+          "default": false,
+          "title": "Adaptive Column Widths",
+          "type": "boolean"
+        },
+        "min_column_width_mm": {
+          "default": 8,
+          "exclusiveMinimum": 0,
+          "maximum": 50,
+          "title": "Min Column Width Mm",
+          "type": "number"
+        },
+        "adaptive_font_size": {
+          "default": false,
+          "title": "Adaptive Font Size",
+          "type": "boolean"
+        },
+        "min_font_size_pt": {
+          "default": 8.5,
+          "exclusiveMinimum": 0,
+          "maximum": 20,
+          "title": "Min Font Size Pt",
+          "type": "number"
+        }
+      },
+      "title": "TableFormattingSpec",
+      "type": "object"
+    },
+    "TableWidthPolicy": {
+      "enum": [
+        "preserve",
+        "fit_printable_width",
+        "fixed"
+      ],
+      "title": "TableWidthPolicy",
+      "type": "string"
+    },
+    "VisualCleanupSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "text_color_hex": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Text Color Hex"
+        },
+        "remove_text_highlight": {
+          "default": false,
+          "title": "Remove Text Highlight",
+          "type": "boolean"
+        },
+        "remove_character_shading": {
+          "default": false,
+          "title": "Remove Character Shading",
+          "type": "boolean"
+        },
+        "remove_paragraph_shading": {
+          "default": false,
+          "title": "Remove Paragraph Shading",
+          "type": "boolean"
+        },
+        "remove_table_cell_shading": {
+          "default": false,
+          "title": "Remove Table Cell Shading",
+          "type": "boolean"
+        },
+        "remove_page_background": {
+          "default": false,
+          "title": "Remove Page Background",
+          "type": "boolean"
+        }
+      },
+      "title": "VisualCleanupSpec",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "formatting-spec.v1",
+      "default": "formatting-spec.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "document": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DocumentFormattingSpec"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "baseline": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RoleFormattingSpec"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "roles": {
+      "additionalProperties": {
+        "$ref": "#/$defs/RoleFormattingSpec"
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/SemanticRole"
+      },
+      "title": "Roles",
+      "type": "object"
+    },
+    "tables": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TableFormattingSpec"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "figures": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/FigureFormattingSpec"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "headers": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/HeaderFooterFormattingSpec"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "footers": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/HeaderFooterFormattingSpec"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "page_numbers": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PageNumberSpec"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "visual_cleanup": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/VisualCleanupSpec"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "auto_layout": {
+      "$ref": "#/$defs/AutoLayoutSpec"
+    },
+    "behavior": {
+      "$ref": "#/$defs/FormattingBehavior"
+    },
+    "source": {
+      "$ref": "#/$defs/SpecSource"
+    }
+  },
+  "title": "FormattingSpec",
+  "type": "object"
+}

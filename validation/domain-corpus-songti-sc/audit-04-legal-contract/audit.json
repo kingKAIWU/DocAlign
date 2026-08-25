@@ -1,0 +1,1021 @@
+{
+  "schema_version": "audit-report.v1",
+  "job_id": "corpus-04-legal-contract",
+  "source_file": "04-legal-contract.docx",
+  "output_file": "04-legal-contract-默认整理.docx",
+  "source_sha256": "eb1f2b09e4d39568bc63974426310b3f1ce806ea8b1b196a1734889050b3cf53",
+  "output_sha256": "34284a9f67022b31508dd7a92f76af9230189a0354048c4f6d1bc7d577a88824",
+  "summary": {
+    "paragraphs": 19,
+    "tables": 1,
+    "images": 0,
+    "classified_blocks": 12,
+    "unknown_blocks": 7,
+    "format_operations": 82,
+    "changed_mutations": 68,
+    "validation_failures": 0,
+    "paragraphs_before": 19,
+    "paragraphs_after": 19,
+    "auto_layout_splits": 0
+  },
+  "roles": {
+    "body": 11,
+    "title": 1,
+    "unknown": 7
+  },
+  "mutations": [
+    {
+      "operation_id": "op-000001",
+      "node_id": "section-0",
+      "property_path": "section.layout",
+      "before": {
+        "width": 12240,
+        "height": 15840,
+        "orientation": "PORTRAIT",
+        "margins": [
+          1440,
+          1440,
+          1800,
+          1800
+        ]
+      },
+      "after": {
+        "width": 11906,
+        "height": 16838,
+        "orientation": "PORTRAIT",
+        "margins": [
+          1134,
+          1134,
+          1134,
+          1134
+        ]
+      },
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Keywords",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Bibliography",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Appendix",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Author Info",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Subtitle",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Figure Caption",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Appendix Heading",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Heading 4",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Body",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Blockquote",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Table Caption",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Heading 1",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Heading 3",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA List Item",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Heading 2",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Abstract Heading",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Abstract",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Bibliography Heading",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Unknown",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Title",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000022",
+      "node_id": "p-main-000000-050d9b5e9a",
+      "property_path": "paragraph.style",
+      "before": "Normal",
+      "after": "DA Title",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000024",
+      "node_id": "p-main-000000-050d9b5e9a",
+      "property_path": "runs.0.font",
+      "before": {
+        "ascii": "Arial",
+        "hAnsi": "Arial",
+        "eastAsia": null,
+        "cs": null,
+        "size_pt": 15.0,
+        "bold": true,
+        "italic": true,
+        "underline": true
+      },
+      "after": {
+        "ascii": "Times New Roman",
+        "hAnsi": "Times New Roman",
+        "eastAsia": "Songti SC",
+        "cs": "Times New Roman",
+        "size_pt": 22.0,
+        "bold": true,
+        "italic": false,
+        "underline": false
+      },
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000025",
+      "node_id": "p-main-000001-16c7e8de2d",
+      "property_path": "paragraph.style",
+      "before": "Normal",
+      "after": "DA Body",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000027",
+      "node_id": "p-main-000001-16c7e8de2d",
+      "property_path": "runs.0.font",
+      "before": {
+        "ascii": null,
+        "hAnsi": null,
+        "eastAsia": null,
+        "cs": null,
+        "size_pt": null,
+        "bold": null,
+        "italic": null,
+        "underline": null
+      },
+      "after": {
+        "ascii": "Times New Roman",
+        "hAnsi": "Times New Roman",
+        "eastAsia": "Songti SC",
+        "cs": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false
+      },
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000028",
+      "node_id": "p-main-000002-462c3e6786",
+      "property_path": "paragraph.style",
+      "before": "Normal",
+      "after": "DA Body",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000030",
+      "node_id": "p-main-000002-462c3e6786",
+      "property_path": "runs.0.font",
+      "before": {
+        "ascii": null,
+        "hAnsi": null,
+        "eastAsia": null,
+        "cs": null,
+        "size_pt": null,
+        "bold": null,
+        "italic": null,
+        "underline": null
+      },
+      "after": {
+        "ascii": "Times New Roman",
+        "hAnsi": "Times New Roman",
+        "eastAsia": "Songti SC",
+        "cs": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false
+      },
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000031",
+      "node_id": "p-main-000003-410e92853d",
+      "property_path": "paragraph.style",
+      "before": "Normal",
+      "after": "DA Body",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000033",
+      "node_id": "p-main-000003-410e92853d",
+      "property_path": "runs.0.font",
+      "before": {
+        "ascii": null,
+        "hAnsi": null,
+        "eastAsia": null,
+        "cs": null,
+        "size_pt": null,
+        "bold": null,
+        "italic": null,
+        "underline": null
+      },
+      "after": {
+        "ascii": "Times New Roman",
+        "hAnsi": "Times New Roman",
+        "eastAsia": "Songti SC",
+        "cs": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false
+      },
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000034",
+      "node_id": "p-main-000004-bc54e413fe",
+      "property_path": "paragraph.style",
+      "before": "Normal",
+      "after": "DA Body",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000036",
+      "node_id": "p-main-000004-bc54e413fe",
+      "property_path": "runs.0.font",
+      "before": {
+        "ascii": null,
+        "hAnsi": null,
+        "eastAsia": null,
+        "cs": null,
+        "size_pt": null,
+        "bold": null,
+        "italic": null,
+        "underline": null
+      },
+      "after": {
+        "ascii": "Times New Roman",
+        "hAnsi": "Times New Roman",
+        "eastAsia": "Songti SC",
+        "cs": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false
+      },
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000037",
+      "node_id": "p-main-000005-7500107b8a",
+      "property_path": "paragraph.style",
+      "before": "Normal",
+      "after": "DA Unknown",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000039",
+      "node_id": "p-main-000005-7500107b8a",
+      "property_path": "runs.0.font",
+      "before": {
+        "ascii": "Arial",
+        "hAnsi": "Arial",
+        "eastAsia": null,
+        "cs": null,
+        "size_pt": 15.0,
+        "bold": true,
+        "italic": true,
+        "underline": true
+      },
+      "after": {
+        "ascii": "Times New Roman",
+        "hAnsi": "Times New Roman",
+        "eastAsia": "Songti SC",
+        "cs": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false
+      },
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000040",
+      "node_id": "p-main-000006-d0e4cb37c0",
+      "property_path": "paragraph.style",
+      "before": "Normal",
+      "after": "DA Body",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000042",
+      "node_id": "p-main-000006-d0e4cb37c0",
+      "property_path": "runs.0.font",
+      "before": {
+        "ascii": null,
+        "hAnsi": null,
+        "eastAsia": null,
+        "cs": null,
+        "size_pt": null,
+        "bold": null,
+        "italic": null,
+        "underline": null
+      },
+      "after": {
+        "ascii": "Times New Roman",
+        "hAnsi": "Times New Roman",
+        "eastAsia": "Songti SC",
+        "cs": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false
+      },
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000043",
+      "node_id": "p-main-000007-ca36ab2157",
+      "property_path": "paragraph.style",
+      "before": "Normal",
+      "after": "DA Unknown",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000045",
+      "node_id": "p-main-000007-ca36ab2157",
+      "property_path": "runs.0.font",
+      "before": {
+        "ascii": "Arial",
+        "hAnsi": "Arial",
+        "eastAsia": null,
+        "cs": null,
+        "size_pt": 15.0,
+        "bold": true,
+        "italic": true,
+        "underline": true
+      },
+      "after": {
+        "ascii": "Times New Roman",
+        "hAnsi": "Times New Roman",
+        "eastAsia": "Songti SC",
+        "cs": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false
+      },
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000046",
+      "node_id": "p-main-000008-d72549c8d3",
+      "property_path": "paragraph.style",
+      "before": "Normal",
+      "after": "DA Body",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000048",
+      "node_id": "p-main-000008-d72549c8d3",
+      "property_path": "runs.0.font",
+      "before": {
+        "ascii": null,
+        "hAnsi": null,
+        "eastAsia": null,
+        "cs": null,
+        "size_pt": null,
+        "bold": null,
+        "italic": null,
+        "underline": null
+      },
+      "after": {
+        "ascii": "Times New Roman",
+        "hAnsi": "Times New Roman",
+        "eastAsia": "Songti SC",
+        "cs": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false
+      },
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000049",
+      "node_id": "p-main-000009-9f413f433e",
+      "property_path": "paragraph.style",
+      "before": "Normal",
+      "after": "DA Unknown",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000051",
+      "node_id": "p-main-000009-9f413f433e",
+      "property_path": "runs.0.font",
+      "before": {
+        "ascii": "Arial",
+        "hAnsi": "Arial",
+        "eastAsia": null,
+        "cs": null,
+        "size_pt": 15.0,
+        "bold": true,
+        "italic": true,
+        "underline": true
+      },
+      "after": {
+        "ascii": "Times New Roman",
+        "hAnsi": "Times New Roman",
+        "eastAsia": "Songti SC",
+        "cs": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false
+      },
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000052",
+      "node_id": "p-main-000010-c72024cb4d",
+      "property_path": "paragraph.style",
+      "before": "Normal",
+      "after": "DA Body",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000054",
+      "node_id": "p-main-000010-c72024cb4d",
+      "property_path": "runs.0.font",
+      "before": {
+        "ascii": null,
+        "hAnsi": null,
+        "eastAsia": null,
+        "cs": null,
+        "size_pt": null,
+        "bold": null,
+        "italic": null,
+        "underline": null
+      },
+      "after": {
+        "ascii": "Times New Roman",
+        "hAnsi": "Times New Roman",
+        "eastAsia": "Songti SC",
+        "cs": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false
+      },
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000055",
+      "node_id": "p-main-000011-3c6c1cb021",
+      "property_path": "paragraph.style",
+      "before": "Normal",
+      "after": "DA Unknown",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000057",
+      "node_id": "p-main-000011-3c6c1cb021",
+      "property_path": "runs.0.font",
+      "before": {
+        "ascii": "Arial",
+        "hAnsi": "Arial",
+        "eastAsia": null,
+        "cs": null,
+        "size_pt": 15.0,
+        "bold": true,
+        "italic": true,
+        "underline": true
+      },
+      "after": {
+        "ascii": "Times New Roman",
+        "hAnsi": "Times New Roman",
+        "eastAsia": "Songti SC",
+        "cs": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false
+      },
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000058",
+      "node_id": "p-main-000012-af968dd92c",
+      "property_path": "paragraph.style",
+      "before": "Normal",
+      "after": "DA Body",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000060",
+      "node_id": "p-main-000012-af968dd92c",
+      "property_path": "runs.0.font",
+      "before": {
+        "ascii": null,
+        "hAnsi": null,
+        "eastAsia": null,
+        "cs": null,
+        "size_pt": null,
+        "bold": null,
+        "italic": null,
+        "underline": null
+      },
+      "after": {
+        "ascii": "Times New Roman",
+        "hAnsi": "Times New Roman",
+        "eastAsia": "Songti SC",
+        "cs": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false
+      },
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000061",
+      "node_id": "p-main-000013-c593c487d7",
+      "property_path": "paragraph.style",
+      "before": "Normal",
+      "after": "DA Unknown",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000063",
+      "node_id": "p-main-000013-c593c487d7",
+      "property_path": "runs.0.font",
+      "before": {
+        "ascii": "Arial",
+        "hAnsi": "Arial",
+        "eastAsia": null,
+        "cs": null,
+        "size_pt": 15.0,
+        "bold": true,
+        "italic": true,
+        "underline": true
+      },
+      "after": {
+        "ascii": "Times New Roman",
+        "hAnsi": "Times New Roman",
+        "eastAsia": "Songti SC",
+        "cs": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false
+      },
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000064",
+      "node_id": "p-main-000014-0cd1782e4e",
+      "property_path": "paragraph.style",
+      "before": "Normal",
+      "after": "DA Body",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000066",
+      "node_id": "p-main-000014-0cd1782e4e",
+      "property_path": "runs.0.font",
+      "before": {
+        "ascii": null,
+        "hAnsi": null,
+        "eastAsia": null,
+        "cs": null,
+        "size_pt": null,
+        "bold": null,
+        "italic": null,
+        "underline": null
+      },
+      "after": {
+        "ascii": "Times New Roman",
+        "hAnsi": "Times New Roman",
+        "eastAsia": "Songti SC",
+        "cs": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false
+      },
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000067",
+      "node_id": "p-main-000015-08edef76d6",
+      "property_path": "paragraph.style",
+      "before": "Normal",
+      "after": "DA Unknown",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000069",
+      "node_id": "p-main-000015-08edef76d6",
+      "property_path": "runs.0.font",
+      "before": {
+        "ascii": "Arial",
+        "hAnsi": "Arial",
+        "eastAsia": null,
+        "cs": null,
+        "size_pt": 15.0,
+        "bold": true,
+        "italic": true,
+        "underline": true
+      },
+      "after": {
+        "ascii": "Times New Roman",
+        "hAnsi": "Times New Roman",
+        "eastAsia": "Songti SC",
+        "cs": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false
+      },
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000070",
+      "node_id": "p-main-000016-e06e3c6104",
+      "property_path": "paragraph.style",
+      "before": "Normal",
+      "after": "DA Body",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000072",
+      "node_id": "p-main-000016-e06e3c6104",
+      "property_path": "runs.0.font",
+      "before": {
+        "ascii": null,
+        "hAnsi": null,
+        "eastAsia": null,
+        "cs": null,
+        "size_pt": null,
+        "bold": null,
+        "italic": null,
+        "underline": null
+      },
+      "after": {
+        "ascii": "Times New Roman",
+        "hAnsi": "Times New Roman",
+        "eastAsia": "Songti SC",
+        "cs": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false
+      },
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000073",
+      "node_id": "p-main-000017-03df209116",
+      "property_path": "paragraph.style",
+      "before": "Normal",
+      "after": "DA Unknown",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000075",
+      "node_id": "p-main-000017-03df209116",
+      "property_path": "runs.0.font",
+      "before": {
+        "ascii": "Arial",
+        "hAnsi": "Arial",
+        "eastAsia": null,
+        "cs": null,
+        "size_pt": 15.0,
+        "bold": true,
+        "italic": true,
+        "underline": true
+      },
+      "after": {
+        "ascii": "Times New Roman",
+        "hAnsi": "Times New Roman",
+        "eastAsia": "Songti SC",
+        "cs": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false
+      },
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000076",
+      "node_id": "t-main-000018-bcdcb030d5",
+      "property_path": "table.format",
+      "before": {
+        "alignment": "None",
+        "autofit": true
+      },
+      "after": {
+        "alignment": "CENTER (1)",
+        "autofit": false
+      },
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000077",
+      "node_id": "p-main-000019-614597c5d3",
+      "property_path": "paragraph.style",
+      "before": "Normal",
+      "after": "DA Body",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000079",
+      "node_id": "p-main-000019-614597c5d3",
+      "property_path": "runs.0.font",
+      "before": {
+        "ascii": null,
+        "hAnsi": null,
+        "eastAsia": null,
+        "cs": null,
+        "size_pt": null,
+        "bold": null,
+        "italic": null,
+        "underline": null
+      },
+      "after": {
+        "ascii": "Times New Roman",
+        "hAnsi": "Times New Roman",
+        "eastAsia": "Songti SC",
+        "cs": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false
+      },
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000080",
+      "node_id": "header-0",
+      "property_path": "header.format",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000081",
+      "node_id": "footer-0",
+      "property_path": "footer.format",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000082",
+      "node_id": null,
+      "property_path": "visual_cleanup.text_color_hex",
+      "before": {
+        "noncompliant_nodes": 552
+      },
+      "after": "000000",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000082",
+      "node_id": null,
+      "property_path": "visual_cleanup.remove_text_highlight",
+      "before": {
+        "noncompliant_nodes": 25
+      },
+      "after": true,
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000082",
+      "node_id": null,
+      "property_path": "visual_cleanup.remove_character_shading",
+      "before": {
+        "noncompliant_nodes": 9
+      },
+      "after": true,
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000082",
+      "node_id": null,
+      "property_path": "visual_cleanup.remove_paragraph_shading",
+      "before": {
+        "noncompliant_nodes": 8
+      },
+      "after": true,
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000082",
+      "node_id": null,
+      "property_path": "visual_cleanup.remove_table_cell_shading",
+      "before": {
+        "noncompliant_nodes": 954
+      },
+      "after": true,
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000082",
+      "node_id": null,
+      "property_path": "visual_cleanup.remove_page_background",
+      "before": {
+        "noncompliant_nodes": 1
+      },
+      "after": true,
+      "status": "changed"
+    }
+  ],
+  "warnings": [
+    {
+      "code": "TABLE_WIDTH_EXCEEDS_PAGE",
+      "message": "Estimated table width exceeds the printable page width.",
+      "node_id": "t-main-000018-bcdcb030d5"
+    },
+    {
+      "code": "LOW_CONFIDENCE_ROLE",
+      "message": "Paragraph role confidence is 0.58.",
+      "node_id": "p-main-000005-7500107b8a"
+    },
+    {
+      "code": "LOW_CONFIDENCE_ROLE",
+      "message": "Paragraph role confidence is 0.58.",
+      "node_id": "p-main-000007-ca36ab2157"
+    },
+    {
+      "code": "LOW_CONFIDENCE_ROLE",
+      "message": "Paragraph role confidence is 0.58.",
+      "node_id": "p-main-000009-9f413f433e"
+    },
+    {
+      "code": "LOW_CONFIDENCE_ROLE",
+      "message": "Paragraph role confidence is 0.58.",
+      "node_id": "p-main-000011-3c6c1cb021"
+    },
+    {
+      "code": "LOW_CONFIDENCE_ROLE",
+      "message": "Paragraph role confidence is 0.58.",
+      "node_id": "p-main-000013-c593c487d7"
+    },
+    {
+      "code": "LOW_CONFIDENCE_ROLE",
+      "message": "Paragraph role confidence is 0.58.",
+      "node_id": "p-main-000015-08edef76d6"
+    },
+    {
+      "code": "LOW_CONFIDENCE_ROLE",
+      "message": "Paragraph role confidence is 0.58.",
+      "node_id": "p-main-000017-03df209116"
+    }
+  ],
+  "validation": {
+    "schema_version": "validation-report.v1",
+    "valid": true,
+    "issues": [],
+    "content_fingerprint_before": "fb639367bf4e512197ad7a3957ebc846253e1af0531a6360bdf055f79d644915",
+    "content_fingerprint_after": "fb639367bf4e512197ad7a3957ebc846253e1af0531a6360bdf055f79d644915"
+  },
+  "assumptions": [
+    "All sections are normalized to A4 portrait with 20 mm margins.",
+    "Chinese text uses SimSun, Latin text uses Times New Roman, and visible text is black.",
+    "Highlights and Word character, paragraph, cell, and page backgrounds are removed.",
+    "Titles remain distinguishable through conventional size and weight hierarchy."
+  ],
+  "spec_source": {
+    "type": "preset",
+    "preset_id": "default-clean-cn",
+    "instruction_hash": null,
+    "compiler_version": null,
+    "provider": null,
+    "model": null,
+    "assumptions": [
+      "All sections are normalized to A4 portrait with 20 mm margins.",
+      "Chinese text uses SimSun, Latin text uses Times New Roman, and visible text is black.",
+      "Highlights and Word character, paragraph, cell, and page backgrounds are removed.",
+      "Titles remain distinguishable through conventional size and weight hierarchy."
+    ]
+  }
+}

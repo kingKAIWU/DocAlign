@@ -1,0 +1,808 @@
+{
+  "schema_version": "audit-report.v1",
+  "job_id": "corpus-05-meeting-minutes",
+  "source_file": "05-meeting-minutes.docx",
+  "output_file": "05-meeting-minutes-默认整理.docx",
+  "source_sha256": "0f42f56954fa2a6b30b72e236b505e3eb48a5501bbcc3f78734e81bc54a12cec",
+  "output_sha256": "fe751b68dc933c5e211937e53212083ade5abb4c75ca3f2ea8809f7dfc95530e",
+  "summary": {
+    "paragraphs": 13,
+    "tables": 1,
+    "images": 0,
+    "classified_blocks": 12,
+    "unknown_blocks": 1,
+    "format_operations": 64,
+    "changed_mutations": 52,
+    "validation_failures": 0,
+    "paragraphs_before": 13,
+    "paragraphs_after": 13,
+    "auto_layout_splits": 0
+  },
+  "roles": {
+    "body": 7,
+    "list_item": 4,
+    "title": 1,
+    "unknown": 1
+  },
+  "mutations": [
+    {
+      "operation_id": "op-000001",
+      "node_id": "section-0",
+      "property_path": "section.layout",
+      "before": {
+        "width": 12240,
+        "height": 15840,
+        "orientation": "PORTRAIT",
+        "margins": [
+          1440,
+          1440,
+          1800,
+          1800
+        ]
+      },
+      "after": {
+        "width": 11906,
+        "height": 16838,
+        "orientation": "PORTRAIT",
+        "margins": [
+          1134,
+          1134,
+          1134,
+          1134
+        ]
+      },
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Heading 3",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Unknown",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Subtitle",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Author Info",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA List Item",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Bibliography",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Title",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Abstract",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Blockquote",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Abstract Heading",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Heading 2",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Body",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Keywords",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Appendix",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Heading 1",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Table Caption",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Appendix Heading",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Bibliography Heading",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Figure Caption",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "property_path": "styles.DA Heading 4",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000022",
+      "node_id": "p-main-000000-65c5386595",
+      "property_path": "paragraph.style",
+      "before": "Normal",
+      "after": "DA Title",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000024",
+      "node_id": "p-main-000000-65c5386595",
+      "property_path": "runs.0.font",
+      "before": {
+        "ascii": "Arial",
+        "hAnsi": "Arial",
+        "eastAsia": null,
+        "cs": null,
+        "size_pt": 15.0,
+        "bold": true,
+        "italic": true,
+        "underline": true
+      },
+      "after": {
+        "ascii": "Times New Roman",
+        "hAnsi": "Times New Roman",
+        "eastAsia": "宋体",
+        "cs": "Times New Roman",
+        "size_pt": 22.0,
+        "bold": true,
+        "italic": false,
+        "underline": false
+      },
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000025",
+      "node_id": "p-main-000001-5219da5658",
+      "property_path": "paragraph.style",
+      "before": "Normal",
+      "after": "DA Body",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000027",
+      "node_id": "p-main-000001-5219da5658",
+      "property_path": "runs.0.font",
+      "before": {
+        "ascii": null,
+        "hAnsi": null,
+        "eastAsia": null,
+        "cs": null,
+        "size_pt": null,
+        "bold": null,
+        "italic": null,
+        "underline": null
+      },
+      "after": {
+        "ascii": "Times New Roman",
+        "hAnsi": "Times New Roman",
+        "eastAsia": "宋体",
+        "cs": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false
+      },
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000028",
+      "node_id": "p-main-000002-94850c0bdc",
+      "property_path": "paragraph.style",
+      "before": "Normal",
+      "after": "DA Body",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000030",
+      "node_id": "p-main-000002-94850c0bdc",
+      "property_path": "runs.0.font",
+      "before": {
+        "ascii": null,
+        "hAnsi": null,
+        "eastAsia": null,
+        "cs": null,
+        "size_pt": null,
+        "bold": null,
+        "italic": null,
+        "underline": null
+      },
+      "after": {
+        "ascii": "Times New Roman",
+        "hAnsi": "Times New Roman",
+        "eastAsia": "宋体",
+        "cs": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false
+      },
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000031",
+      "node_id": "p-main-000003-96ac41a3d2",
+      "property_path": "paragraph.style",
+      "before": "Normal",
+      "after": "DA Body",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000033",
+      "node_id": "p-main-000003-96ac41a3d2",
+      "property_path": "runs.0.font",
+      "before": {
+        "ascii": null,
+        "hAnsi": null,
+        "eastAsia": null,
+        "cs": null,
+        "size_pt": null,
+        "bold": null,
+        "italic": null,
+        "underline": null
+      },
+      "after": {
+        "ascii": "Times New Roman",
+        "hAnsi": "Times New Roman",
+        "eastAsia": "宋体",
+        "cs": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false
+      },
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000034",
+      "node_id": "p-main-000004-84013a8da0",
+      "property_path": "paragraph.style",
+      "before": "Normal",
+      "after": "DA Body",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000036",
+      "node_id": "p-main-000004-84013a8da0",
+      "property_path": "runs.0.font",
+      "before": {
+        "ascii": null,
+        "hAnsi": null,
+        "eastAsia": null,
+        "cs": null,
+        "size_pt": null,
+        "bold": null,
+        "italic": null,
+        "underline": null
+      },
+      "after": {
+        "ascii": "Times New Roman",
+        "hAnsi": "Times New Roman",
+        "eastAsia": "宋体",
+        "cs": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false
+      },
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000037",
+      "node_id": "p-main-000005-81acc14475",
+      "property_path": "paragraph.style",
+      "before": "Normal",
+      "after": "DA Body",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000039",
+      "node_id": "p-main-000005-81acc14475",
+      "property_path": "runs.0.font",
+      "before": {
+        "ascii": null,
+        "hAnsi": null,
+        "eastAsia": null,
+        "cs": null,
+        "size_pt": null,
+        "bold": null,
+        "italic": null,
+        "underline": null
+      },
+      "after": {
+        "ascii": "Times New Roman",
+        "hAnsi": "Times New Roman",
+        "eastAsia": "宋体",
+        "cs": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false
+      },
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000040",
+      "node_id": "p-main-000006-2f55e4e571",
+      "property_path": "paragraph.style",
+      "before": "Normal",
+      "after": "DA Unknown",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000042",
+      "node_id": "p-main-000006-2f55e4e571",
+      "property_path": "runs.0.font",
+      "before": {
+        "ascii": "Arial",
+        "hAnsi": "Arial",
+        "eastAsia": null,
+        "cs": null,
+        "size_pt": 15.0,
+        "bold": true,
+        "italic": true,
+        "underline": true
+      },
+      "after": {
+        "ascii": "Times New Roman",
+        "hAnsi": "Times New Roman",
+        "eastAsia": "宋体",
+        "cs": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false
+      },
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000043",
+      "node_id": "p-main-000007-93c6aa6aeb",
+      "property_path": "paragraph.style",
+      "before": "Normal",
+      "after": "DA Body",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000045",
+      "node_id": "p-main-000007-93c6aa6aeb",
+      "property_path": "runs.0.font",
+      "before": {
+        "ascii": null,
+        "hAnsi": null,
+        "eastAsia": null,
+        "cs": null,
+        "size_pt": null,
+        "bold": null,
+        "italic": null,
+        "underline": null
+      },
+      "after": {
+        "ascii": "Times New Roman",
+        "hAnsi": "Times New Roman",
+        "eastAsia": "宋体",
+        "cs": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false
+      },
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000046",
+      "node_id": "p-main-000008-1e032cf1bf",
+      "property_path": "paragraph.style",
+      "before": "List Bullet",
+      "after": "List Bullet",
+      "status": "skipped"
+    },
+    {
+      "operation_id": "op-000048",
+      "node_id": "p-main-000008-1e032cf1bf",
+      "property_path": "runs.0.font",
+      "before": {
+        "ascii": null,
+        "hAnsi": null,
+        "eastAsia": null,
+        "cs": null,
+        "size_pt": null,
+        "bold": null,
+        "italic": null,
+        "underline": null
+      },
+      "after": {
+        "ascii": "Times New Roman",
+        "hAnsi": "Times New Roman",
+        "eastAsia": "宋体",
+        "cs": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false
+      },
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000049",
+      "node_id": "p-main-000009-e24e349c6d",
+      "property_path": "paragraph.style",
+      "before": "List Bullet",
+      "after": "List Bullet",
+      "status": "skipped"
+    },
+    {
+      "operation_id": "op-000051",
+      "node_id": "p-main-000009-e24e349c6d",
+      "property_path": "runs.0.font",
+      "before": {
+        "ascii": null,
+        "hAnsi": null,
+        "eastAsia": null,
+        "cs": null,
+        "size_pt": null,
+        "bold": null,
+        "italic": null,
+        "underline": null
+      },
+      "after": {
+        "ascii": "Times New Roman",
+        "hAnsi": "Times New Roman",
+        "eastAsia": "宋体",
+        "cs": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false
+      },
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000052",
+      "node_id": "p-main-000010-a56eac45f2",
+      "property_path": "paragraph.style",
+      "before": "List Bullet",
+      "after": "List Bullet",
+      "status": "skipped"
+    },
+    {
+      "operation_id": "op-000054",
+      "node_id": "p-main-000010-a56eac45f2",
+      "property_path": "runs.0.font",
+      "before": {
+        "ascii": null,
+        "hAnsi": null,
+        "eastAsia": null,
+        "cs": null,
+        "size_pt": null,
+        "bold": null,
+        "italic": null,
+        "underline": null
+      },
+      "after": {
+        "ascii": "Times New Roman",
+        "hAnsi": "Times New Roman",
+        "eastAsia": "宋体",
+        "cs": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false
+      },
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000055",
+      "node_id": "p-main-000011-93031e9a0a",
+      "property_path": "paragraph.style",
+      "before": "List Bullet",
+      "after": "List Bullet",
+      "status": "skipped"
+    },
+    {
+      "operation_id": "op-000057",
+      "node_id": "p-main-000011-93031e9a0a",
+      "property_path": "runs.0.font",
+      "before": {
+        "ascii": null,
+        "hAnsi": null,
+        "eastAsia": null,
+        "cs": null,
+        "size_pt": null,
+        "bold": null,
+        "italic": null,
+        "underline": null
+      },
+      "after": {
+        "ascii": "Times New Roman",
+        "hAnsi": "Times New Roman",
+        "eastAsia": "宋体",
+        "cs": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false
+      },
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000058",
+      "node_id": "p-main-000012-d0ad2efe41",
+      "property_path": "paragraph.style",
+      "before": "Normal",
+      "after": "DA Body",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000060",
+      "node_id": "p-main-000012-d0ad2efe41",
+      "property_path": "runs.0.font",
+      "before": {
+        "ascii": null,
+        "hAnsi": null,
+        "eastAsia": null,
+        "cs": null,
+        "size_pt": null,
+        "bold": null,
+        "italic": null,
+        "underline": null
+      },
+      "after": {
+        "ascii": "Times New Roman",
+        "hAnsi": "Times New Roman",
+        "eastAsia": "宋体",
+        "cs": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false
+      },
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000061",
+      "node_id": "t-main-000013-20094eae08",
+      "property_path": "table.format",
+      "before": {
+        "alignment": "None",
+        "autofit": true
+      },
+      "after": {
+        "alignment": "CENTER (1)",
+        "autofit": false
+      },
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000062",
+      "node_id": "header-0",
+      "property_path": "header.format",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000063",
+      "node_id": "footer-0",
+      "property_path": "footer.format",
+      "before": null,
+      "after": "configured",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000064",
+      "node_id": null,
+      "property_path": "visual_cleanup.text_color_hex",
+      "before": {
+        "noncompliant_nodes": 561
+      },
+      "after": "000000",
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000064",
+      "node_id": null,
+      "property_path": "visual_cleanup.remove_text_highlight",
+      "before": {
+        "noncompliant_nodes": 28
+      },
+      "after": true,
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000064",
+      "node_id": null,
+      "property_path": "visual_cleanup.remove_character_shading",
+      "before": {
+        "noncompliant_nodes": 3
+      },
+      "after": true,
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000064",
+      "node_id": null,
+      "property_path": "visual_cleanup.remove_paragraph_shading",
+      "before": {
+        "noncompliant_nodes": 5
+      },
+      "after": true,
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000064",
+      "node_id": null,
+      "property_path": "visual_cleanup.remove_table_cell_shading",
+      "before": {
+        "noncompliant_nodes": 963
+      },
+      "after": true,
+      "status": "changed"
+    },
+    {
+      "operation_id": "op-000064",
+      "node_id": null,
+      "property_path": "visual_cleanup.remove_page_background",
+      "before": {
+        "noncompliant_nodes": 1
+      },
+      "after": true,
+      "status": "changed"
+    }
+  ],
+  "warnings": [
+    {
+      "code": "TABLE_WIDTH_EXCEEDS_PAGE",
+      "message": "Estimated table width exceeds the printable page width.",
+      "node_id": "t-main-000013-20094eae08"
+    },
+    {
+      "code": "LOW_CONFIDENCE_ROLE",
+      "message": "Paragraph role confidence is 0.58.",
+      "node_id": "p-main-000006-2f55e4e571"
+    },
+    {
+      "code": "NUMBERING_LAYOUT_PRESERVED",
+      "message": "Existing list numbering, paragraph style, alignment, and indents were preserved; compatible font and spacing rules were applied directly.",
+      "node_id": "p-main-000008-1e032cf1bf"
+    },
+    {
+      "code": "NUMBERING_LAYOUT_PRESERVED",
+      "message": "Existing list numbering, paragraph style, alignment, and indents were preserved; compatible font and spacing rules were applied directly.",
+      "node_id": "p-main-000009-e24e349c6d"
+    },
+    {
+      "code": "NUMBERING_LAYOUT_PRESERVED",
+      "message": "Existing list numbering, paragraph style, alignment, and indents were preserved; compatible font and spacing rules were applied directly.",
+      "node_id": "p-main-000010-a56eac45f2"
+    },
+    {
+      "code": "NUMBERING_LAYOUT_PRESERVED",
+      "message": "Existing list numbering, paragraph style, alignment, and indents were preserved; compatible font and spacing rules were applied directly.",
+      "node_id": "p-main-000011-93031e9a0a"
+    }
+  ],
+  "validation": {
+    "schema_version": "validation-report.v1",
+    "valid": true,
+    "issues": [],
+    "content_fingerprint_before": "c6b3eb5fd2d754e5055499ed8a69cba81bb8583526457461c555ab19bfea7c44",
+    "content_fingerprint_after": "c6b3eb5fd2d754e5055499ed8a69cba81bb8583526457461c555ab19bfea7c44"
+  },
+  "assumptions": [
+    "All sections are normalized to A4 portrait with 20 mm margins.",
+    "Chinese text uses SimSun, Latin text uses Times New Roman, and visible text is black.",
+    "Highlights and Word character, paragraph, cell, and page backgrounds are removed.",
+    "Titles remain distinguishable through conventional size and weight hierarchy."
+  ],
+  "spec_source": {
+    "type": "preset",
+    "preset_id": "default-clean-cn",
+    "instruction_hash": null,
+    "compiler_version": null,
+    "provider": null,
+    "model": null,
+    "assumptions": [
+      "All sections are normalized to A4 portrait with 20 mm margins.",
+      "Chinese text uses SimSun, Latin text uses Times New Roman, and visible text is black.",
+      "Highlights and Word character, paragraph, cell, and page backgrounds are removed.",
+      "Titles remain distinguishable through conventional size and weight hierarchy."
+    ]
+  }
+}

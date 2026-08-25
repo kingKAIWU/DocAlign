@@ -1,0 +1,80 @@
+schema_version: formatting-spec.v1
+document:
+  page:
+    size: A4
+    orientation: portrait
+    margin_top_mm: 25
+    margin_bottom_mm: 25
+    margin_left_mm: 30
+    margin_right_mm: 25
+    preserve_existing_landscape_sections: true
+    force_orientation_all_sections: false
+roles:
+  body:
+    font:
+      east_asia: 宋体
+      ascii: Times New Roman
+      high_ansi: Times New Roman
+      complex_script: Times New Roman
+      size_pt: 12
+    paragraph:
+      alignment: justify
+      line_spacing: {mode: multiple, value: 1.5}
+      first_line_indent_pt: 24
+      space_before_pt: 0
+      space_after_pt: 0
+    force:
+      properties: [font.east_asia, font.ascii, font.high_ansi, font.complex_script, font.size_pt]
+  heading_1:
+    font: {east_asia: 黑体, ascii: Times New Roman, high_ansi: Times New Roman, size_pt: 16, bold: true}
+    paragraph: {alignment: center, space_before_pt: 18, space_after_pt: 12, keep_with_next: true}
+    force:
+      properties: [font.east_asia, font.ascii, font.high_ansi, font.size_pt, font.bold]
+  heading_2:
+    font: {east_asia: 黑体, ascii: Times New Roman, high_ansi: Times New Roman, size_pt: 14, bold: true}
+    paragraph: {alignment: left, space_before_pt: 12, space_after_pt: 6, keep_with_next: true}
+    force:
+      properties: [font.east_asia, font.ascii, font.high_ansi, font.size_pt, font.bold]
+  heading_3:
+    font: {east_asia: 黑体, ascii: Times New Roman, high_ansi: Times New Roman, size_pt: 12, bold: true}
+    paragraph: {alignment: left, space_before_pt: 9, space_after_pt: 3, keep_with_next: true}
+    force:
+      properties: [font.east_asia, font.ascii, font.high_ansi, font.size_pt, font.bold]
+  figure_caption:
+    font: {east_asia: 宋体, ascii: Times New Roman, size_pt: 10.5}
+    paragraph: {alignment: center, space_before_pt: 3, space_after_pt: 6}
+    force:
+      properties: [font.east_asia, font.ascii, font.size_pt]
+  table_caption:
+    font: {east_asia: 宋体, ascii: Times New Roman, size_pt: 10.5}
+    paragraph: {alignment: center, space_before_pt: 3, space_after_pt: 6}
+    force:
+      properties: [font.east_asia, font.ascii, font.size_pt]
+tables:
+  width_policy: preserve
+  font: {east_asia: 宋体, ascii: Times New Roman, size_pt: 10.5}
+  paragraph: {space_before_pt: 0, space_after_pt: 0}
+figures:
+  center_image_only_paragraphs: true
+auto_layout:
+  enabled: true
+  split_body_paragraphs: true
+  split_on_manual_breaks: true
+  target_body_chars: 280
+  max_body_chars: 480
+behavior:
+  preserve_inline_emphasis: true
+  preserve_hyperlinks: true
+  preserve_fields: true
+  preserve_equations: true
+  preserve_unknown_xml: true
+  normalize_direct_paragraph_formatting: true
+  normalize_direct_run_formatting: true
+  apply_to_unknown_roles: false
+  unknown_role_fallback: body
+  validation_passes: 2
+  auto_repair: true
+source:
+  type: preset
+  preset_id: generic-academic-cn
+  assumptions: []

@@ -1,0 +1,355 @@
+[
+  {
+    "source": "01-government-notice.docx",
+    "output": "01-government-notice-常规文档.docx",
+    "source_pollution": {
+      "highlight": 21,
+      "character_shading": 5,
+      "paragraph_shading": 1,
+      "cell_shading": 954,
+      "page_background": 1
+    },
+    "output_pollution": {
+      "highlight": 0,
+      "character_shading": 0,
+      "paragraph_shading": 0,
+      "cell_shading": 0,
+      "page_background": 0
+    },
+    "content_preserved": false,
+    "validation_valid": true,
+    "validation_issues": 0,
+    "all_sections_portrait": true,
+    "document_kind": "government_document",
+    "preset_id": "default-clean-cn",
+    "sections": 1,
+    "paragraphs": 13,
+    "tables": 1,
+    "images": 0,
+    "role_counts": {
+      "author_info": 1,
+      "body": 3,
+      "heading_1": 2,
+      "heading_2": 1,
+      "list_item": 3,
+      "title": 1,
+      "unknown": 2
+    },
+    "warnings": [
+      "LOW_CONFIDENCE_ROLE",
+      "LOW_CONFIDENCE_ROLE"
+    ],
+    "auto_layout_splits": 1,
+    "changed_mutations": 56,
+    "validation_failures": 0
+  },
+  {
+    "source": "02-academic-paper.docx",
+    "output": "02-academic-paper-常规文档.docx",
+    "source_pollution": {
+      "highlight": 26,
+      "character_shading": 6,
+      "paragraph_shading": 1,
+      "cell_shading": 958,
+      "page_background": 1
+    },
+    "output_pollution": {
+      "highlight": 0,
+      "character_shading": 0,
+      "paragraph_shading": 0,
+      "cell_shading": 0,
+      "page_background": 0
+    },
+    "content_preserved": false,
+    "validation_valid": true,
+    "validation_issues": 0,
+    "all_sections_portrait": true,
+    "document_kind": "academic_paper",
+    "preset_id": "default-clean-cn",
+    "sections": 1,
+    "paragraphs": 16,
+    "tables": 1,
+    "images": 1,
+    "role_counts": {
+      "abstract_body": 1,
+      "abstract_heading": 1,
+      "author_info": 1,
+      "bibliography_entry": 1,
+      "bibliography_heading": 1,
+      "body": 2,
+      "figure_caption": 1,
+      "heading_1": 2,
+      "heading_2": 1,
+      "keywords": 1,
+      "table_caption": 1,
+      "title": 1,
+      "unknown": 2
+    },
+    "warnings": [
+      "LOW_CONFIDENCE_ROLE",
+      "LOW_CONFIDENCE_ROLE"
+    ],
+    "auto_layout_splits": 1,
+    "changed_mutations": 65,
+    "validation_failures": 0
+  },
+  {
+    "source": "03-business-report.docx",
+    "output": "03-business-report-宽表优先.docx",
+    "source_pollution": {
+      "highlight": 76,
+      "character_shading": 4,
+      "paragraph_shading": 1,
+      "cell_shading": 1010,
+      "page_background": 1
+    },
+    "output_pollution": {
+      "highlight": 0,
+      "character_shading": 0,
+      "paragraph_shading": 0,
+      "cell_shading": 0,
+      "page_background": 0
+    },
+    "content_preserved": true,
+    "validation_valid": true,
+    "validation_issues": 0,
+    "all_sections_portrait": false,
+    "document_kind": "financial_report",
+    "preset_id": "wide-table-clean-cn",
+    "sections": 3,
+    "paragraphs": 12,
+    "tables": 1,
+    "images": 0,
+    "role_counts": {
+      "heading_1": 4,
+      "list_item": 3,
+      "title": 1,
+      "unknown": 4
+    },
+    "warnings": [
+      "LOW_CONFIDENCE_ROLE",
+      "LOW_CONFIDENCE_ROLE"
+    ],
+    "auto_layout_splits": 0,
+    "changed_mutations": 53,
+    "validation_failures": 0
+  },
+  {
+    "source": "04-legal-contract.docx",
+    "output": "04-legal-contract-合同条款.docx",
+    "source_pollution": {
+      "highlight": 25,
+      "character_shading": 9,
+      "paragraph_shading": 8,
+      "cell_shading": 954,
+      "page_background": 1
+    },
+    "output_pollution": {
+      "highlight": 0,
+      "character_shading": 0,
+      "paragraph_shading": 0,
+      "cell_shading": 0,
+      "page_background": 0
+    },
+    "content_preserved": true,
+    "validation_valid": true,
+    "validation_issues": 0,
+    "all_sections_portrait": true,
+    "document_kind": "contract",
+    "preset_id": "contract-clean-cn",
+    "sections": 1,
+    "paragraphs": 19,
+    "tables": 1,
+    "images": 0,
+    "role_counts": {
+      "body": 4,
+      "heading_2": 7,
+      "title": 1,
+      "unknown": 7
+    },
+    "warnings": [
+      "LOW_CONFIDENCE_ROLE",
+      "LOW_CONFIDENCE_ROLE",
+      "LOW_CONFIDENCE_ROLE",
+      "LOW_CONFIDENCE_ROLE",
+      "LOW_CONFIDENCE_ROLE",
+      "LOW_CONFIDENCE_ROLE",
+      "LOW_CONFIDENCE_ROLE"
+    ],
+    "auto_layout_splits": 0,
+    "changed_mutations": 68,
+    "validation_failures": 0
+  },
+  {
+    "source": "05-meeting-minutes.docx",
+    "output": "05-meeting-minutes-紧凑信息.docx",
+    "source_pollution": {
+      "highlight": 28,
+      "character_shading": 3,
+      "paragraph_shading": 5,
+      "cell_shading": 963,
+      "page_background": 1
+    },
+    "output_pollution": {
+      "highlight": 0,
+      "character_shading": 0,
+      "paragraph_shading": 0,
+      "cell_shading": 0,
+      "page_background": 0
+    },
+    "content_preserved": true,
+    "validation_valid": true,
+    "validation_issues": 0,
+    "all_sections_portrait": true,
+    "document_kind": "meeting_minutes",
+    "preset_id": "compact-clean-cn",
+    "sections": 1,
+    "paragraphs": 13,
+    "tables": 1,
+    "images": 0,
+    "role_counts": {
+      "body": 4,
+      "heading_1": 3,
+      "list_item": 4,
+      "title": 1,
+      "unknown": 1
+    },
+    "warnings": [
+      "LOW_CONFIDENCE_ROLE"
+    ],
+    "auto_layout_splits": 0,
+    "changed_mutations": 52,
+    "validation_failures": 0
+  },
+  {
+    "source": "06-resume.docx",
+    "output": "06-resume-紧凑信息.docx",
+    "source_pollution": {
+      "highlight": 14,
+      "character_shading": 14,
+      "paragraph_shading": 1,
+      "cell_shading": 938,
+      "page_background": 1
+    },
+    "output_pollution": {
+      "highlight": 0,
+      "character_shading": 0,
+      "paragraph_shading": 0,
+      "cell_shading": 0,
+      "page_background": 0
+    },
+    "content_preserved": true,
+    "validation_valid": true,
+    "validation_issues": 0,
+    "all_sections_portrait": true,
+    "document_kind": "resume",
+    "preset_id": "compact-clean-cn",
+    "sections": 1,
+    "paragraphs": 19,
+    "tables": 0,
+    "images": 0,
+    "role_counts": {
+      "author_info": 1,
+      "heading_1": 7,
+      "title": 1,
+      "unknown": 10
+    },
+    "warnings": [
+      "LOW_CONFIDENCE_ROLE",
+      "LOW_CONFIDENCE_ROLE",
+      "LOW_CONFIDENCE_ROLE",
+      "LOW_CONFIDENCE_ROLE",
+      "LOW_CONFIDENCE_ROLE",
+      "LOW_CONFIDENCE_ROLE",
+      "LOW_CONFIDENCE_ROLE",
+      "LOW_CONFIDENCE_ROLE",
+      "LOW_CONFIDENCE_ROLE",
+      "LOW_CONFIDENCE_ROLE"
+    ],
+    "auto_layout_splits": 0,
+    "changed_mutations": 67,
+    "validation_failures": 0
+  },
+  {
+    "source": "07-training-manual.docx",
+    "output": "07-training-manual-紧凑信息.docx",
+    "source_pollution": {
+      "highlight": 11,
+      "character_shading": 3,
+      "paragraph_shading": 2,
+      "cell_shading": 946,
+      "page_background": 1
+    },
+    "output_pollution": {
+      "highlight": 0,
+      "character_shading": 0,
+      "paragraph_shading": 0,
+      "cell_shading": 0,
+      "page_background": 0
+    },
+    "content_preserved": true,
+    "validation_valid": true,
+    "validation_issues": 0,
+    "all_sections_portrait": true,
+    "document_kind": "manual",
+    "preset_id": "compact-clean-cn",
+    "sections": 1,
+    "paragraphs": 16,
+    "tables": 1,
+    "images": 1,
+    "role_counts": {
+      "body": 2,
+      "figure_caption": 1,
+      "heading_1": 3,
+      "heading_2": 1,
+      "list_item": 7,
+      "title": 1,
+      "unknown": 1
+    },
+    "warnings": [
+      "LOW_CONFIDENCE_ROLE"
+    ],
+    "auto_layout_splits": 0,
+    "changed_mutations": 55,
+    "validation_failures": 0
+  },
+  {
+    "source": "08-financial-statement.docx",
+    "output": "08-financial-statement-宽表优先.docx",
+    "source_pollution": {
+      "highlight": 146,
+      "character_shading": 3,
+      "paragraph_shading": 1,
+      "cell_shading": 1081,
+      "page_background": 1
+    },
+    "output_pollution": {
+      "highlight": 0,
+      "character_shading": 0,
+      "paragraph_shading": 0,
+      "cell_shading": 0,
+      "page_background": 0
+    },
+    "content_preserved": true,
+    "validation_valid": true,
+    "validation_issues": 0,
+    "all_sections_portrait": false,
+    "document_kind": "financial_report",
+    "preset_id": "wide-table-clean-cn",
+    "sections": 3,
+    "paragraphs": 6,
+    "tables": 1,
+    "images": 0,
+    "role_counts": {
+      "body": 1,
+      "heading_1": 2,
+      "unknown": 3
+    },
+    "warnings": [
+      "LOW_CONFIDENCE_ROLE"
+    ],
+    "auto_layout_splits": 0,
+    "changed_mutations": 44,
+    "validation_failures": 0
+  }
+]

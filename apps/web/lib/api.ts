@@ -1,0 +1,136 @@
+import type {
+  Analysis,
+  Capabilities,
+  ComplianceReport,
+  DocumentRecord,
+  FormattingSpec,
+  Job,
+  SemanticRole,
+} from "./types";
+
+export const API_BASE =
+  process.env.NEXT_PUBLIC_DOCALIGN_API_URL ?? "http://127.0.0.1:8000/api/v1";
+
+export class ApiError extends Error {
+  constructor(
+    public code: string,
+    message: string,
+    public status: number,
+    public details: Record<string, unknown> = {},
+  ) {
+    super(message);
+  }
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`${API_BASE}${path}`, {
+    ...init,
+    headers: init?.body instanceof FormData ? init.headers : { "Content-Type": "application/json", ...init?.headers },
+  });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => null);
+    const error = payload?.error;
+    throw new ApiError(
+      error?.code ?? "REQUEST_FAILED",
+      error?.message ?? `Request failed with HTTP ${response.status}`,
+      response.status,
+      error?.details ?? {},
+    );
+  }
+  if (response.status === 204) return undefined as T;
+  return response.json() as Promise<T>;
+}
+
+export const api = {
+  capabilities: (signal?: AbortSignal) =>
+    request<Capabilities>("/capabilities", { signal }),
+  preset: (signal?: AbortSignal) =>
+    request<{ preset_id: string; spec: FormattingSpec }>("/presets/default-clean-cn", {
+      signal,
+    }),
+  presets: (signal?: AbortSignal) =>
+    request<{
+      presets: Array<{
+        preset_id: string;
+        name: string;
+        description: string;
+        recommended_kinds: string[];
+        spec: FormattingSpec;
+      }>;
+    }>("/presets", { signal }),
+  document: (documentId: string, signal?: AbortSignal) =>
+    request<DocumentRecord>(`/documents/${documentId}`, { signal }),
+  analysis: (analysisId: string, signal?: AbortSignal) =>
+    request<Analysis>(`/analyses/${analysisId}`, { signal }),
+  upload: (file: File) => {
+    const body = new FormData();
+    body.append("file", file);
+    return request<DocumentRecord>("/documents", { method: "POST", body });
+  },
+  createFromText: (text: string, filename: string) =>
+    request<DocumentRecord>("/documents/from-text", {
+      method: "POST",
+      body: JSON.stringify({ text, filename }),
+    }),
+  analyze: (documentId: string, mode: "deterministic" | "smart") =>
+    request<Analysis>(`/documents/${documentId}/analyze`, {
+      method: "POST",
+      body: JSON.stringify({ mode }),
+    }),
+  overrideRoles: (
+    analysisId: string,
+    overrides: Array<{ node_id: string; role: SemanticRole }>,
+  ) =>
+    request<Analysis>(`/analyses/${analysisId}/role-overrides`, {
+      method: "PUT",
+      body: JSON.stringify({ overrides }),
+    }),
+  createSpec: (documentId: string, spec: FormattingSpec) =>
+    request<{ spec_id: string; spec: FormattingSpec }>("/specs", {
+      method: "POST",
+      body: JSON.stringify({ document_id: documentId, spec }),
+    }),
+  compileSpec: (
+    documentId: string,
+    analysisId: string,
+    instruction: string,
+    applyPreset: boolean,
+  ) =>
+    request<{
+      spec_id: string;
+      spec: FormattingSpec;
+      applied_capabilities: string[];
+      assumptions: string[];
+      ambiguities: string[];
+      unsupported_requests: string[];
+    }>("/specs/compile", {
+      method: "POST",
+      body: JSON.stringify({
+        document_id: documentId,
+        analysis_id: analysisId,
+        instruction,
+        apply_preset: applyPreset,
+      }),
+    }),
+  createJob: (documentId: string, analysisId: string, specId: string) =>
+    request<Job>("/jobs", {
+      method: "POST",
+      body: JSON.stringify({ document_id: documentId, analysis_id: analysisId, spec_id: specId }),
+    }),
+  compliance: (documentId: string, analysisId: string, specId: string) =>
+    request<ComplianceReport>(`/documents/${documentId}/compliance`, {
+      method: "POST",
+      body: JSON.stringify({ analysis_id: analysisId, spec_id: specId }),
+    }),
+  job: (jobId: string, signal?: AbortSignal) =>
+    request<Job>(`/jobs/${jobId}`, { signal, cache: "no-store" }),
+  deleteDocument: (documentId: string) =>
+    request<void>(`/documents/${documentId}`, { method: "DELETE" }),
+};
+
+export function apiUrl(path: string | null): string | undefined {
+  if (!path) return undefined;
+  if (path.startsWith("http://") || path.startsWith("https://")) return path;
+  const origin = API_BASE.replace(/\/api\/v1\/?$/, "");
+  return `${origin}${path}`;
+}

@@ -1,0 +1,165 @@
+{
+  "$defs": {
+    "ComplianceSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "total_violations": {
+          "title": "Total Violations",
+          "type": "integer"
+        },
+        "returned_violations": {
+          "title": "Returned Violations",
+          "type": "integer"
+        },
+        "affected_locators": {
+          "title": "Affected Locators",
+          "type": "integer"
+        },
+        "by_severity": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "title": "By Severity",
+          "type": "object"
+        },
+        "by_code": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "title": "By Code",
+          "type": "object"
+        },
+        "truncated": {
+          "default": false,
+          "title": "Truncated",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "total_violations",
+        "returned_violations",
+        "affected_locators"
+      ],
+      "title": "ComplianceSummary",
+      "type": "object"
+    },
+    "Severity": {
+      "enum": [
+        "fatal",
+        "error",
+        "warning",
+        "info"
+      ],
+      "title": "Severity",
+      "type": "string"
+    },
+    "ValidationIssue": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "title": "Code",
+          "type": "string"
+        },
+        "severity": {
+          "$ref": "#/$defs/Severity"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "node_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Node Id"
+        },
+        "locator": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Locator"
+        },
+        "details": {
+          "additionalProperties": true,
+          "title": "Details",
+          "type": "object"
+        }
+      },
+      "required": [
+        "code",
+        "severity",
+        "message"
+      ],
+      "title": "ValidationIssue",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "compliance-report.v1",
+      "default": "compliance-report.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "document_id": {
+      "title": "Document Id",
+      "type": "string"
+    },
+    "analysis_id": {
+      "title": "Analysis Id",
+      "type": "string"
+    },
+    "spec_id": {
+      "title": "Spec Id",
+      "type": "string"
+    },
+    "compliant": {
+      "title": "Compliant",
+      "type": "boolean"
+    },
+    "summary": {
+      "$ref": "#/$defs/ComplianceSummary"
+    },
+    "violations": {
+      "items": {
+        "$ref": "#/$defs/ValidationIssue"
+      },
+      "title": "Violations",
+      "type": "array"
+    },
+    "content_fingerprint": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Content Fingerprint"
+    }
+  },
+  "required": [
+    "document_id",
+    "analysis_id",
+    "spec_id",
+    "compliant",
+    "summary"
+  ],
+  "title": "ComplianceReport",
+  "type": "object"
+}

@@ -1,0 +1,1 @@
+"""DocAlign local FastAPI application."""

@@ -1,0 +1,70 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "docalign"
+version = "0.1.0"
+description = "Deterministic DOCX formatting and compliance engine"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+license = { text = "Proprietary" }
+dependencies = [
+  "alembic>=1.16,<2",
+  "fastapi>=0.116,<1",
+  "httpx>=0.28,<1",
+  "lxml>=5.4,<7",
+  "pydantic>=2.11,<3",
+  "pydantic-settings>=2.10,<3",
+  "python-docx>=1.2,<2",
+  "python-multipart>=0.0.20,<1",
+  "pyyaml>=6.0,<7",
+  "sqlalchemy>=2.0,<3",
+  "typer>=0.16,<1",
+  "uvicorn[standard]>=0.35,<1",
+]
+
+[project.scripts]
+docalign = "docalign_core.cli:app"
+
+[dependency-groups]
+dev = [
+  "lxml-stubs>=0.5,<1",
+  "mypy>=1.17,<2",
+  "pytest>=8.4,<10",
+  "pytest-asyncio>=1.1,<2",
+  "pytest-cov>=6.2,<8",
+  "ruff>=0.12,<1",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["packages/docalign_core/docalign_core"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = ["apps/web"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+packages = ["docalign_core", "apps.api"]
+mypy_path = ["packages/docalign_core"]
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = ["docx.*", "yaml.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q --strict-markers --disable-warnings --cov=docalign_core --cov=apps.api --cov-report=term-missing --cov-fail-under=85"
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+branch = true
+source = ["packages/docalign_core/docalign_core", "apps/api"]

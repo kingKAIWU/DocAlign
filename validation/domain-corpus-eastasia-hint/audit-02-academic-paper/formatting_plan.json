@@ -1,0 +1,1849 @@
+{
+  "schema_version": "formatting-plan.v1",
+  "plan_id": "plan_31ec869fdfa4e541",
+  "document_id": "doc_1e8429f46d19",
+  "operations": [
+    {
+      "operation_id": "layout-op-000001",
+      "node_id": "p-main-000006-5edbc247f9",
+      "target_role": "body",
+      "operation_type": "split_body_paragraph",
+      "properties": {
+        "segment_count": 2,
+        "reason": "manual line breaks"
+      },
+      "reason": "Split safe continuous body text into real Word paragraphs."
+    },
+    {
+      "operation_id": "op-000001",
+      "node_id": "section-0",
+      "target_role": null,
+      "operation_type": "set_section_layout",
+      "properties": {
+        "size": "A4",
+        "orientation": "portrait",
+        "margin_top_mm": 20.0,
+        "margin_bottom_mm": 20.0,
+        "margin_left_mm": 20.0,
+        "margin_right_mm": 20.0,
+        "header_distance_mm": 15.0,
+        "footer_distance_mm": 15.0,
+        "preserve_existing_landscape_sections": false,
+        "force_orientation_all_sections": true
+      },
+      "reason": "Document page formatting specification."
+    },
+    {
+      "operation_id": "op-000002",
+      "node_id": null,
+      "target_role": "abstract_body",
+      "operation_type": "create_or_update_style",
+      "properties": {
+        "style_name": "DA Abstract",
+        "spec": {
+          "font": {
+            "east_asia": "宋体",
+            "ascii": "Times New Roman",
+            "high_ansi": "Times New Roman",
+            "complex_script": "Times New Roman",
+            "size_pt": 12.0,
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "color_hex": "000000"
+          },
+          "paragraph": {
+            "alignment": "justify",
+            "line_spacing": {
+              "mode": "multiple",
+              "value": 1.5
+            },
+            "space_before_pt": 0.0,
+            "space_after_pt": 0.0,
+            "first_line_indent_pt": 24.0
+          },
+          "force": {
+            "properties": [
+              "font.color_hex",
+              "font.italic",
+              "font.bold",
+              "font.underline",
+              "font.size_pt",
+              "font.complex_script",
+              "font.east_asia",
+              "font.ascii",
+              "font.high_ansi"
+            ]
+          }
+        }
+      },
+      "reason": "Ensure the DocAlign-owned style for abstract_body."
+    },
+    {
+      "operation_id": "op-000003",
+      "node_id": null,
+      "target_role": "abstract_heading",
+      "operation_type": "create_or_update_style",
+      "properties": {
+        "style_name": "DA Abstract Heading",
+        "spec": {
+          "font": {
+            "east_asia": "宋体",
+            "ascii": "Times New Roman",
+            "high_ansi": "Times New Roman",
+            "complex_script": "Times New Roman",
+            "size_pt": 14.0,
+            "bold": true,
+            "italic": false,
+            "underline": false,
+            "color_hex": "000000"
+          },
+          "paragraph": {
+            "alignment": "center",
+            "line_spacing": {
+              "mode": "multiple",
+              "value": 1.5
+            },
+            "space_before_pt": 12.0,
+            "space_after_pt": 6.0,
+            "first_line_indent_pt": 24.0,
+            "keep_with_next": true
+          },
+          "force": {
+            "properties": [
+              "font.color_hex",
+              "font.italic",
+              "font.bold",
+              "font.underline",
+              "font.size_pt",
+              "font.complex_script",
+              "font.east_asia",
+              "font.ascii",
+              "font.high_ansi"
+            ]
+          }
+        }
+      },
+      "reason": "Ensure the DocAlign-owned style for abstract_heading."
+    },
+    {
+      "operation_id": "op-000004",
+      "node_id": null,
+      "target_role": "appendix_body",
+      "operation_type": "create_or_update_style",
+      "properties": {
+        "style_name": "DA Appendix",
+        "spec": {
+          "font": {
+            "east_asia": "宋体",
+            "ascii": "Times New Roman",
+            "high_ansi": "Times New Roman",
+            "complex_script": "Times New Roman",
+            "size_pt": 12.0,
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "color_hex": "000000"
+          },
+          "paragraph": {
+            "alignment": "justify",
+            "line_spacing": {
+              "mode": "multiple",
+              "value": 1.5
+            },
+            "space_before_pt": 0.0,
+            "space_after_pt": 0.0,
+            "first_line_indent_pt": 24.0
+          },
+          "force": {
+            "properties": [
+              "font.color_hex",
+              "font.italic",
+              "font.bold",
+              "font.underline",
+              "font.size_pt",
+              "font.complex_script",
+              "font.east_asia",
+              "font.ascii",
+              "font.high_ansi"
+            ]
+          }
+        }
+      },
+      "reason": "Ensure the DocAlign-owned style for appendix_body."
+    },
+    {
+      "operation_id": "op-000005",
+      "node_id": null,
+      "target_role": "appendix_heading",
+      "operation_type": "create_or_update_style",
+      "properties": {
+        "style_name": "DA Appendix Heading",
+        "spec": {
+          "font": {
+            "east_asia": "宋体",
+            "ascii": "Times New Roman",
+            "high_ansi": "Times New Roman",
+            "complex_script": "Times New Roman",
+            "size_pt": 16.0,
+            "bold": true,
+            "italic": false,
+            "underline": false,
+            "color_hex": "000000"
+          },
+          "paragraph": {
+            "alignment": "center",
+            "line_spacing": {
+              "mode": "multiple",
+              "value": 1.5
+            },
+            "space_before_pt": 18.0,
+            "space_after_pt": 12.0,
+            "first_line_indent_pt": 24.0,
+            "keep_with_next": true
+          },
+          "force": {
+            "properties": [
+              "font.color_hex",
+              "font.italic",
+              "font.bold",
+              "font.underline",
+              "font.size_pt",
+              "font.complex_script",
+              "font.east_asia",
+              "font.ascii",
+              "font.high_ansi"
+            ]
+          }
+        }
+      },
+      "reason": "Ensure the DocAlign-owned style for appendix_heading."
+    },
+    {
+      "operation_id": "op-000006",
+      "node_id": null,
+      "target_role": "author_info",
+      "operation_type": "create_or_update_style",
+      "properties": {
+        "style_name": "DA Author Info",
+        "spec": {
+          "font": {
+            "east_asia": "宋体",
+            "ascii": "Times New Roman",
+            "high_ansi": "Times New Roman",
+            "complex_script": "Times New Roman",
+            "size_pt": 12.0,
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "color_hex": "000000"
+          },
+          "paragraph": {
+            "alignment": "center",
+            "line_spacing": {
+              "mode": "multiple",
+              "value": 1.5
+            },
+            "space_before_pt": 0.0,
+            "space_after_pt": 12.0,
+            "first_line_indent_pt": 24.0,
+            "keep_with_next": true
+          },
+          "force": {
+            "properties": [
+              "font.color_hex",
+              "font.italic",
+              "font.bold",
+              "font.underline",
+              "font.size_pt",
+              "font.complex_script",
+              "font.east_asia",
+              "font.ascii",
+              "font.high_ansi"
+            ]
+          }
+        }
+      },
+      "reason": "Ensure the DocAlign-owned style for author_info."
+    },
+    {
+      "operation_id": "op-000007",
+      "node_id": null,
+      "target_role": "bibliography_entry",
+      "operation_type": "create_or_update_style",
+      "properties": {
+        "style_name": "DA Bibliography",
+        "spec": {
+          "font": {
+            "east_asia": "宋体",
+            "ascii": "Times New Roman",
+            "high_ansi": "Times New Roman",
+            "complex_script": "Times New Roman",
+            "size_pt": 12.0,
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "color_hex": "000000"
+          },
+          "paragraph": {
+            "alignment": "justify",
+            "line_spacing": {
+              "mode": "single",
+              "value": 1.0
+            },
+            "space_before_pt": 0.0,
+            "space_after_pt": 0.0,
+            "hanging_indent_pt": 21.0
+          },
+          "force": {
+            "properties": [
+              "font.color_hex",
+              "font.italic",
+              "font.bold",
+              "font.underline",
+              "font.size_pt",
+              "font.complex_script",
+              "font.east_asia",
+              "font.ascii",
+              "font.high_ansi"
+            ]
+          }
+        }
+      },
+      "reason": "Ensure the DocAlign-owned style for bibliography_entry."
+    },
+    {
+      "operation_id": "op-000008",
+      "node_id": null,
+      "target_role": "bibliography_heading",
+      "operation_type": "create_or_update_style",
+      "properties": {
+        "style_name": "DA Bibliography Heading",
+        "spec": {
+          "font": {
+            "east_asia": "宋体",
+            "ascii": "Times New Roman",
+            "high_ansi": "Times New Roman",
+            "complex_script": "Times New Roman",
+            "size_pt": 16.0,
+            "bold": true,
+            "italic": false,
+            "underline": false,
+            "color_hex": "000000"
+          },
+          "paragraph": {
+            "alignment": "center",
+            "line_spacing": {
+              "mode": "multiple",
+              "value": 1.5
+            },
+            "space_before_pt": 18.0,
+            "space_after_pt": 12.0,
+            "first_line_indent_pt": 24.0,
+            "keep_with_next": true
+          },
+          "force": {
+            "properties": [
+              "font.color_hex",
+              "font.italic",
+              "font.bold",
+              "font.underline",
+              "font.size_pt",
+              "font.complex_script",
+              "font.east_asia",
+              "font.ascii",
+              "font.high_ansi"
+            ]
+          }
+        }
+      },
+      "reason": "Ensure the DocAlign-owned style for bibliography_heading."
+    },
+    {
+      "operation_id": "op-000009",
+      "node_id": null,
+      "target_role": "blockquote",
+      "operation_type": "create_or_update_style",
+      "properties": {
+        "style_name": "DA Blockquote",
+        "spec": {
+          "font": {
+            "east_asia": "宋体",
+            "ascii": "Times New Roman",
+            "high_ansi": "Times New Roman",
+            "complex_script": "Times New Roman",
+            "size_pt": 11.0,
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "color_hex": "000000"
+          },
+          "paragraph": {
+            "alignment": "justify",
+            "line_spacing": {
+              "mode": "single",
+              "value": 1.0
+            },
+            "space_before_pt": 6.0,
+            "space_after_pt": 6.0,
+            "first_line_indent_pt": 24.0,
+            "left_indent_pt": 24.0,
+            "right_indent_pt": 24.0
+          },
+          "force": {
+            "properties": [
+              "font.color_hex",
+              "font.italic",
+              "font.bold",
+              "font.underline",
+              "font.size_pt",
+              "font.complex_script",
+              "font.east_asia",
+              "font.ascii",
+              "font.high_ansi"
+            ]
+          }
+        }
+      },
+      "reason": "Ensure the DocAlign-owned style for blockquote."
+    },
+    {
+      "operation_id": "op-000010",
+      "node_id": null,
+      "target_role": "body",
+      "operation_type": "create_or_update_style",
+      "properties": {
+        "style_name": "DA Body",
+        "spec": {
+          "font": {
+            "east_asia": "宋体",
+            "ascii": "Times New Roman",
+            "high_ansi": "Times New Roman",
+            "complex_script": "Times New Roman",
+            "size_pt": 12.0,
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "color_hex": "000000"
+          },
+          "paragraph": {
+            "alignment": "justify",
+            "line_spacing": {
+              "mode": "multiple",
+              "value": 1.5
+            },
+            "space_before_pt": 0.0,
+            "space_after_pt": 0.0,
+            "first_line_indent_pt": 24.0
+          },
+          "force": {
+            "properties": [
+              "font.color_hex",
+              "font.italic",
+              "font.bold",
+              "font.underline",
+              "font.size_pt",
+              "font.complex_script",
+              "font.east_asia",
+              "font.ascii",
+              "font.high_ansi"
+            ]
+          }
+        }
+      },
+      "reason": "Ensure the DocAlign-owned style for body."
+    },
+    {
+      "operation_id": "op-000011",
+      "node_id": null,
+      "target_role": "figure_caption",
+      "operation_type": "create_or_update_style",
+      "properties": {
+        "style_name": "DA Figure Caption",
+        "spec": {
+          "font": {
+            "east_asia": "宋体",
+            "ascii": "Times New Roman",
+            "high_ansi": "Times New Roman",
+            "complex_script": "Times New Roman",
+            "size_pt": 10.5,
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "color_hex": "000000"
+          },
+          "paragraph": {
+            "alignment": "center",
+            "line_spacing": {
+              "mode": "multiple",
+              "value": 1.5
+            },
+            "space_before_pt": 3.0,
+            "space_after_pt": 6.0,
+            "first_line_indent_pt": 24.0
+          },
+          "force": {
+            "properties": [
+              "font.color_hex",
+              "font.italic",
+              "font.bold",
+              "font.underline",
+              "font.size_pt",
+              "font.complex_script",
+              "font.east_asia",
+              "font.ascii",
+              "font.high_ansi"
+            ]
+          }
+        }
+      },
+      "reason": "Ensure the DocAlign-owned style for figure_caption."
+    },
+    {
+      "operation_id": "op-000012",
+      "node_id": null,
+      "target_role": "heading_1",
+      "operation_type": "create_or_update_style",
+      "properties": {
+        "style_name": "DA Heading 1",
+        "spec": {
+          "font": {
+            "east_asia": "宋体",
+            "ascii": "Times New Roman",
+            "high_ansi": "Times New Roman",
+            "complex_script": "Times New Roman",
+            "size_pt": 16.0,
+            "bold": true,
+            "italic": false,
+            "underline": false,
+            "color_hex": "000000"
+          },
+          "paragraph": {
+            "alignment": "center",
+            "line_spacing": {
+              "mode": "multiple",
+              "value": 1.5
+            },
+            "space_before_pt": 18.0,
+            "space_after_pt": 12.0,
+            "first_line_indent_pt": 24.0,
+            "keep_with_next": true
+          },
+          "force": {
+            "properties": [
+              "font.color_hex",
+              "font.italic",
+              "font.bold",
+              "font.underline",
+              "font.size_pt",
+              "font.complex_script",
+              "font.east_asia",
+              "font.ascii",
+              "font.high_ansi"
+            ]
+          }
+        }
+      },
+      "reason": "Ensure the DocAlign-owned style for heading_1."
+    },
+    {
+      "operation_id": "op-000013",
+      "node_id": null,
+      "target_role": "heading_2",
+      "operation_type": "create_or_update_style",
+      "properties": {
+        "style_name": "DA Heading 2",
+        "spec": {
+          "font": {
+            "east_asia": "宋体",
+            "ascii": "Times New Roman",
+            "high_ansi": "Times New Roman",
+            "complex_script": "Times New Roman",
+            "size_pt": 14.0,
+            "bold": true,
+            "italic": false,
+            "underline": false,
+            "color_hex": "000000"
+          },
+          "paragraph": {
+            "alignment": "left",
+            "line_spacing": {
+              "mode": "multiple",
+              "value": 1.5
+            },
+            "space_before_pt": 12.0,
+            "space_after_pt": 6.0,
+            "first_line_indent_pt": 24.0,
+            "keep_with_next": true
+          },
+          "force": {
+            "properties": [
+              "font.color_hex",
+              "font.italic",
+              "font.bold",
+              "font.underline",
+              "font.size_pt",
+              "font.complex_script",
+              "font.east_asia",
+              "font.ascii",
+              "font.high_ansi"
+            ]
+          }
+        }
+      },
+      "reason": "Ensure the DocAlign-owned style for heading_2."
+    },
+    {
+      "operation_id": "op-000014",
+      "node_id": null,
+      "target_role": "heading_3",
+      "operation_type": "create_or_update_style",
+      "properties": {
+        "style_name": "DA Heading 3",
+        "spec": {
+          "font": {
+            "east_asia": "宋体",
+            "ascii": "Times New Roman",
+            "high_ansi": "Times New Roman",
+            "complex_script": "Times New Roman",
+            "size_pt": 12.0,
+            "bold": true,
+            "italic": false,
+            "underline": false,
+            "color_hex": "000000"
+          },
+          "paragraph": {
+            "alignment": "left",
+            "line_spacing": {
+              "mode": "multiple",
+              "value": 1.5
+            },
+            "space_before_pt": 9.0,
+            "space_after_pt": 3.0,
+            "first_line_indent_pt": 24.0,
+            "keep_with_next": true
+          },
+          "force": {
+            "properties": [
+              "font.color_hex",
+              "font.italic",
+              "font.bold",
+              "font.underline",
+              "font.size_pt",
+              "font.complex_script",
+              "font.east_asia",
+              "font.ascii",
+              "font.high_ansi"
+            ]
+          }
+        }
+      },
+      "reason": "Ensure the DocAlign-owned style for heading_3."
+    },
+    {
+      "operation_id": "op-000015",
+      "node_id": null,
+      "target_role": "heading_4",
+      "operation_type": "create_or_update_style",
+      "properties": {
+        "style_name": "DA Heading 4",
+        "spec": {
+          "font": {
+            "east_asia": "宋体",
+            "ascii": "Times New Roman",
+            "high_ansi": "Times New Roman",
+            "complex_script": "Times New Roman",
+            "size_pt": 12.0,
+            "bold": true,
+            "italic": false,
+            "underline": false,
+            "color_hex": "000000"
+          },
+          "paragraph": {
+            "alignment": "left",
+            "line_spacing": {
+              "mode": "multiple",
+              "value": 1.5
+            },
+            "space_before_pt": 6.0,
+            "space_after_pt": 3.0,
+            "first_line_indent_pt": 24.0,
+            "keep_with_next": true
+          },
+          "force": {
+            "properties": [
+              "font.color_hex",
+              "font.italic",
+              "font.bold",
+              "font.underline",
+              "font.size_pt",
+              "font.complex_script",
+              "font.east_asia",
+              "font.ascii",
+              "font.high_ansi"
+            ]
+          }
+        }
+      },
+      "reason": "Ensure the DocAlign-owned style for heading_4."
+    },
+    {
+      "operation_id": "op-000016",
+      "node_id": null,
+      "target_role": "keywords",
+      "operation_type": "create_or_update_style",
+      "properties": {
+        "style_name": "DA Keywords",
+        "spec": {
+          "font": {
+            "east_asia": "宋体",
+            "ascii": "Times New Roman",
+            "high_ansi": "Times New Roman",
+            "complex_script": "Times New Roman",
+            "size_pt": 12.0,
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "color_hex": "000000"
+          },
+          "paragraph": {
+            "alignment": "left",
+            "line_spacing": {
+              "mode": "multiple",
+              "value": 1.5
+            },
+            "space_before_pt": 0.0,
+            "space_after_pt": 6.0,
+            "first_line_indent_pt": 0.0
+          },
+          "force": {
+            "properties": [
+              "font.color_hex",
+              "font.italic",
+              "font.bold",
+              "font.underline",
+              "font.size_pt",
+              "font.complex_script",
+              "font.east_asia",
+              "font.ascii",
+              "font.high_ansi"
+            ]
+          }
+        }
+      },
+      "reason": "Ensure the DocAlign-owned style for keywords."
+    },
+    {
+      "operation_id": "op-000017",
+      "node_id": null,
+      "target_role": "list_item",
+      "operation_type": "create_or_update_style",
+      "properties": {
+        "style_name": "DA List Item",
+        "spec": {
+          "font": {
+            "east_asia": "宋体",
+            "ascii": "Times New Roman",
+            "high_ansi": "Times New Roman",
+            "complex_script": "Times New Roman",
+            "size_pt": 12.0,
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "color_hex": "000000"
+          },
+          "paragraph": {
+            "alignment": "justify",
+            "line_spacing": {
+              "mode": "multiple",
+              "value": 1.5
+            },
+            "space_before_pt": 0.0,
+            "space_after_pt": 0.0,
+            "first_line_indent_pt": 24.0
+          },
+          "force": {
+            "properties": [
+              "font.color_hex",
+              "font.italic",
+              "font.bold",
+              "font.underline",
+              "font.size_pt",
+              "font.complex_script",
+              "font.east_asia",
+              "font.ascii",
+              "font.high_ansi"
+            ]
+          }
+        }
+      },
+      "reason": "Ensure the DocAlign-owned style for list_item."
+    },
+    {
+      "operation_id": "op-000018",
+      "node_id": null,
+      "target_role": "subtitle",
+      "operation_type": "create_or_update_style",
+      "properties": {
+        "style_name": "DA Subtitle",
+        "spec": {
+          "font": {
+            "east_asia": "宋体",
+            "ascii": "Times New Roman",
+            "high_ansi": "Times New Roman",
+            "complex_script": "Times New Roman",
+            "size_pt": 15.0,
+            "bold": true,
+            "italic": false,
+            "underline": false,
+            "color_hex": "000000"
+          },
+          "paragraph": {
+            "alignment": "center",
+            "line_spacing": {
+              "mode": "multiple",
+              "value": 1.5
+            },
+            "space_before_pt": 0.0,
+            "space_after_pt": 12.0,
+            "first_line_indent_pt": 24.0,
+            "keep_with_next": true
+          },
+          "force": {
+            "properties": [
+              "font.color_hex",
+              "font.italic",
+              "font.bold",
+              "font.underline",
+              "font.size_pt",
+              "font.complex_script",
+              "font.east_asia",
+              "font.ascii",
+              "font.high_ansi"
+            ]
+          }
+        }
+      },
+      "reason": "Ensure the DocAlign-owned style for subtitle."
+    },
+    {
+      "operation_id": "op-000019",
+      "node_id": null,
+      "target_role": "table_caption",
+      "operation_type": "create_or_update_style",
+      "properties": {
+        "style_name": "DA Table Caption",
+        "spec": {
+          "font": {
+            "east_asia": "宋体",
+            "ascii": "Times New Roman",
+            "high_ansi": "Times New Roman",
+            "complex_script": "Times New Roman",
+            "size_pt": 10.5,
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "color_hex": "000000"
+          },
+          "paragraph": {
+            "alignment": "center",
+            "line_spacing": {
+              "mode": "multiple",
+              "value": 1.5
+            },
+            "space_before_pt": 3.0,
+            "space_after_pt": 6.0,
+            "first_line_indent_pt": 24.0
+          },
+          "force": {
+            "properties": [
+              "font.color_hex",
+              "font.italic",
+              "font.bold",
+              "font.underline",
+              "font.size_pt",
+              "font.complex_script",
+              "font.east_asia",
+              "font.ascii",
+              "font.high_ansi"
+            ]
+          }
+        }
+      },
+      "reason": "Ensure the DocAlign-owned style for table_caption."
+    },
+    {
+      "operation_id": "op-000020",
+      "node_id": null,
+      "target_role": "title",
+      "operation_type": "create_or_update_style",
+      "properties": {
+        "style_name": "DA Title",
+        "spec": {
+          "font": {
+            "east_asia": "宋体",
+            "ascii": "Times New Roman",
+            "high_ansi": "Times New Roman",
+            "complex_script": "Times New Roman",
+            "size_pt": 22.0,
+            "bold": true,
+            "italic": false,
+            "underline": false,
+            "color_hex": "000000"
+          },
+          "paragraph": {
+            "alignment": "center",
+            "line_spacing": {
+              "mode": "multiple",
+              "value": 1.5
+            },
+            "space_before_pt": 0.0,
+            "space_after_pt": 18.0,
+            "first_line_indent_pt": 24.0,
+            "keep_with_next": true
+          },
+          "force": {
+            "properties": [
+              "font.color_hex",
+              "font.italic",
+              "font.bold",
+              "font.underline",
+              "font.size_pt",
+              "font.complex_script",
+              "font.east_asia",
+              "font.ascii",
+              "font.high_ansi"
+            ]
+          }
+        }
+      },
+      "reason": "Ensure the DocAlign-owned style for title."
+    },
+    {
+      "operation_id": "op-000021",
+      "node_id": null,
+      "target_role": "unknown",
+      "operation_type": "create_or_update_style",
+      "properties": {
+        "style_name": "DA Unknown",
+        "spec": {
+          "font": {
+            "east_asia": "宋体",
+            "ascii": "Times New Roman",
+            "high_ansi": "Times New Roman",
+            "complex_script": "Times New Roman",
+            "size_pt": 12.0,
+            "bold": false,
+            "italic": false,
+            "underline": false,
+            "color_hex": "000000"
+          },
+          "paragraph": {
+            "alignment": "justify",
+            "line_spacing": {
+              "mode": "multiple",
+              "value": 1.5
+            },
+            "space_before_pt": 0.0,
+            "space_after_pt": 0.0,
+            "first_line_indent_pt": 24.0
+          },
+          "force": {
+            "properties": [
+              "font.color_hex",
+              "font.italic",
+              "font.bold",
+              "font.underline",
+              "font.size_pt",
+              "font.complex_script",
+              "font.east_asia",
+              "font.ascii",
+              "font.high_ansi"
+            ]
+          }
+        }
+      },
+      "reason": "Ensure the DocAlign-owned style for unknown."
+    },
+    {
+      "operation_id": "op-000022",
+      "node_id": "p-main-000000-851182e9a0",
+      "target_role": "title",
+      "operation_type": "assign_paragraph_style",
+      "properties": {
+        "style_name": "DA Title",
+        "block_index": 0
+      },
+      "reason": "Classified as title with confidence 0.82."
+    },
+    {
+      "operation_id": "op-000023",
+      "node_id": "p-main-000000-851182e9a0",
+      "target_role": "title",
+      "operation_type": "set_paragraph_format",
+      "properties": {
+        "alignment": "center",
+        "line_spacing": {
+          "mode": "multiple",
+          "value": 1.5
+        },
+        "space_before_pt": 0.0,
+        "space_after_pt": 18.0,
+        "first_line_indent_pt": 24.0,
+        "keep_with_next": true
+      },
+      "reason": "Normalize paragraph properties covered by the role specification."
+    },
+    {
+      "operation_id": "op-000024",
+      "node_id": "p-main-000000-851182e9a0",
+      "target_role": "title",
+      "operation_type": "set_run_font",
+      "properties": {
+        "east_asia": "宋体",
+        "ascii": "Times New Roman",
+        "high_ansi": "Times New Roman",
+        "complex_script": "Times New Roman",
+        "size_pt": 22.0,
+        "bold": true,
+        "italic": false,
+        "underline": false,
+        "color_hex": "000000"
+      },
+      "reason": "Normalize script-specific fonts for the role."
+    },
+    {
+      "operation_id": "op-000025",
+      "node_id": "p-main-000001-cf8753bce3",
+      "target_role": "author_info",
+      "operation_type": "assign_paragraph_style",
+      "properties": {
+        "style_name": "DA Author Info",
+        "block_index": 1
+      },
+      "reason": "Classified as author_info with confidence 0.76."
+    },
+    {
+      "operation_id": "op-000026",
+      "node_id": "p-main-000001-cf8753bce3",
+      "target_role": "author_info",
+      "operation_type": "set_paragraph_format",
+      "properties": {
+        "alignment": "center",
+        "line_spacing": {
+          "mode": "multiple",
+          "value": 1.5
+        },
+        "space_before_pt": 0.0,
+        "space_after_pt": 12.0,
+        "first_line_indent_pt": 24.0,
+        "keep_with_next": true
+      },
+      "reason": "Normalize paragraph properties covered by the role specification."
+    },
+    {
+      "operation_id": "op-000027",
+      "node_id": "p-main-000001-cf8753bce3",
+      "target_role": "author_info",
+      "operation_type": "set_run_font",
+      "properties": {
+        "east_asia": "宋体",
+        "ascii": "Times New Roman",
+        "high_ansi": "Times New Roman",
+        "complex_script": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false,
+        "color_hex": "000000"
+      },
+      "reason": "Normalize script-specific fonts for the role."
+    },
+    {
+      "operation_id": "op-000028",
+      "node_id": "p-main-000002-21c04b2eee",
+      "target_role": "abstract_heading",
+      "operation_type": "assign_paragraph_style",
+      "properties": {
+        "style_name": "DA Abstract Heading",
+        "block_index": 2
+      },
+      "reason": "Classified as abstract_heading with confidence 0.99."
+    },
+    {
+      "operation_id": "op-000029",
+      "node_id": "p-main-000002-21c04b2eee",
+      "target_role": "abstract_heading",
+      "operation_type": "set_paragraph_format",
+      "properties": {
+        "alignment": "center",
+        "line_spacing": {
+          "mode": "multiple",
+          "value": 1.5
+        },
+        "space_before_pt": 12.0,
+        "space_after_pt": 6.0,
+        "first_line_indent_pt": 24.0,
+        "keep_with_next": true
+      },
+      "reason": "Normalize paragraph properties covered by the role specification."
+    },
+    {
+      "operation_id": "op-000030",
+      "node_id": "p-main-000002-21c04b2eee",
+      "target_role": "abstract_heading",
+      "operation_type": "set_run_font",
+      "properties": {
+        "east_asia": "宋体",
+        "ascii": "Times New Roman",
+        "high_ansi": "Times New Roman",
+        "complex_script": "Times New Roman",
+        "size_pt": 14.0,
+        "bold": true,
+        "italic": false,
+        "underline": false,
+        "color_hex": "000000"
+      },
+      "reason": "Normalize script-specific fonts for the role."
+    },
+    {
+      "operation_id": "op-000031",
+      "node_id": "p-main-000003-f3b20f2d5e",
+      "target_role": "abstract_body",
+      "operation_type": "assign_paragraph_style",
+      "properties": {
+        "style_name": "DA Abstract",
+        "block_index": 3
+      },
+      "reason": "Classified as abstract_body with confidence 0.86."
+    },
+    {
+      "operation_id": "op-000032",
+      "node_id": "p-main-000003-f3b20f2d5e",
+      "target_role": "abstract_body",
+      "operation_type": "set_paragraph_format",
+      "properties": {
+        "alignment": "justify",
+        "line_spacing": {
+          "mode": "multiple",
+          "value": 1.5
+        },
+        "space_before_pt": 0.0,
+        "space_after_pt": 0.0,
+        "first_line_indent_pt": 24.0
+      },
+      "reason": "Normalize paragraph properties covered by the role specification."
+    },
+    {
+      "operation_id": "op-000033",
+      "node_id": "p-main-000003-f3b20f2d5e",
+      "target_role": "abstract_body",
+      "operation_type": "set_run_font",
+      "properties": {
+        "east_asia": "宋体",
+        "ascii": "Times New Roman",
+        "high_ansi": "Times New Roman",
+        "complex_script": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false,
+        "color_hex": "000000"
+      },
+      "reason": "Normalize script-specific fonts for the role."
+    },
+    {
+      "operation_id": "op-000034",
+      "node_id": "p-main-000004-6a3c0f088e",
+      "target_role": "keywords",
+      "operation_type": "assign_paragraph_style",
+      "properties": {
+        "style_name": "DA Keywords",
+        "block_index": 4
+      },
+      "reason": "Classified as keywords with confidence 0.98."
+    },
+    {
+      "operation_id": "op-000035",
+      "node_id": "p-main-000004-6a3c0f088e",
+      "target_role": "keywords",
+      "operation_type": "set_paragraph_format",
+      "properties": {
+        "alignment": "left",
+        "line_spacing": {
+          "mode": "multiple",
+          "value": 1.5
+        },
+        "space_before_pt": 0.0,
+        "space_after_pt": 6.0,
+        "first_line_indent_pt": 0.0
+      },
+      "reason": "Normalize paragraph properties covered by the role specification."
+    },
+    {
+      "operation_id": "op-000036",
+      "node_id": "p-main-000004-6a3c0f088e",
+      "target_role": "keywords",
+      "operation_type": "set_run_font",
+      "properties": {
+        "east_asia": "宋体",
+        "ascii": "Times New Roman",
+        "high_ansi": "Times New Roman",
+        "complex_script": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false,
+        "color_hex": "000000"
+      },
+      "reason": "Normalize script-specific fonts for the role."
+    },
+    {
+      "operation_id": "op-000037",
+      "node_id": "p-main-000005-76958d09e7",
+      "target_role": "heading_1",
+      "operation_type": "assign_paragraph_style",
+      "properties": {
+        "style_name": "DA Heading 1",
+        "block_index": 5
+      },
+      "reason": "Classified as heading_1 with confidence 0.94."
+    },
+    {
+      "operation_id": "op-000038",
+      "node_id": "p-main-000005-76958d09e7",
+      "target_role": "heading_1",
+      "operation_type": "set_paragraph_format",
+      "properties": {
+        "alignment": "center",
+        "line_spacing": {
+          "mode": "multiple",
+          "value": 1.5
+        },
+        "space_before_pt": 18.0,
+        "space_after_pt": 12.0,
+        "first_line_indent_pt": 24.0,
+        "keep_with_next": true
+      },
+      "reason": "Normalize paragraph properties covered by the role specification."
+    },
+    {
+      "operation_id": "op-000039",
+      "node_id": "p-main-000005-76958d09e7",
+      "target_role": "heading_1",
+      "operation_type": "set_run_font",
+      "properties": {
+        "east_asia": "宋体",
+        "ascii": "Times New Roman",
+        "high_ansi": "Times New Roman",
+        "complex_script": "Times New Roman",
+        "size_pt": 16.0,
+        "bold": true,
+        "italic": false,
+        "underline": false,
+        "color_hex": "000000"
+      },
+      "reason": "Normalize script-specific fonts for the role."
+    },
+    {
+      "operation_id": "op-000040",
+      "node_id": "p-main-000006-bc15a4df85",
+      "target_role": "body",
+      "operation_type": "assign_paragraph_style",
+      "properties": {
+        "style_name": "DA Body",
+        "block_index": 6
+      },
+      "reason": "Classified as body with confidence 0.75."
+    },
+    {
+      "operation_id": "op-000041",
+      "node_id": "p-main-000006-bc15a4df85",
+      "target_role": "body",
+      "operation_type": "set_paragraph_format",
+      "properties": {
+        "alignment": "justify",
+        "line_spacing": {
+          "mode": "multiple",
+          "value": 1.5
+        },
+        "space_before_pt": 0.0,
+        "space_after_pt": 0.0,
+        "first_line_indent_pt": 24.0
+      },
+      "reason": "Normalize paragraph properties covered by the role specification."
+    },
+    {
+      "operation_id": "op-000042",
+      "node_id": "p-main-000006-bc15a4df85",
+      "target_role": "body",
+      "operation_type": "set_run_font",
+      "properties": {
+        "east_asia": "宋体",
+        "ascii": "Times New Roman",
+        "high_ansi": "Times New Roman",
+        "complex_script": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false,
+        "color_hex": "000000"
+      },
+      "reason": "Normalize script-specific fonts for the role."
+    },
+    {
+      "operation_id": "op-000043",
+      "node_id": "p-main-000007-d234bf57eb",
+      "target_role": "body",
+      "operation_type": "assign_paragraph_style",
+      "properties": {
+        "style_name": "DA Body",
+        "block_index": 7
+      },
+      "reason": "Classified as body with confidence 0.75."
+    },
+    {
+      "operation_id": "op-000044",
+      "node_id": "p-main-000007-d234bf57eb",
+      "target_role": "body",
+      "operation_type": "set_paragraph_format",
+      "properties": {
+        "alignment": "justify",
+        "line_spacing": {
+          "mode": "multiple",
+          "value": 1.5
+        },
+        "space_before_pt": 0.0,
+        "space_after_pt": 0.0,
+        "first_line_indent_pt": 24.0
+      },
+      "reason": "Normalize paragraph properties covered by the role specification."
+    },
+    {
+      "operation_id": "op-000045",
+      "node_id": "p-main-000007-d234bf57eb",
+      "target_role": "body",
+      "operation_type": "set_run_font",
+      "properties": {
+        "east_asia": "宋体",
+        "ascii": "Times New Roman",
+        "high_ansi": "Times New Roman",
+        "complex_script": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false,
+        "color_hex": "000000"
+      },
+      "reason": "Normalize script-specific fonts for the role."
+    },
+    {
+      "operation_id": "op-000046",
+      "node_id": "p-main-000008-5b5c6fff6b",
+      "target_role": "heading_2",
+      "operation_type": "assign_paragraph_style",
+      "properties": {
+        "style_name": "DA Heading 2",
+        "block_index": 8
+      },
+      "reason": "Classified as heading_2 with confidence 0.94."
+    },
+    {
+      "operation_id": "op-000047",
+      "node_id": "p-main-000008-5b5c6fff6b",
+      "target_role": "heading_2",
+      "operation_type": "set_paragraph_format",
+      "properties": {
+        "alignment": "left",
+        "line_spacing": {
+          "mode": "multiple",
+          "value": 1.5
+        },
+        "space_before_pt": 12.0,
+        "space_after_pt": 6.0,
+        "first_line_indent_pt": 24.0,
+        "keep_with_next": true
+      },
+      "reason": "Normalize paragraph properties covered by the role specification."
+    },
+    {
+      "operation_id": "op-000048",
+      "node_id": "p-main-000008-5b5c6fff6b",
+      "target_role": "heading_2",
+      "operation_type": "set_run_font",
+      "properties": {
+        "east_asia": "宋体",
+        "ascii": "Times New Roman",
+        "high_ansi": "Times New Roman",
+        "complex_script": "Times New Roman",
+        "size_pt": 14.0,
+        "bold": true,
+        "italic": false,
+        "underline": false,
+        "color_hex": "000000"
+      },
+      "reason": "Normalize script-specific fonts for the role."
+    },
+    {
+      "operation_id": "op-000049",
+      "node_id": "p-main-000009-8b63f868d4",
+      "target_role": "unknown",
+      "operation_type": "assign_paragraph_style",
+      "properties": {
+        "style_name": "DA Unknown",
+        "block_index": 9
+      },
+      "reason": "Classified as unknown with confidence 0.58."
+    },
+    {
+      "operation_id": "op-000050",
+      "node_id": "p-main-000009-8b63f868d4",
+      "target_role": "unknown",
+      "operation_type": "set_paragraph_format",
+      "properties": {
+        "alignment": "justify",
+        "line_spacing": {
+          "mode": "multiple",
+          "value": 1.5
+        },
+        "space_before_pt": 0.0,
+        "space_after_pt": 0.0,
+        "first_line_indent_pt": 24.0
+      },
+      "reason": "Normalize paragraph properties covered by the role specification."
+    },
+    {
+      "operation_id": "op-000051",
+      "node_id": "p-main-000009-8b63f868d4",
+      "target_role": "unknown",
+      "operation_type": "set_run_font",
+      "properties": {
+        "east_asia": "宋体",
+        "ascii": "Times New Roman",
+        "high_ansi": "Times New Roman",
+        "complex_script": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false,
+        "color_hex": "000000"
+      },
+      "reason": "Normalize script-specific fonts for the role."
+    },
+    {
+      "operation_id": "op-000052",
+      "node_id": "p-main-000010-e3b0c44298",
+      "target_role": "body",
+      "operation_type": "assign_paragraph_style",
+      "properties": {
+        "style_name": "DA Body",
+        "block_index": 10
+      },
+      "reason": "Classified as body with confidence 0.75."
+    },
+    {
+      "operation_id": "op-000053",
+      "node_id": "p-main-000010-e3b0c44298",
+      "target_role": "body",
+      "operation_type": "set_paragraph_format",
+      "properties": {
+        "alignment": "justify",
+        "line_spacing": {
+          "mode": "multiple",
+          "value": 1.5
+        },
+        "space_before_pt": 0.0,
+        "space_after_pt": 0.0,
+        "first_line_indent_pt": 24.0
+      },
+      "reason": "Normalize paragraph properties covered by the role specification."
+    },
+    {
+      "operation_id": "op-000054",
+      "node_id": "p-main-000010-e3b0c44298",
+      "target_role": "body",
+      "operation_type": "set_run_font",
+      "properties": {
+        "east_asia": "宋体",
+        "ascii": "Times New Roman",
+        "high_ansi": "Times New Roman",
+        "complex_script": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false,
+        "color_hex": "000000"
+      },
+      "reason": "Normalize script-specific fonts for the role."
+    },
+    {
+      "operation_id": "op-000055",
+      "node_id": "p-main-000010-e3b0c44298",
+      "target_role": null,
+      "operation_type": "align_image_paragraph",
+      "properties": {
+        "alignment": "center"
+      },
+      "reason": "Image-only paragraph centering is enabled."
+    },
+    {
+      "operation_id": "op-000056",
+      "node_id": "p-main-000011-d0641e372b",
+      "target_role": "figure_caption",
+      "operation_type": "assign_paragraph_style",
+      "properties": {
+        "style_name": "DA Figure Caption",
+        "block_index": 11
+      },
+      "reason": "Classified as figure_caption with confidence 0.95."
+    },
+    {
+      "operation_id": "op-000057",
+      "node_id": "p-main-000011-d0641e372b",
+      "target_role": "figure_caption",
+      "operation_type": "set_paragraph_format",
+      "properties": {
+        "alignment": "center",
+        "line_spacing": {
+          "mode": "multiple",
+          "value": 1.5
+        },
+        "space_before_pt": 3.0,
+        "space_after_pt": 6.0,
+        "first_line_indent_pt": 24.0
+      },
+      "reason": "Normalize paragraph properties covered by the role specification."
+    },
+    {
+      "operation_id": "op-000058",
+      "node_id": "p-main-000011-d0641e372b",
+      "target_role": "figure_caption",
+      "operation_type": "set_run_font",
+      "properties": {
+        "east_asia": "宋体",
+        "ascii": "Times New Roman",
+        "high_ansi": "Times New Roman",
+        "complex_script": "Times New Roman",
+        "size_pt": 10.5,
+        "bold": false,
+        "italic": false,
+        "underline": false,
+        "color_hex": "000000"
+      },
+      "reason": "Normalize script-specific fonts for the role."
+    },
+    {
+      "operation_id": "op-000059",
+      "node_id": "p-main-000012-025976276a",
+      "target_role": "table_caption",
+      "operation_type": "assign_paragraph_style",
+      "properties": {
+        "style_name": "DA Table Caption",
+        "block_index": 12
+      },
+      "reason": "Classified as table_caption with confidence 0.90."
+    },
+    {
+      "operation_id": "op-000060",
+      "node_id": "p-main-000012-025976276a",
+      "target_role": "table_caption",
+      "operation_type": "set_paragraph_format",
+      "properties": {
+        "alignment": "center",
+        "line_spacing": {
+          "mode": "multiple",
+          "value": 1.5
+        },
+        "space_before_pt": 3.0,
+        "space_after_pt": 6.0,
+        "first_line_indent_pt": 24.0
+      },
+      "reason": "Normalize paragraph properties covered by the role specification."
+    },
+    {
+      "operation_id": "op-000061",
+      "node_id": "p-main-000012-025976276a",
+      "target_role": "table_caption",
+      "operation_type": "set_run_font",
+      "properties": {
+        "east_asia": "宋体",
+        "ascii": "Times New Roman",
+        "high_ansi": "Times New Roman",
+        "complex_script": "Times New Roman",
+        "size_pt": 10.5,
+        "bold": false,
+        "italic": false,
+        "underline": false,
+        "color_hex": "000000"
+      },
+      "reason": "Normalize script-specific fonts for the role."
+    },
+    {
+      "operation_id": "op-000062",
+      "node_id": "t-main-000013-1c1e398aa6",
+      "target_role": null,
+      "operation_type": "set_table_format",
+      "properties": {
+        "block_index": 13,
+        "alignment": "center",
+        "width_policy": "fit_printable_width",
+        "cell_vertical_alignment": "center",
+        "font": {
+          "east_asia": "宋体",
+          "ascii": "Times New Roman",
+          "high_ansi": "Times New Roman",
+          "complex_script": "Times New Roman",
+          "size_pt": 10.5,
+          "bold": false,
+          "italic": false,
+          "underline": false,
+          "color_hex": "000000"
+        },
+        "paragraph": {
+          "alignment": "left",
+          "line_spacing": {
+            "mode": "single",
+            "value": 1.0
+          },
+          "space_before_pt": 0.0,
+          "space_after_pt": 0.0
+        }
+      },
+      "reason": "Apply table formatting without reconstructing the table."
+    },
+    {
+      "operation_id": "op-000063",
+      "node_id": "p-main-000014-0667b23f21",
+      "target_role": "heading_1",
+      "operation_type": "assign_paragraph_style",
+      "properties": {
+        "style_name": "DA Heading 1",
+        "block_index": 14
+      },
+      "reason": "Classified as heading_1 with confidence 0.94."
+    },
+    {
+      "operation_id": "op-000064",
+      "node_id": "p-main-000014-0667b23f21",
+      "target_role": "heading_1",
+      "operation_type": "set_paragraph_format",
+      "properties": {
+        "alignment": "center",
+        "line_spacing": {
+          "mode": "multiple",
+          "value": 1.5
+        },
+        "space_before_pt": 18.0,
+        "space_after_pt": 12.0,
+        "first_line_indent_pt": 24.0,
+        "keep_with_next": true
+      },
+      "reason": "Normalize paragraph properties covered by the role specification."
+    },
+    {
+      "operation_id": "op-000065",
+      "node_id": "p-main-000014-0667b23f21",
+      "target_role": "heading_1",
+      "operation_type": "set_run_font",
+      "properties": {
+        "east_asia": "宋体",
+        "ascii": "Times New Roman",
+        "high_ansi": "Times New Roman",
+        "complex_script": "Times New Roman",
+        "size_pt": 16.0,
+        "bold": true,
+        "italic": false,
+        "underline": false,
+        "color_hex": "000000"
+      },
+      "reason": "Normalize script-specific fonts for the role."
+    },
+    {
+      "operation_id": "op-000066",
+      "node_id": "p-main-000015-68d05e75dc",
+      "target_role": "unknown",
+      "operation_type": "assign_paragraph_style",
+      "properties": {
+        "style_name": "DA Unknown",
+        "block_index": 15
+      },
+      "reason": "Classified as unknown with confidence 0.58."
+    },
+    {
+      "operation_id": "op-000067",
+      "node_id": "p-main-000015-68d05e75dc",
+      "target_role": "unknown",
+      "operation_type": "set_paragraph_format",
+      "properties": {
+        "alignment": "justify",
+        "line_spacing": {
+          "mode": "multiple",
+          "value": 1.5
+        },
+        "space_before_pt": 0.0,
+        "space_after_pt": 0.0,
+        "first_line_indent_pt": 24.0
+      },
+      "reason": "Normalize paragraph properties covered by the role specification."
+    },
+    {
+      "operation_id": "op-000068",
+      "node_id": "p-main-000015-68d05e75dc",
+      "target_role": "unknown",
+      "operation_type": "set_run_font",
+      "properties": {
+        "east_asia": "宋体",
+        "ascii": "Times New Roman",
+        "high_ansi": "Times New Roman",
+        "complex_script": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false,
+        "color_hex": "000000"
+      },
+      "reason": "Normalize script-specific fonts for the role."
+    },
+    {
+      "operation_id": "op-000069",
+      "node_id": "p-main-000016-edc3efb149",
+      "target_role": "bibliography_heading",
+      "operation_type": "assign_paragraph_style",
+      "properties": {
+        "style_name": "DA Bibliography Heading",
+        "block_index": 16
+      },
+      "reason": "Classified as bibliography_heading with confidence 0.99."
+    },
+    {
+      "operation_id": "op-000070",
+      "node_id": "p-main-000016-edc3efb149",
+      "target_role": "bibliography_heading",
+      "operation_type": "set_paragraph_format",
+      "properties": {
+        "alignment": "center",
+        "line_spacing": {
+          "mode": "multiple",
+          "value": 1.5
+        },
+        "space_before_pt": 18.0,
+        "space_after_pt": 12.0,
+        "first_line_indent_pt": 24.0,
+        "keep_with_next": true
+      },
+      "reason": "Normalize paragraph properties covered by the role specification."
+    },
+    {
+      "operation_id": "op-000071",
+      "node_id": "p-main-000016-edc3efb149",
+      "target_role": "bibliography_heading",
+      "operation_type": "set_run_font",
+      "properties": {
+        "east_asia": "宋体",
+        "ascii": "Times New Roman",
+        "high_ansi": "Times New Roman",
+        "complex_script": "Times New Roman",
+        "size_pt": 16.0,
+        "bold": true,
+        "italic": false,
+        "underline": false,
+        "color_hex": "000000"
+      },
+      "reason": "Normalize script-specific fonts for the role."
+    },
+    {
+      "operation_id": "op-000072",
+      "node_id": "p-main-000017-8562811b44",
+      "target_role": "bibliography_entry",
+      "operation_type": "assign_paragraph_style",
+      "properties": {
+        "style_name": "DA Bibliography",
+        "block_index": 17
+      },
+      "reason": "Classified as bibliography_entry with confidence 0.87."
+    },
+    {
+      "operation_id": "op-000073",
+      "node_id": "p-main-000017-8562811b44",
+      "target_role": "bibliography_entry",
+      "operation_type": "set_paragraph_format",
+      "properties": {
+        "alignment": "justify",
+        "line_spacing": {
+          "mode": "single",
+          "value": 1.0
+        },
+        "space_before_pt": 0.0,
+        "space_after_pt": 0.0,
+        "hanging_indent_pt": 21.0
+      },
+      "reason": "Normalize paragraph properties covered by the role specification."
+    },
+    {
+      "operation_id": "op-000074",
+      "node_id": "p-main-000017-8562811b44",
+      "target_role": "bibliography_entry",
+      "operation_type": "set_run_font",
+      "properties": {
+        "east_asia": "宋体",
+        "ascii": "Times New Roman",
+        "high_ansi": "Times New Roman",
+        "complex_script": "Times New Roman",
+        "size_pt": 12.0,
+        "bold": false,
+        "italic": false,
+        "underline": false,
+        "color_hex": "000000"
+      },
+      "reason": "Normalize script-specific fonts for the role."
+    },
+    {
+      "operation_id": "op-000075",
+      "node_id": null,
+      "target_role": null,
+      "operation_type": "format_header",
+      "properties": {},
+      "reason": "Apply existing header formatting."
+    },
+    {
+      "operation_id": "op-000076",
+      "node_id": null,
+      "target_role": null,
+      "operation_type": "format_footer",
+      "properties": {},
+      "reason": "Apply existing footer formatting."
+    },
+    {
+      "operation_id": "op-000077",
+      "node_id": null,
+      "target_role": null,
+      "operation_type": "normalize_document_visuals",
+      "properties": {
+        "text_color_hex": "000000",
+        "remove_text_highlight": true,
+        "remove_character_shading": true,
+        "remove_paragraph_shading": true,
+        "remove_table_cell_shading": true,
+        "remove_page_background": true
+      },
+      "reason": "Normalize document-wide text color and removable Word background properties."
+    }
+  ],
+  "warnings": [
+    {
+      "code": "TABLE_WIDTH_EXCEEDS_PAGE",
+      "message": "Estimated table width exceeds the printable page width.",
+      "node_id": "t-main-000013-1c1e398aa6"
+    },
+    {
+      "code": "LOW_CONFIDENCE_ROLE",
+      "message": "Paragraph role confidence is 0.58.",
+      "node_id": "p-main-000009-8b63f868d4"
+    },
+    {
+      "code": "LOW_CONFIDENCE_ROLE",
+      "message": "Paragraph role confidence is 0.58.",
+      "node_id": "p-main-000015-68d05e75dc"
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+# DocAlign v0.1 Implementation Checklist
+
+- [x] TASK-001 Bootstrap monorepo
+- [x] TASK-002 DOCX upload validation
+- [x] TASK-003 Ordered block iterator
+- [x] TASK-004 DocumentIR models
+- [x] TASK-005 Paragraph/run/style/section parser
+- [x] TASK-006 Fixtures and content fingerprint
+- [x] TASK-007 Deterministic classifier
+- [x] TASK-008 FormattingSpec v1
+- [x] TASK-009 Unit normalization
+- [x] TASK-010 DocAlign style manager
+- [x] TASK-011 CJK/Latin OOXML font setter
+- [x] TASK-012 Paragraph formatting engine
+- [x] TASK-013 Formatting planner and mutation audit
+- [x] TASK-014 Body/heading/caption formatter
+- [x] TASK-015 Validator and save/reopen check
+- [x] TASK-016 Idempotence regression tests
+- [x] TASK-017 Section/page settings
+- [x] TASK-018 Header/footer/page number basics
+- [x] TASK-019 Table formatting basics
+- [x] TASK-020 Audit JSON/Markdown
+- [x] TASK-021 REST workflow
+- [x] TASK-022 LLM interpreter abstraction
+- [x] TASK-023 Natural-language spec compilation
+- [x] TASK-024 Minimal frontend workspace
+- [x] TASK-025 Complete E2E test
+- [x] TASK-026 Smart semantic paragraph analysis
+- [x] TASK-027 Document baseline plus role overrides
+- [x] TASK-028 Plain-text to DOCX import
+- [x] TASK-029 Intelligent preset plus explicit-rule merge
+- [x] TASK-030 Dedicated list role and numbering preservation
+- [x] TASK-031 Real-document smart analysis and idempotency regression
+- [x] TASK-032 Safe automatic paragraph segmentation and heading hierarchy inference
+- [x] TASK-033 Refresh-safe single-instance job polling and reconnect backoff

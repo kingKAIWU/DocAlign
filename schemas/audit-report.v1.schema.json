@@ -1,0 +1,500 @@
+{
+  "$defs": {
+    "AuditSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "paragraphs": {
+          "title": "Paragraphs",
+          "type": "integer"
+        },
+        "tables": {
+          "title": "Tables",
+          "type": "integer"
+        },
+        "images": {
+          "title": "Images",
+          "type": "integer"
+        },
+        "classified_blocks": {
+          "title": "Classified Blocks",
+          "type": "integer"
+        },
+        "unknown_blocks": {
+          "title": "Unknown Blocks",
+          "type": "integer"
+        },
+        "format_operations": {
+          "title": "Format Operations",
+          "type": "integer"
+        },
+        "changed_mutations": {
+          "title": "Changed Mutations",
+          "type": "integer"
+        },
+        "validation_failures": {
+          "title": "Validation Failures",
+          "type": "integer"
+        },
+        "paragraphs_before": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Paragraphs Before"
+        },
+        "paragraphs_after": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Paragraphs After"
+        },
+        "auto_layout_splits": {
+          "default": 0,
+          "title": "Auto Layout Splits",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "paragraphs",
+        "tables",
+        "images",
+        "classified_blocks",
+        "unknown_blocks",
+        "format_operations",
+        "changed_mutations",
+        "validation_failures"
+      ],
+      "title": "AuditSummary",
+      "type": "object"
+    },
+    "MutationRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "operation_id": {
+          "title": "Operation Id",
+          "type": "string"
+        },
+        "node_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Node Id"
+        },
+        "locator": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Locator"
+        },
+        "property_path": {
+          "title": "Property Path",
+          "type": "string"
+        },
+        "before": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Before"
+        },
+        "after": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "After"
+        },
+        "status": {
+          "enum": [
+            "changed",
+            "already_compliant",
+            "skipped",
+            "warning"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "operation_id",
+        "property_path",
+        "status"
+      ],
+      "title": "MutationRecord",
+      "type": "object"
+    },
+    "PlanWarning": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "title": "Code",
+          "type": "string"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "node_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Node Id"
+        },
+        "locator": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Locator"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "title": "PlanWarning",
+      "type": "object"
+    },
+    "Severity": {
+      "enum": [
+        "fatal",
+        "error",
+        "warning",
+        "info"
+      ],
+      "title": "Severity",
+      "type": "string"
+    },
+    "SpecSource": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "$ref": "#/$defs/SpecSourceType",
+          "default": "structured"
+        },
+        "preset_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Preset Id"
+        },
+        "instruction_hash": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Instruction Hash"
+        },
+        "compiler_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Compiler Version"
+        },
+        "provider": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Provider"
+        },
+        "model": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Model"
+        },
+        "assumptions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Assumptions",
+          "type": "array"
+        }
+      },
+      "title": "SpecSource",
+      "type": "object"
+    },
+    "SpecSourceType": {
+      "enum": [
+        "system",
+        "preset",
+        "natural_language",
+        "structured",
+        "merged"
+      ],
+      "title": "SpecSourceType",
+      "type": "string"
+    },
+    "ValidationIssue": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "title": "Code",
+          "type": "string"
+        },
+        "severity": {
+          "$ref": "#/$defs/Severity"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "node_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Node Id"
+        },
+        "locator": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Locator"
+        },
+        "details": {
+          "additionalProperties": true,
+          "title": "Details",
+          "type": "object"
+        }
+      },
+      "required": [
+        "code",
+        "severity",
+        "message"
+      ],
+      "title": "ValidationIssue",
+      "type": "object"
+    },
+    "ValidationReport": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "validation-report.v1",
+          "default": "validation-report.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "valid": {
+          "title": "Valid",
+          "type": "boolean"
+        },
+        "issues": {
+          "items": {
+            "$ref": "#/$defs/ValidationIssue"
+          },
+          "title": "Issues",
+          "type": "array"
+        },
+        "content_fingerprint_before": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Content Fingerprint Before"
+        },
+        "content_fingerprint_after": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Content Fingerprint After"
+        }
+      },
+      "required": [
+        "valid"
+      ],
+      "title": "ValidationReport",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "audit-report.v1",
+      "default": "audit-report.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "job_id": {
+      "title": "Job Id",
+      "type": "string"
+    },
+    "source_file": {
+      "title": "Source File",
+      "type": "string"
+    },
+    "output_file": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Output File"
+    },
+    "source_sha256": {
+      "title": "Source Sha256",
+      "type": "string"
+    },
+    "output_sha256": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Output Sha256"
+    },
+    "summary": {
+      "$ref": "#/$defs/AuditSummary"
+    },
+    "roles": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Roles",
+      "type": "object"
+    },
+    "mutations": {
+      "items": {
+        "$ref": "#/$defs/MutationRecord"
+      },
+      "title": "Mutations",
+      "type": "array"
+    },
+    "warnings": {
+      "items": {
+        "$ref": "#/$defs/PlanWarning"
+      },
+      "title": "Warnings",
+      "type": "array"
+    },
+    "validation": {
+      "$ref": "#/$defs/ValidationReport"
+    },
+    "assumptions": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Assumptions",
+      "type": "array"
+    },
+    "spec_source": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SpecSource"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "required": [
+    "job_id",
+    "source_file",
+    "source_sha256",
+    "summary",
+    "validation"
+  ],
+  "title": "AuditReport",
+  "type": "object"
+}

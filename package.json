@@ -1,0 +1,16 @@
+{
+  "name": "docalign",
+  "private": true,
+  "packageManager": "pnpm@11.19.0",
+  "scripts": {
+    "dev": "pnpm --filter @docalign/web dev",
+    "build": "pnpm --filter @docalign/web build",
+    "lint": "pnpm --filter @docalign/web lint",
+    "test": "pnpm --filter @docalign/web test",
+    "e2e": "pnpm --filter @docalign/web e2e",
+    "types": "openapi-typescript schemas/openapi.v1.json -o apps/web/lib/generated-api.ts"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.10.1"
+  }
+}

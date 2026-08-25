@@ -1,0 +1,2585 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "DocAlign API",
+    "description": "Local deterministic DOCX formatting and compliance API.",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "summary": "Health",
+        "operationId": "health_api_v1_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Health Api V1 Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/capabilities": {
+      "get": {
+        "summary": "Capabilities",
+        "operationId": "capabilities_api_v1_capabilities_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Capabilities Api V1 Capabilities Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/presets/generic-academic-cn": {
+      "get": {
+        "summary": "Generic Academic Preset",
+        "operationId": "generic_academic_preset_api_v1_presets_generic_academic_cn_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Generic Academic Preset Api V1 Presets Generic Academic Cn Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/presets/default-clean-cn": {
+      "get": {
+        "summary": "Default Cleanup Preset",
+        "operationId": "default_cleanup_preset_api_v1_presets_default_clean_cn_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Default Cleanup Preset Api V1 Presets Default Clean Cn Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/presets": {
+      "get": {
+        "summary": "Cleanup Presets",
+        "operationId": "cleanup_presets_api_v1_presets_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Cleanup Presets Api V1 Presets Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents": {
+      "post": {
+        "summary": "Upload Document",
+        "operationId": "upload_document_api_v1_documents_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_document_api_v1_documents_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Upload Document Api V1 Documents Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/from-text": {
+      "post": {
+        "summary": "Create Document From Text",
+        "operationId": "create_document_from_text_api_v1_documents_from_text_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TextDocumentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Create Document From Text Api V1 Documents From Text Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/{document_id}": {
+      "get": {
+        "summary": "Get Document",
+        "operationId": "get_document_api_v1_documents__document_id__get",
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Document Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Document Api V1 Documents  Document Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete Document",
+        "operationId": "delete_document_api_v1_documents__document_id__delete",
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Document Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/{document_id}/source": {
+      "get": {
+        "summary": "Get Document Source",
+        "operationId": "get_document_source_api_v1_documents__document_id__source_get",
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Document Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/{document_id}/format-manifest": {
+      "get": {
+        "summary": "Get Format Manifest",
+        "operationId": "get_format_manifest_api_v1_documents__document_id__format_manifest_get",
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Document Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormatManifest"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/{document_id}/analyze": {
+      "post": {
+        "summary": "Analyze Document",
+        "operationId": "analyze_document_api_v1_documents__document_id__analyze_post",
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Document Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/AnalyzeRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Request"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Analyze Document Api V1 Documents  Document Id  Analyze Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analyses/{analysis_id}": {
+      "get": {
+        "summary": "Get Analysis",
+        "operationId": "get_analysis_api_v1_analyses__analysis_id__get",
+        "parameters": [
+          {
+            "name": "analysis_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Analysis Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Analysis Api V1 Analyses  Analysis Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analyses/{analysis_id}/role-overrides": {
+      "put": {
+        "summary": "Set Role Overrides",
+        "operationId": "set_role_overrides_api_v1_analyses__analysis_id__role_overrides_put",
+        "parameters": [
+          {
+            "name": "analysis_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Analysis Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoleOverrideRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Set Role Overrides Api V1 Analyses  Analysis Id  Role Overrides Put"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/specs": {
+      "post": {
+        "summary": "Create Spec",
+        "operationId": "create_spec_api_v1_specs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StructuredSpecRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Create Spec Api V1 Specs Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/specs/compile": {
+      "post": {
+        "summary": "Compile Spec",
+        "operationId": "compile_spec_api_v1_specs_compile_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompileSpecRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Compile Spec Api V1 Specs Compile Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/specs/validate": {
+      "post": {
+        "summary": "Validate Spec",
+        "operationId": "validate_spec_api_v1_specs_validate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ValidateSpecRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Validate Spec Api V1 Specs Validate Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/specs/{spec_id}": {
+      "get": {
+        "summary": "Get Spec",
+        "operationId": "get_spec_api_v1_specs__spec_id__get",
+        "parameters": [
+          {
+            "name": "spec_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Spec Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Spec Api V1 Specs  Spec Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update Spec",
+        "operationId": "update_spec_api_v1_specs__spec_id__put",
+        "parameters": [
+          {
+            "name": "spec_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Spec Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StructuredSpecRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Update Spec Api V1 Specs  Spec Id  Put"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/jobs": {
+      "post": {
+        "summary": "Create Job",
+        "operationId": "create_job_api_v1_jobs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JobCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Create Job Api V1 Jobs Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/{document_id}/compliance": {
+      "post": {
+        "summary": "Audit Document Compliance",
+        "operationId": "audit_document_compliance_api_v1_documents__document_id__compliance_post",
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Document Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComplianceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComplianceReport"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/jobs/{job_id}": {
+      "get": {
+        "summary": "Get Job",
+        "operationId": "get_job_api_v1_jobs__job_id__get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Job Api V1 Jobs  Job Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/jobs/{job_id}/output": {
+      "get": {
+        "summary": "Get Job Output",
+        "operationId": "get_job_output_api_v1_jobs__job_id__output_get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/jobs/{job_id}/audit.json": {
+      "get": {
+        "summary": "Get Job Audit Json",
+        "operationId": "get_job_audit_json_api_v1_jobs__job_id__audit_json_get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/jobs/{job_id}/audit.md": {
+      "get": {
+        "summary": "Get Job Audit Markdown",
+        "operationId": "get_job_audit_markdown_api_v1_jobs__job_id__audit_md_get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Alignment": {
+        "type": "string",
+        "enum": [
+          "left",
+          "center",
+          "right",
+          "justify"
+        ],
+        "title": "Alignment"
+      },
+      "AnalysisMode": {
+        "type": "string",
+        "enum": [
+          "deterministic",
+          "smart"
+        ],
+        "title": "AnalysisMode"
+      },
+      "AnalyzeRequest": {
+        "properties": {
+          "mode": {
+            "$ref": "#/components/schemas/AnalysisMode",
+            "default": "deterministic"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "AnalyzeRequest"
+      },
+      "AutoLayoutSpec": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "default": false
+          },
+          "split_body_paragraphs": {
+            "type": "boolean",
+            "title": "Split Body Paragraphs",
+            "default": true
+          },
+          "split_on_manual_breaks": {
+            "type": "boolean",
+            "title": "Split On Manual Breaks",
+            "default": true
+          },
+          "target_body_chars": {
+            "type": "integer",
+            "maximum": 2000.0,
+            "minimum": 80.0,
+            "title": "Target Body Chars",
+            "default": 280
+          },
+          "max_body_chars": {
+            "type": "integer",
+            "maximum": 4000.0,
+            "minimum": 120.0,
+            "title": "Max Body Chars",
+            "default": 480
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "AutoLayoutSpec",
+        "description": "Deterministic structural layout applied before role-based formatting.\n\nStructural edits are deliberately conservative: only plain body paragraphs may be split,\nand every split is followed by a fresh local role analysis and content-integrity check."
+      },
+      "Body_upload_document_api_v1_documents_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_document_api_v1_documents_post"
+      },
+      "CompileSpecRequest": {
+        "properties": {
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id"
+          },
+          "analysis_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analysis Id"
+          },
+          "instruction": {
+            "type": "string",
+            "maxLength": 20000,
+            "minLength": 1,
+            "title": "Instruction"
+          },
+          "apply_preset": {
+            "type": "boolean",
+            "title": "Apply Preset",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "instruction"
+        ],
+        "title": "CompileSpecRequest"
+      },
+      "ComplianceReport": {
+        "properties": {
+          "schema_version": {
+            "type": "string",
+            "const": "compliance-report.v1",
+            "title": "Schema Version",
+            "default": "compliance-report.v1"
+          },
+          "document_id": {
+            "type": "string",
+            "title": "Document Id"
+          },
+          "analysis_id": {
+            "type": "string",
+            "title": "Analysis Id"
+          },
+          "spec_id": {
+            "type": "string",
+            "title": "Spec Id"
+          },
+          "compliant": {
+            "type": "boolean",
+            "title": "Compliant"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/ComplianceSummary"
+          },
+          "violations": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationIssue"
+            },
+            "type": "array",
+            "title": "Violations"
+          },
+          "content_fingerprint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Fingerprint"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "document_id",
+          "analysis_id",
+          "spec_id",
+          "compliant",
+          "summary"
+        ],
+        "title": "ComplianceReport"
+      },
+      "ComplianceRequest": {
+        "properties": {
+          "analysis_id": {
+            "type": "string",
+            "title": "Analysis Id"
+          },
+          "spec_id": {
+            "type": "string",
+            "title": "Spec Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "analysis_id",
+          "spec_id"
+        ],
+        "title": "ComplianceRequest"
+      },
+      "ComplianceSummary": {
+        "properties": {
+          "total_violations": {
+            "type": "integer",
+            "title": "Total Violations"
+          },
+          "returned_violations": {
+            "type": "integer",
+            "title": "Returned Violations"
+          },
+          "affected_locators": {
+            "type": "integer",
+            "title": "Affected Locators"
+          },
+          "by_severity": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Severity"
+          },
+          "by_code": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Code"
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "total_violations",
+          "returned_violations",
+          "affected_locators"
+        ],
+        "title": "ComplianceSummary"
+      },
+      "DocumentFormattingSpec": {
+        "properties": {
+          "page": {
+            "$ref": "#/components/schemas/PageFormattingSpec"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "DocumentFormattingSpec"
+      },
+      "FigureFormattingSpec": {
+        "properties": {
+          "center_image_only_paragraphs": {
+            "type": "boolean",
+            "title": "Center Image Only Paragraphs",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "FigureFormattingSpec"
+      },
+      "FontSpec": {
+        "properties": {
+          "east_asia": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "East Asia"
+          },
+          "ascii": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ascii"
+          },
+          "high_ansi": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "High Ansi"
+          },
+          "complex_script": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Complex Script"
+          },
+          "size_pt": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 200.0,
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Size Pt"
+          },
+          "bold": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bold"
+          },
+          "italic": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Italic"
+          },
+          "underline": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Underline"
+          },
+          "color_hex": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Color Hex"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "FontSpec"
+      },
+      "ForcePolicy": {
+        "properties": {
+          "properties": {
+            "items": {
+              "$ref": "#/components/schemas/FormattingProperty"
+            },
+            "type": "array",
+            "uniqueItems": true,
+            "title": "Properties"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ForcePolicy"
+      },
+      "FormatManifest": {
+        "properties": {
+          "schema_version": {
+            "type": "string",
+            "const": "format-manifest.v1",
+            "title": "Schema Version",
+            "default": "format-manifest.v1"
+          },
+          "document_id": {
+            "type": "string",
+            "title": "Document Id"
+          },
+          "source_filename": {
+            "type": "string",
+            "title": "Source Filename"
+          },
+          "source_sha256": {
+            "type": "string",
+            "title": "Source Sha256"
+          },
+          "requirements": {
+            "items": {
+              "$ref": "#/components/schemas/ManifestRequirement"
+            },
+            "type": "array",
+            "title": "Requirements"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/FormatManifestSummary"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "document_id",
+          "source_filename",
+          "source_sha256",
+          "summary"
+        ],
+        "title": "FormatManifest"
+      },
+      "FormatManifestSummary": {
+        "properties": {
+          "requirement_count": {
+            "type": "integer",
+            "title": "Requirement Count"
+          },
+          "by_category": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Category"
+          },
+          "auto_applicable_count": {
+            "type": "integer",
+            "title": "Auto Applicable Count",
+            "default": 0
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "requirement_count"
+        ],
+        "title": "FormatManifestSummary"
+      },
+      "FormattingBehavior": {
+        "properties": {
+          "preserve_inline_emphasis": {
+            "type": "boolean",
+            "title": "Preserve Inline Emphasis",
+            "default": true
+          },
+          "preserve_hyperlinks": {
+            "type": "boolean",
+            "title": "Preserve Hyperlinks",
+            "default": true
+          },
+          "preserve_fields": {
+            "type": "boolean",
+            "title": "Preserve Fields",
+            "default": true
+          },
+          "preserve_equations": {
+            "type": "boolean",
+            "title": "Preserve Equations",
+            "default": true
+          },
+          "preserve_unknown_xml": {
+            "type": "boolean",
+            "title": "Preserve Unknown Xml",
+            "default": true
+          },
+          "normalize_direct_paragraph_formatting": {
+            "type": "boolean",
+            "title": "Normalize Direct Paragraph Formatting",
+            "default": true
+          },
+          "normalize_direct_run_formatting": {
+            "type": "boolean",
+            "title": "Normalize Direct Run Formatting",
+            "default": true
+          },
+          "preserve_right_aligned_signatures": {
+            "type": "boolean",
+            "title": "Preserve Right Aligned Signatures",
+            "default": false
+          },
+          "apply_to_unknown_roles": {
+            "type": "boolean",
+            "title": "Apply To Unknown Roles",
+            "default": false
+          },
+          "unknown_role_fallback": {
+            "$ref": "#/components/schemas/SemanticRole",
+            "default": "body"
+          },
+          "validation_passes": {
+            "type": "integer",
+            "maximum": 3.0,
+            "minimum": 1.0,
+            "title": "Validation Passes",
+            "default": 2
+          },
+          "auto_repair": {
+            "type": "boolean",
+            "title": "Auto Repair",
+            "default": true
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "FormattingBehavior"
+      },
+      "FormattingProperty": {
+        "type": "string",
+        "enum": [
+          "font.east_asia",
+          "font.ascii",
+          "font.high_ansi",
+          "font.complex_script",
+          "font.size_pt",
+          "font.bold",
+          "font.italic",
+          "font.underline",
+          "font.color_hex",
+          "paragraph.alignment",
+          "paragraph.line_spacing",
+          "paragraph.space_before_pt",
+          "paragraph.space_after_pt",
+          "paragraph.first_line_indent_pt",
+          "paragraph.left_indent_pt",
+          "paragraph.right_indent_pt"
+        ],
+        "title": "FormattingProperty"
+      },
+      "FormattingSpec": {
+        "properties": {
+          "schema_version": {
+            "type": "string",
+            "const": "formatting-spec.v1",
+            "title": "Schema Version",
+            "default": "formatting-spec.v1"
+          },
+          "document": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DocumentFormattingSpec"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "baseline": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RoleFormattingSpec"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "roles": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/RoleFormattingSpec"
+            },
+            "propertyNames": {
+              "$ref": "#/components/schemas/SemanticRole"
+            },
+            "type": "object",
+            "title": "Roles"
+          },
+          "tables": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TableFormattingSpec"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "figures": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FigureFormattingSpec"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "headers": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HeaderFooterFormattingSpec"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "footers": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HeaderFooterFormattingSpec"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "page_numbers": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PageNumberSpec"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "visual_cleanup": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VisualCleanupSpec"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "auto_layout": {
+            "$ref": "#/components/schemas/AutoLayoutSpec"
+          },
+          "behavior": {
+            "$ref": "#/components/schemas/FormattingBehavior"
+          },
+          "source": {
+            "$ref": "#/components/schemas/SpecSource"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "FormattingSpec"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HeaderFooterFormattingSpec": {
+        "properties": {
+          "font": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FontSpec"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "paragraph": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ParagraphSpec"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "HeaderFooterFormattingSpec"
+      },
+      "JobCreateRequest": {
+        "properties": {
+          "document_id": {
+            "type": "string",
+            "title": "Document Id"
+          },
+          "analysis_id": {
+            "type": "string",
+            "title": "Analysis Id"
+          },
+          "spec_id": {
+            "type": "string",
+            "title": "Spec Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "document_id",
+          "analysis_id",
+          "spec_id"
+        ],
+        "title": "JobCreateRequest"
+      },
+      "LineSpacingMode": {
+        "type": "string",
+        "enum": [
+          "single",
+          "multiple",
+          "exact",
+          "at_least"
+        ],
+        "title": "LineSpacingMode"
+      },
+      "LineSpacingSpec": {
+        "properties": {
+          "mode": {
+            "$ref": "#/components/schemas/LineSpacingMode"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "mode"
+        ],
+        "title": "LineSpacingSpec"
+      },
+      "ManifestRequirement": {
+        "properties": {
+          "requirement_id": {
+            "type": "string",
+            "title": "Requirement Id"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "style",
+              "section",
+              "table",
+              "numbering",
+              "header_footer"
+            ],
+            "title": "Category"
+          },
+          "target": {
+            "type": "string",
+            "title": "Target"
+          },
+          "property_path": {
+            "type": "string",
+            "title": "Property Path"
+          },
+          "expected": {
+            "title": "Expected"
+          },
+          "source_part": {
+            "type": "string",
+            "title": "Source Part"
+          },
+          "evidence": {
+            "type": "string",
+            "title": "Evidence"
+          },
+          "confidence": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence"
+          },
+          "auto_applicable": {
+            "type": "boolean",
+            "title": "Auto Applicable",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "requirement_id",
+          "category",
+          "target",
+          "property_path",
+          "expected",
+          "source_part",
+          "evidence",
+          "confidence"
+        ],
+        "title": "ManifestRequirement"
+      },
+      "Orientation": {
+        "type": "string",
+        "enum": [
+          "portrait",
+          "landscape"
+        ],
+        "title": "Orientation"
+      },
+      "PageFormattingSpec": {
+        "properties": {
+          "size": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PageSize"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "orientation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Orientation"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "margin_top_mm": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Margin Top Mm"
+          },
+          "margin_bottom_mm": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Margin Bottom Mm"
+          },
+          "margin_left_mm": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Margin Left Mm"
+          },
+          "margin_right_mm": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Margin Right Mm"
+          },
+          "header_distance_mm": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Header Distance Mm"
+          },
+          "footer_distance_mm": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Footer Distance Mm"
+          },
+          "preserve_existing_landscape_sections": {
+            "type": "boolean",
+            "title": "Preserve Existing Landscape Sections",
+            "default": true
+          },
+          "force_orientation_all_sections": {
+            "type": "boolean",
+            "title": "Force Orientation All Sections",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "PageFormattingSpec"
+      },
+      "PageNumberSpec": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "default": false
+          },
+          "location": {
+            "type": "string",
+            "const": "footer",
+            "title": "Location",
+            "default": "footer"
+          },
+          "alignment": {
+            "$ref": "#/components/schemas/Alignment",
+            "default": "center"
+          },
+          "number_format": {
+            "type": "string",
+            "const": "decimal",
+            "title": "Number Format",
+            "default": "decimal"
+          },
+          "start_at": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "PageNumberSpec"
+      },
+      "PageSize": {
+        "type": "string",
+        "enum": [
+          "A4",
+          "LETTER"
+        ],
+        "title": "PageSize"
+      },
+      "ParagraphSpec": {
+        "properties": {
+          "alignment": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Alignment"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "line_spacing": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LineSpacingSpec"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "space_before_pt": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Space Before Pt"
+          },
+          "space_after_pt": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Space After Pt"
+          },
+          "first_line_indent_pt": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Line Indent Pt"
+          },
+          "hanging_indent_pt": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hanging Indent Pt"
+          },
+          "left_indent_pt": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Left Indent Pt"
+          },
+          "right_indent_pt": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Right Indent Pt"
+          },
+          "keep_with_next": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Keep With Next"
+          },
+          "keep_lines_together": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Keep Lines Together"
+          },
+          "page_break_before": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page Break Before"
+          },
+          "widow_orphan_control": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Widow Orphan Control"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ParagraphSpec"
+      },
+      "RoleFormattingSpec": {
+        "properties": {
+          "font": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FontSpec"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "paragraph": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ParagraphSpec"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "style_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Style Name"
+          },
+          "force": {
+            "$ref": "#/components/schemas/ForcePolicy"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "RoleFormattingSpec"
+      },
+      "RoleOverride": {
+        "properties": {
+          "node_id": {
+            "type": "string",
+            "title": "Node Id"
+          },
+          "role": {
+            "$ref": "#/components/schemas/SemanticRole"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "node_id",
+          "role"
+        ],
+        "title": "RoleOverride"
+      },
+      "RoleOverrideRequest": {
+        "properties": {
+          "overrides": {
+            "items": {
+              "$ref": "#/components/schemas/RoleOverride"
+            },
+            "type": "array",
+            "title": "Overrides"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "RoleOverrideRequest"
+      },
+      "SemanticRole": {
+        "type": "string",
+        "enum": [
+          "cover",
+          "title",
+          "subtitle",
+          "author_info",
+          "abstract_heading",
+          "abstract_body",
+          "keywords",
+          "heading_1",
+          "heading_2",
+          "heading_3",
+          "heading_4",
+          "body",
+          "blockquote",
+          "list_item",
+          "figure_caption",
+          "table_caption",
+          "bibliography_heading",
+          "bibliography_entry",
+          "appendix_heading",
+          "appendix_body",
+          "header",
+          "footer",
+          "unknown"
+        ],
+        "title": "SemanticRole"
+      },
+      "Severity": {
+        "type": "string",
+        "enum": [
+          "fatal",
+          "error",
+          "warning",
+          "info"
+        ],
+        "title": "Severity"
+      },
+      "SpecSource": {
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/SpecSourceType",
+            "default": "structured"
+          },
+          "preset_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preset Id"
+          },
+          "instruction_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instruction Hash"
+          },
+          "compiler_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Compiler Version"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "assumptions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Assumptions"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "SpecSource"
+      },
+      "SpecSourceType": {
+        "type": "string",
+        "enum": [
+          "system",
+          "preset",
+          "natural_language",
+          "structured",
+          "merged"
+        ],
+        "title": "SpecSourceType"
+      },
+      "StructuredSpecRequest": {
+        "properties": {
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id"
+          },
+          "spec": {
+            "$ref": "#/components/schemas/FormattingSpec"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "spec"
+        ],
+        "title": "StructuredSpecRequest"
+      },
+      "TableFormattingSpec": {
+        "properties": {
+          "alignment": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Alignment"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "width_policy": {
+            "$ref": "#/components/schemas/TableWidthPolicy",
+            "default": "preserve"
+          },
+          "fixed_width_mm": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fixed Width Mm"
+          },
+          "cell_vertical_alignment": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "top",
+                  "center",
+                  "bottom"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cell Vertical Alignment"
+          },
+          "font": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FontSpec"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "paragraph": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ParagraphSpec"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "grid_borders": {
+            "type": "boolean",
+            "title": "Grid Borders",
+            "default": false
+          },
+          "repeat_header_row": {
+            "type": "boolean",
+            "title": "Repeat Header Row",
+            "default": false
+          },
+          "prevent_row_split": {
+            "type": "boolean",
+            "title": "Prevent Row Split",
+            "default": false
+          },
+          "adaptive_column_widths": {
+            "type": "boolean",
+            "title": "Adaptive Column Widths",
+            "default": false
+          },
+          "min_column_width_mm": {
+            "type": "number",
+            "maximum": 50.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Min Column Width Mm",
+            "default": 8
+          },
+          "adaptive_font_size": {
+            "type": "boolean",
+            "title": "Adaptive Font Size",
+            "default": false
+          },
+          "min_font_size_pt": {
+            "type": "number",
+            "maximum": 20.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Min Font Size Pt",
+            "default": 8.5
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "TableFormattingSpec"
+      },
+      "TableWidthPolicy": {
+        "type": "string",
+        "enum": [
+          "preserve",
+          "fit_printable_width",
+          "fixed"
+        ],
+        "title": "TableWidthPolicy"
+      },
+      "TextDocumentRequest": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 1000000,
+            "minLength": 1,
+            "title": "Text"
+          },
+          "filename": {
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 1,
+            "title": "Filename",
+            "default": "未命名文档.docx"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "TextDocumentRequest"
+      },
+      "ValidateSpecRequest": {
+        "properties": {
+          "spec": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Spec"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "spec"
+        ],
+        "title": "ValidateSpecRequest"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "ValidationIssue": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "severity": {
+            "$ref": "#/components/schemas/Severity"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "node_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Node Id"
+          },
+          "locator": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locator"
+          },
+          "details": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Details"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "severity",
+          "message"
+        ],
+        "title": "ValidationIssue"
+      },
+      "VisualCleanupSpec": {
+        "properties": {
+          "text_color_hex": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text Color Hex"
+          },
+          "remove_text_highlight": {
+            "type": "boolean",
+            "title": "Remove Text Highlight",
+            "default": false
+          },
+          "remove_character_shading": {
+            "type": "boolean",
+            "title": "Remove Character Shading",
+            "default": false
+          },
+          "remove_paragraph_shading": {
+            "type": "boolean",
+            "title": "Remove Paragraph Shading",
+            "default": false
+          },
+          "remove_table_cell_shading": {
+            "type": "boolean",
+            "title": "Remove Table Cell Shading",
+            "default": false
+          },
+          "remove_page_background": {
+            "type": "boolean",
+            "title": "Remove Page Background",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "VisualCleanupSpec"
+      }
+    }
+  }
+}
