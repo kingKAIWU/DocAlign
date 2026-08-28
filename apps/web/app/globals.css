@@ -138,6 +138,17 @@ a { color: inherit; }
 .preset-option strong, .preset-option small { display: block; }
 .preset-option strong { font-size: 10px; }
 .preset-option small { margin-top: 3px; color: var(--muted); font-size: 8px; line-height: 1.45; }
+.preset-trust-card { margin-top: 9px; padding: 9px; border: 1px solid #dec490; border-radius: 5px; background: #fff8ed; }
+.preset-trust-card > div { display: flex; justify-content: space-between; gap: 8px; }
+.preset-trust-card > div strong { color: #725119; font-size: 9px; }
+.preset-trust-card > div span { color: var(--muted); font: 8px/1.4 ui-monospace, monospace; }
+.preset-trust-card > p { margin: 5px 0 0; }
+.preset-trust-card details { margin-top: 6px; color: var(--muted); font-size: 8px; line-height: 1.5; }
+.preset-trust-card summary { cursor: pointer; color: #725119; font-weight: 700; }
+.preset-trust-card details p { margin: 6px 0 0; }
+.preset-trust-card ul { margin: 6px 0 0; padding-left: 15px; }
+.preset-trust-card li { margin: 3px 0; }
+.preset-trust-card a { color: var(--green-2); text-decoration: underline; }
 .advanced-rules { min-height: 0; }
 .advanced-rules summary { min-height: 28px; display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--ink); font-size: 10px; font-weight: 750; }
 .advanced-rules summary::after { content: "展开"; margin-left: auto; color: var(--muted); font-size: 8px; font-weight: 600; }

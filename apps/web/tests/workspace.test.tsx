@@ -81,6 +81,16 @@ describe("Workspace", () => {
           name: "常规文档",
           description: "A4 竖版、正文小四、1.5 倍行距。",
           recommended_kinds: ["other"],
+          metadata: {
+            pack_version: "1.0.0",
+            claim_level: "generic",
+            scope_label: "DocAlign 内置通用整理规则",
+            maintained_by: "DocAlign",
+            last_reviewed_on: "2026-08-29",
+            source_references: [],
+            covered_capabilities: ["page_layout", "role_typography"],
+            limitations: ["这是通用整理方案，不代表任何机构规则的完整合规。"],
+          },
           spec: {
             schema_version: "formatting-spec.v1",
             roles: {},
@@ -102,6 +112,7 @@ describe("Workspace", () => {
     render(<Workspace />);
     expect(screen.getByRole("heading", { name: "先理解文档，再智能排版" })).toBeInTheDocument();
     expect(await screen.findByText("常规、干净、可重复")).toBeInTheDocument();
+    expect(screen.getByText("通用方案 · 非机构合规")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("tab", { name: "自然语言编译" }));
     expect(screen.getByText("兼容模型未配置；默认整理模式仍可直接使用。")).toBeInTheDocument();
     expect(screen.getByText("本地处理")).toBeInTheDocument();

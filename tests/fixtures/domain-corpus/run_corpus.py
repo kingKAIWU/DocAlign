@@ -73,16 +73,16 @@ def run(
             getattr(block, "columns_estimate", 0) >= 8 for block in analysis.document_ir.blocks
         )
         selected = (
-            next(item for item in catalog if item["preset_id"] == "wide-table-clean-cn")
+            next(item for item in catalog if item.preset_id == "wide-table-clean-cn")
             if has_wide_table
             else next(
-                (item for item in catalog if document_kind in item["recommended_kinds"]),
+                (item for item in catalog if document_kind in item.recommended_kinds),
                 catalog[0],
             )
         )
         output_label = OUTPUT_LABELS.get(source.stem, source.stem)
-        output = output_dir / f"{output_label}-{selected['name']}.docx"
-        spec = selected["spec"].model_copy(deep=True)
+        output = output_dir / f"{output_label}-{selected.name}.docx"
+        spec = selected.spec.model_copy(deep=True)
         if east_asian_font:
             if spec.baseline and spec.baseline.font:
                 spec.baseline.font.east_asia = east_asian_font
@@ -141,7 +141,7 @@ def run(
                     for section in rendered.sections
                 ),
                 "document_kind": document_kind,
-                "preset_id": selected["preset_id"],
+                "preset_id": selected.preset_id,
                 "sections": len(rendered.sections),
                 "paragraphs": len(paragraphs),
                 "tables": analysis.summary.table_count,

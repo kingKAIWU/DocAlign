@@ -84,6 +84,8 @@ export type Job = components["schemas"]["JobResponse"];
 
 export type JobResultSummary = components["schemas"]["JobResultSummary"];
 
+export type CleanupPreset = components["schemas"]["CleanupPresetCatalogItem"];
+
 export type FormattingSpec = components["schemas"]["FormattingSpec"];
 
 export type ComplianceViolation = {

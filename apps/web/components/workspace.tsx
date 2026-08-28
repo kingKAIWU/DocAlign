@@ -9,6 +9,7 @@ import { errorLabels, jobStatusLabels, roleLabels, roles } from "@/lib/messages"
 import type {
   Analysis,
   Capabilities,
+  CleanupPreset,
   ComplianceReport,
   DocumentRecord,
   FormattingSpec,
@@ -44,14 +45,6 @@ type StoredWorkspace = {
   document_id: string;
   analysis_id?: string;
   job_id?: string;
-};
-
-type CleanupPreset = {
-  preset_id: string;
-  name: string;
-  description: string;
-  recommended_kinds: string[];
-  spec: FormattingSpec;
 };
 
 function readableError(caught: unknown): string {
@@ -294,6 +287,7 @@ export function Workspace() {
     [analysis, showOnlyUncertain],
   );
   const unknownCount = analysis?.summary.unknown_count ?? 0;
+  const selectedPreset = presets.find((preset) => preset.preset_id === selectedPresetId);
 
   async function upload(file: File) {
     setBusy("upload");
@@ -877,6 +871,48 @@ export function Workspace() {
                     );
                   })}
                 </div>
+                {selectedPreset && (
+                  <div className="preset-trust-card" role="note" aria-label="规则来源与适用边界">
+                    <div>
+                      <strong>
+                        {selectedPreset.metadata.claim_level === "generic"
+                          ? "通用方案 · 非机构合规"
+                          : selectedPreset.metadata.claim_level === "verified"
+                            ? "已验证规则包"
+                            : "参考规则包 · 部分覆盖"}
+                      </strong>
+                      <span>v{selectedPreset.metadata.pack_version}</span>
+                    </div>
+                    <p>
+                      {selectedPreset.metadata.scope_label} · {selectedPreset.metadata.maintained_by} 维护 · {selectedPreset.metadata.last_reviewed_on} 复核
+                    </p>
+                    <details>
+                      <summary>
+                        查看覆盖范围与限制（{selectedPreset.metadata.limitations.length}）
+                      </summary>
+                      <p>
+                        覆盖：{selectedPreset.metadata.covered_capabilities
+                          .map((item) => capabilityLabels[item] ?? item)
+                          .join("、")}
+                      </p>
+                      {selectedPreset.metadata.source_references.length > 0 && (
+                        <ul className="preset-sources">
+                          {selectedPreset.metadata.source_references.map((source) => (
+                            <li key={source.url}>
+                              <a href={source.url} target="_blank" rel="noreferrer">{source.title}</a>
+                              {source.version ? ` · ${source.version}` : ""}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      <ul>
+                        {selectedPreset.metadata.limitations.map((limitation) => (
+                          <li key={limitation}>{limitation}</li>
+                        ))}
+                      </ul>
+                    </details>
+                  </div>
+                )}
                 <button
                   type="button"
                   className="button secondary"

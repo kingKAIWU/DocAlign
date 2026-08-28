@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import date
 from enum import StrEnum
 from pathlib import Path
 from typing import Literal
@@ -268,6 +269,29 @@ class SpecSource(StrictModel):
     provider: str | None = None
     model: str | None = None
     assumptions: list[str] = Field(default_factory=list)
+
+
+class RulePackClaimLevel(StrEnum):
+    GENERIC = "generic"
+    REFERENCE = "reference"
+    VERIFIED = "verified"
+
+
+class RulePackReference(StrictModel):
+    title: str
+    url: str
+    version: str | None = None
+
+
+class RulePackMetadata(StrictModel):
+    pack_version: str
+    claim_level: RulePackClaimLevel
+    scope_label: str
+    maintained_by: str
+    last_reviewed_on: date
+    source_references: list[RulePackReference]
+    covered_capabilities: list[str]
+    limitations: list[str]
 
 
 class FormattingSpec(StrictModel):
@@ -698,36 +722,85 @@ def wide_table_cleanup_spec() -> FormattingSpec:
     return spec
 
 
-def cleanup_preset_catalog() -> list[dict[str, object]]:
+class CleanupPresetCatalogItem(StrictModel):
+    preset_id: str
+    name: str
+    description: str
+    recommended_kinds: list[str]
+    metadata: RulePackMetadata
+    spec: FormattingSpec
+
+
+def _generic_pack_metadata(*specific_limitations: str) -> RulePackMetadata:
+    return RulePackMetadata(
+        pack_version="1.0.0",
+        claim_level=RulePackClaimLevel.GENERIC,
+        scope_label="DocAlign 内置通用整理规则",
+        maintained_by="DocAlign",
+        last_reviewed_on=date(2026, 8, 29),
+        source_references=[],
+        covered_capabilities=[
+            "page_layout",
+            "document_typography",
+            "role_typography",
+            "table_formatting",
+            "figure_formatting",
+            "header_footer_formatting",
+            "page_numbers",
+            "document_text_color",
+            "document_background_cleanup",
+            "auto_layout",
+        ],
+        limitations=[
+            "这是通用整理方案，不代表 GB/T 9704、高校、期刊或任何机构规则的完整合规。",
+            "目录、脚注、尾注、批注和文本框目前只做内容保护，不执行专属格式规则。",
+            *specific_limitations,
+        ],
+    )
+
+
+def cleanup_preset_catalog() -> list[CleanupPresetCatalogItem]:
     return [
-        {
-            "preset_id": "default-clean-cn",
-            "name": "常规文档",
-            "description": "A4 竖版、正文小四、1.5 倍行距，适合通知、论文和报告。",
-            "recommended_kinds": ["government_document", "academic_paper", "report", "other"],
-            "spec": default_cleanup_spec(),
-        },
-        {
-            "preset_id": "compact-clean-cn",
-            "name": "紧凑信息",
-            "description": "左对齐、较紧凑，适合简历、会议纪要和操作手册。",
-            "recommended_kinds": ["resume", "meeting_minutes", "manual"],
-            "spec": compact_cleanup_spec(),
-        },
-        {
-            "preset_id": "contract-clean-cn",
-            "name": "合同条款",
-            "description": "条款标题左对齐并与正文同页，适合法律合同。",
-            "recommended_kinds": ["contract"],
-            "spec": contract_cleanup_spec(),
-        },
-        {
-            "preset_id": "wide-table-clean-cn",
-            "name": "宽表优先",
-            "description": "保留原有横版分节，适合财务报表和多列表格。",
-            "recommended_kinds": ["financial_report"],
-            "spec": wide_table_cleanup_spec(),
-        },
+        CleanupPresetCatalogItem(
+            preset_id="default-clean-cn",
+            name="常规文档",
+            description="A4 竖版、正文小四、1.5 倍行距，适合通知、论文和报告。",
+            recommended_kinds=["government_document", "academic_paper", "report", "other"],
+            metadata=_generic_pack_metadata(
+                "会统一为 A4 竖版，不适合必须保留横向宽表或机构专用分节的文档。"
+            ),
+            spec=default_cleanup_spec(),
+        ),
+        CleanupPresetCatalogItem(
+            preset_id="compact-clean-cn",
+            name="紧凑信息",
+            description="左对齐、较紧凑，适合简历、会议纪要和操作手册。",
+            recommended_kinds=["resume", "meeting_minutes", "manual"],
+            metadata=_generic_pack_metadata(
+                "紧凑字号和间距是通用可读性选择，不代表招聘、会议或培训机构模板。"
+            ),
+            spec=compact_cleanup_spec(),
+        ),
+        CleanupPresetCatalogItem(
+            preset_id="contract-clean-cn",
+            name="合同条款",
+            description="条款标题左对齐并与正文同页，适合法律合同。",
+            recommended_kinds=["contract"],
+            metadata=_generic_pack_metadata(
+                "只整理合同版式，不审查条款内容、签署效力或任何法律合规要求。"
+            ),
+            spec=contract_cleanup_spec(),
+        ),
+        CleanupPresetCatalogItem(
+            preset_id="wide-table-clean-cn",
+            name="宽表优先",
+            description="保留原有横版分节，适合财务报表和多列表格。",
+            recommended_kinds=["financial_report"],
+            metadata=_generic_pack_metadata(
+                "只优化宽表版式，不验证会计准则、金额、公式或财务披露要求。"
+            ),
+            spec=wide_table_cleanup_spec(),
+        ),
     ]
 
 

@@ -7,6 +7,7 @@ test("keeps advanced rules reachable in short desktop and mobile layouts", async
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto("/");
   await expect(page.getByRole("radio", { name: /常规文档/ })).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText("通用方案 · 非机构合规")).toBeVisible();
 
   const rulesPanel = page.locator(".rules-panel");
   const advancedRules = page.locator(".advanced-rules");

@@ -96,9 +96,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "type": "object",
-                  "title": "Response Cleanup Presets Api V1 Presets Get"
+                  "$ref": "#/components/schemas/CleanupPresetCatalogResponse"
                 }
               }
             }
@@ -1012,6 +1010,63 @@
           "file"
         ],
         "title": "Body_upload_document_api_v1_documents_post"
+      },
+      "CleanupPresetCatalogItem": {
+        "properties": {
+          "preset_id": {
+            "type": "string",
+            "title": "Preset Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "recommended_kinds": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Recommended Kinds"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/RulePackMetadata"
+          },
+          "spec": {
+            "$ref": "#/components/schemas/FormattingSpec"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "preset_id",
+          "name",
+          "description",
+          "recommended_kinds",
+          "metadata",
+          "spec"
+        ],
+        "title": "CleanupPresetCatalogItem"
+      },
+      "CleanupPresetCatalogResponse": {
+        "properties": {
+          "presets": {
+            "items": {
+              "$ref": "#/components/schemas/CleanupPresetCatalogItem"
+            },
+            "type": "array",
+            "title": "Presets"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "presets"
+        ],
+        "title": "CleanupPresetCatalogResponse"
       },
       "CompileSpecRequest": {
         "properties": {
@@ -2372,6 +2427,103 @@
         "additionalProperties": false,
         "type": "object",
         "title": "RoleOverrideRequest"
+      },
+      "RulePackClaimLevel": {
+        "type": "string",
+        "enum": [
+          "generic",
+          "reference",
+          "verified"
+        ],
+        "title": "RulePackClaimLevel"
+      },
+      "RulePackMetadata": {
+        "properties": {
+          "pack_version": {
+            "type": "string",
+            "title": "Pack Version"
+          },
+          "claim_level": {
+            "$ref": "#/components/schemas/RulePackClaimLevel"
+          },
+          "scope_label": {
+            "type": "string",
+            "title": "Scope Label"
+          },
+          "maintained_by": {
+            "type": "string",
+            "title": "Maintained By"
+          },
+          "last_reviewed_on": {
+            "type": "string",
+            "format": "date",
+            "title": "Last Reviewed On"
+          },
+          "source_references": {
+            "items": {
+              "$ref": "#/components/schemas/RulePackReference"
+            },
+            "type": "array",
+            "title": "Source References"
+          },
+          "covered_capabilities": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Covered Capabilities"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Limitations"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "pack_version",
+          "claim_level",
+          "scope_label",
+          "maintained_by",
+          "last_reviewed_on",
+          "source_references",
+          "covered_capabilities",
+          "limitations"
+        ],
+        "title": "RulePackMetadata"
+      },
+      "RulePackReference": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "title",
+          "url"
+        ],
+        "title": "RulePackReference"
       },
       "SemanticRole": {
         "type": "string",

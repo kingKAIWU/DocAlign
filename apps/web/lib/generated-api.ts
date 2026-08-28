@@ -455,6 +455,24 @@ export interface components {
             /** File */
             file: string;
         };
+        /** CleanupPresetCatalogItem */
+        CleanupPresetCatalogItem: {
+            /** Preset Id */
+            preset_id: string;
+            /** Name */
+            name: string;
+            /** Description */
+            description: string;
+            /** Recommended Kinds */
+            recommended_kinds: string[];
+            metadata: components["schemas"]["RulePackMetadata"];
+            spec: components["schemas"]["FormattingSpec"];
+        };
+        /** CleanupPresetCatalogResponse */
+        CleanupPresetCatalogResponse: {
+            /** Presets */
+            presets: components["schemas"]["CleanupPresetCatalogItem"][];
+        };
         /** CompileSpecRequest */
         CompileSpecRequest: {
             /** Document Id */
@@ -913,6 +931,41 @@ export interface components {
             overrides?: components["schemas"]["RoleOverride"][];
         };
         /**
+         * RulePackClaimLevel
+         * @enum {string}
+         */
+        RulePackClaimLevel: "generic" | "reference" | "verified";
+        /** RulePackMetadata */
+        RulePackMetadata: {
+            /** Pack Version */
+            pack_version: string;
+            claim_level: components["schemas"]["RulePackClaimLevel"];
+            /** Scope Label */
+            scope_label: string;
+            /** Maintained By */
+            maintained_by: string;
+            /**
+             * Last Reviewed On
+             * Format: date
+             */
+            last_reviewed_on: string;
+            /** Source References */
+            source_references: components["schemas"]["RulePackReference"][];
+            /** Covered Capabilities */
+            covered_capabilities: string[];
+            /** Limitations */
+            limitations: string[];
+        };
+        /** RulePackReference */
+        RulePackReference: {
+            /** Title */
+            title: string;
+            /** Url */
+            url: string;
+            /** Version */
+            version?: string | null;
+        };
+        /**
          * SemanticRole
          * @enum {string}
          */
@@ -1190,9 +1243,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["CleanupPresetCatalogResponse"];
                 };
             };
         };

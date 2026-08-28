@@ -11,6 +11,8 @@ DocAlign 是一个本地优先、确定性执行的 DOCX 自动排版与格式�
 ### 两种并列的整理模式
 
 - **默认整理模式**：无需模型，按文档类型选择常规文档、紧凑信息、合同条款或宽表优先方案。
+- 每个整理方案都携带版本、维护方、复核日期、能力覆盖和明确限制；当前内置方案均标记为
+  “通用方案 · 非机构合规”。
 - **自然语言编译模式**：把“正文宋体小四、标题黑体、清除所有背景”等要求编译为
   `FormattingSpec v1`，并展示已映射能力、假设、歧义和暂不支持项。
 - 用户规则始终优先于预设规则；高级用户也可以直接编辑 JSON/YAML 规则。
@@ -166,6 +168,7 @@ uv run docalign spec compile \
 | `POST /api/v1/documents/{id}/compliance` | 只读格式体检 |
 | `GET /api/v1/documents/{id}/format-manifest` | 导出格式画像 JSON |
 | `POST /api/v1/jobs` | 创建格式化任务 |
+| `GET /api/v1/presets` | 获取带来源、版本、覆盖与限制的规则包目录 |
 | `GET /api/v1/jobs/{id}` | 查询任务状态、验证结论、改动分类和剩余复核项 |
 | `GET /api/v1/jobs/{id}/output` | 下载验证通过的 DOCX |
 | `GET /api/v1/jobs/{id}/audit.json` | 下载机器可读审计 |

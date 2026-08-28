@@ -1,6 +1,7 @@
 import type {
   Analysis,
   Capabilities,
+  CleanupPreset,
   ComplianceReport,
   DocumentRecord,
   FormattingSpec,
@@ -49,15 +50,7 @@ export const api = {
       signal,
     }),
   presets: (signal?: AbortSignal) =>
-    request<{
-      presets: Array<{
-        preset_id: string;
-        name: string;
-        description: string;
-        recommended_kinds: string[];
-        spec: FormattingSpec;
-      }>;
-    }>("/presets", { signal }),
+    request<{ presets: CleanupPreset[] }>("/presets", { signal }),
   document: (documentId: string, signal?: AbortSignal) =>
     request<DocumentRecord>(`/documents/${documentId}`, { signal }),
   analysis: (analysisId: string, signal?: AbortSignal) =>

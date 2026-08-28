@@ -25,6 +25,7 @@ from apps.api.errors import ApiError
 from apps.api.runner import JobRunner
 from apps.api.schemas import (
     AnalyzeRequest,
+    CleanupPresetCatalogResponse,
     CompileSpecRequest,
     ComplianceRequest,
     JobCreateRequest,
@@ -127,19 +128,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         }
 
     @application.get("/api/v1/presets")
-    def cleanup_presets() -> dict[str, object]:
-        presets: list[dict[str, object]] = []
-        for item in cleanup_preset_catalog():
-            spec = item["spec"]
-            if not isinstance(spec, FormattingSpec):
-                raise TypeError("Cleanup preset catalog contains an invalid spec.")
-            presets.append(
-                {
-                    **{key: value for key, value in item.items() if key != "spec"},
-                    "spec": spec.model_dump(mode="json"),
-                }
-            )
-        return {"presets": presets}
+    def cleanup_presets() -> CleanupPresetCatalogResponse:
+        return CleanupPresetCatalogResponse(presets=cleanup_preset_catalog())
 
     @application.post("/api/v1/documents", status_code=201)
     async def upload_document(file: UploadFile) -> dict[str, object]:

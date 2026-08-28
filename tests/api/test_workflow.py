@@ -68,12 +68,16 @@ def test_complete_structured_api_workflow(academic_docx: Path, tmp_path: Path) -
         assert cleanup_preset.json()["spec"] == default_cleanup_spec().model_dump(mode="json")
         preset_catalog = client.get("/api/v1/presets")
         assert preset_catalog.status_code == 200
-        assert [item["preset_id"] for item in preset_catalog.json()["presets"]] == [
+        preset_items = preset_catalog.json()["presets"]
+        assert [item["preset_id"] for item in preset_items] == [
             "default-clean-cn",
             "compact-clean-cn",
             "contract-clean-cn",
             "wide-table-clean-cn",
         ]
+        assert all(item["metadata"]["claim_level"] == "generic" for item in preset_items)
+        assert all(item["metadata"]["pack_version"] == "1.0.0" for item in preset_items)
+        assert all(item["metadata"]["limitations"] for item in preset_items)
 
         analysis_response = client.post(f"/api/v1/documents/{document_id}/analyze")
         assert analysis_response.status_code == 201, analysis_response.text

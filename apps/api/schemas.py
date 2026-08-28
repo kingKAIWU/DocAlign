@@ -5,7 +5,7 @@ from typing import Any
 
 from docalign_core.domain.document_ir import RoleOverride
 from docalign_core.domain.enums import AnalysisMode, JobStatus
-from docalign_core.domain.formatting_spec import FormattingSpec
+from docalign_core.domain.formatting_spec import CleanupPresetCatalogItem, FormattingSpec
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -78,6 +78,10 @@ class JobResponse(ApiModel):
     error_message: str | None
     created_at: datetime
     updated_at: datetime
+
+
+class CleanupPresetCatalogResponse(ApiModel):
+    presets: list[CleanupPresetCatalogItem]
 
 
 class ComplianceRequest(ApiModel):

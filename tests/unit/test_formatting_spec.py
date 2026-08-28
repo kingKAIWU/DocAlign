@@ -97,12 +97,19 @@ def test_default_cleanup_spec_is_deterministic_and_forceful() -> None:
 
 def test_cleanup_catalog_covers_compact_contract_and_wide_table_scenarios() -> None:
     catalog = cleanup_preset_catalog()
-    assert [item["preset_id"] for item in catalog] == [
+    assert [item.preset_id for item in catalog] == [
         "default-clean-cn",
         "compact-clean-cn",
         "contract-clean-cn",
         "wide-table-clean-cn",
     ]
+    assert all(item.metadata.claim_level == "generic" for item in catalog)
+    assert all(item.metadata.pack_version == "1.0.0" for item in catalog)
+    assert all(item.metadata.covered_capabilities for item in catalog)
+    assert all(
+        any("不代表" in limitation for limitation in item.metadata.limitations)
+        for item in catalog
+    )
     compact = compact_cleanup_spec()
     assert compact.roles[SemanticRole.BODY].font.size_pt == 11
     assert compact.roles[SemanticRole.HEADING_1].paragraph.alignment == "left"
