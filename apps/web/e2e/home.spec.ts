@@ -3,6 +3,40 @@ import { resolve } from "node:path";
 
 const fixture = resolve(process.cwd(), "../../tests/fixtures/academic-comprehensive.docx");
 
+test("keeps advanced rules reachable in short desktop and mobile layouts", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto("/");
+  await expect(page.getByRole("radio", { name: /常规文档/ })).toBeVisible({ timeout: 10_000 });
+
+  const rulesPanel = page.locator(".rules-panel");
+  const advancedRules = page.locator(".advanced-rules");
+  const advancedSummary = advancedRules.getByText("高级规则 JSON · 整理方案");
+
+  const desktopMetrics = await rulesPanel.evaluate((element) => ({
+    clientHeight: element.clientHeight,
+    overflowY: getComputedStyle(element).overflowY,
+    scrollHeight: element.scrollHeight,
+  }));
+  expect(desktopMetrics.overflowY).toBe("auto");
+  expect(desktopMetrics.scrollHeight).toBeGreaterThan(desktopMetrics.clientHeight);
+
+  await advancedSummary.scrollIntoViewIfNeeded();
+  await expect(advancedSummary).toBeVisible();
+  expect(await rulesPanel.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+
+  await advancedSummary.click();
+  const editor = page.getByLabel("结构化规则");
+  await editor.scrollIntoViewIfNeeded();
+  await expect(editor).toBeVisible();
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.reload();
+  await page.locator(".advanced-rules").scrollIntoViewIfNeeded();
+  await expect(page.getByText("高级规则 JSON · 整理方案")).toBeVisible();
+  expect(await page.locator(".rules-panel").evaluate((element) => getComputedStyle(element).overflowY))
+    .toBe("visible");
+});
+
 test("completes the local structured formatting workflow and restores it", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "先理解文档，再智能排版" })).toBeVisible();

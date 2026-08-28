@@ -411,8 +411,10 @@ export function Workspace() {
     setAutoLayout(preset.spec.auto_layout?.enabled ?? true);
     setCompilationReport(null);
     setCompliance(null);
-    clearNotices();
-    if (announce) setMessage(`已载入默认整理模式“${preset.name}”：${preset.description}`);
+    if (announce) {
+      clearNotices();
+      setMessage(`已载入默认整理模式“${preset.name}”：${preset.description}`);
+    }
   }
 
   function useDefaultCleanupMode() {
