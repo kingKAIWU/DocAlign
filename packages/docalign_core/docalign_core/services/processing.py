@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from docalign_core.analysis.classifier import count_reviewable_unknowns
 from docalign_core.docx.parser import parse_docx
 from docalign_core.docx.safety import sha256_file
 from docalign_core.domain.audit import (
@@ -142,7 +143,7 @@ def process_document(
             tables=document_ir.metadata.table_count,
             images=document_ir.metadata.image_count,
             classified_blocks=classified,
-            unknown_blocks=roles.get("unknown", 0),
+            unknown_blocks=count_reviewable_unknowns(document_ir),
             format_operations=len(plan.operations),
             changed_mutations=sum(item.status == "changed" for item in mutations),
             validation_failures=sum(

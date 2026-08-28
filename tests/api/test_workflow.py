@@ -167,13 +167,24 @@ def test_complete_structured_api_workflow(academic_docx: Path, tmp_path: Path) -
         job = _wait_for_job(client, job_id)
         assert job["status"] == "completed", job
         assert job["auto_layout_splits"] == 0
+        result_summary = job["result_summary"]
+        assert result_summary["validation_passed"] is True
+        assert result_summary["content_integrity_passed"] is True
+        assert result_summary["changed_mutations"] > 0
+        assert sum(result_summary["change_categories"].values()) == result_summary[
+            "changed_mutations"
+        ]
 
         output = client.get(f"/api/v1/jobs/{job_id}/output")
         assert output.status_code == 200
         assert output.content.startswith(b"PK")
         audit = client.get(f"/api/v1/jobs/{job_id}/audit.json")
         assert audit.status_code == 200
-        assert audit.json()["validation"]["valid"] is True
+        audit_payload = audit.json()
+        assert audit_payload["validation"]["valid"] is True
+        assert result_summary["remaining_review_items"] == audit_payload["summary"][
+            "unknown_blocks"
+        ]
         audit_markdown = client.get(f"/api/v1/jobs/{job_id}/audit.md")
         assert audit_markdown.status_code == 200
         assert "DocAlign 格式化审计" in audit_markdown.text

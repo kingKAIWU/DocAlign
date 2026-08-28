@@ -56,13 +56,24 @@ test("completes the local structured formatting workflow and restores it", async
   });
   await expect(page.getByRole("link", { name: "下载格式化 DOCX" })).toBeVisible();
   await expect(page.getByText("格式化结果 · 最佳努力预览")).toBeVisible();
+  const resultSummary = page.getByLabel("排版结果摘要");
+  await expect(resultSummary.getByText("格式验证通过")).toBeVisible();
+  await expect(resultSummary.getByText("原文与受保护结构通过")).toBeVisible();
+  await expect(resultSummary.getByText("项实际格式调整")).toBeVisible();
   const auditUrl = await page.getByRole("link", { name: "查看审计" }).getAttribute("href");
   expect(auditUrl).toBeTruthy();
   const audit = await page.request.get(auditUrl!);
   expect(audit.ok()).toBeTruthy();
   expect((await audit.json()).validation.valid).toBe(true);
 
-  await page.reload();
+  const jobId = auditUrl?.match(/\/jobs\/([^/]+)\/audit\.json$/)?.[1];
+  expect(jobId).toBeTruthy();
+  await page.goto(`/jobs/${jobId}`);
+  await expect(page.getByRole("heading", { name: "任务状态" })).toBeVisible();
+  await expect(page.getByText("已完成", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("排版结果摘要").getByText("格式验证通过")).toBeVisible();
+
+  await page.goto("/");
   await expect(page.getByText("已恢复上次本地工作区。")).toBeVisible();
   await expect(page.getByText("输出已生成")).toBeVisible();
 });

@@ -7,6 +7,7 @@ from zipfile import ZipFile
 
 from docalign_core.analysis.classifier import analyze_document
 from docalign_core.docx.parser import parse_docx
+from docalign_core.domain.audit import CONTENT_INTEGRITY_CODES
 from docalign_core.domain.document_ir import ParagraphIR
 from docalign_core.domain.formatting_spec import cleanup_preset_catalog
 from docalign_core.services.processing import process_document
@@ -25,13 +26,6 @@ OUTPUT_LABELS = {
     "07-training-manual": "07-操作手册",
     "08-financial-statement": "08-财务宽表",
 }
-
-CONTENT_INTEGRITY_CODES = {
-    "CONTENT_INTEGRITY_FAILED",
-    "DOCUMENT_STRUCTURE_MISMATCH",
-    "PROTECTED_PACKAGE_PART_CHANGED",
-}
-
 
 def _visual_pollution(path: Path) -> dict[str, int]:
     totals = {

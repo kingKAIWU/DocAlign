@@ -188,6 +188,24 @@ describe("Workspace", () => {
       spec_id: "spec_1",
       status: "completed",
       progress: 100,
+      result_summary: {
+        validation_passed: true,
+        content_integrity_passed: true,
+        format_operations: 77,
+        changed_mutations: 62,
+        change_categories: {
+          paragraph_styles: 22,
+          text_font: 19,
+          page_layout: 2,
+          visual_cleanup: 6,
+        },
+        warning_count: 0,
+        validation_issue_count: 0,
+        remaining_review_items: 0,
+        paragraphs_before: 19,
+        paragraphs_after: 19,
+        auto_layout_splits: 0,
+      },
       output_document_url: "/api/v1/jobs/job_1/output",
       audit_json_url: "/api/v1/jobs/job_1/audit.json",
       audit_markdown_url: "/api/v1/jobs/job_1/audit.md",
@@ -199,6 +217,10 @@ describe("Workspace", () => {
     expect(await screen.findByText("restored.docx")).toBeInTheDocument();
     expect(screen.getByText("已恢复上次本地工作区。")).toBeInTheDocument();
     expect(screen.getByText("输出已生成")).toBeInTheDocument();
+    expect(screen.getByText("格式验证通过")).toBeInTheDocument();
+    expect(screen.getByText("原文与受保护结构通过")).toBeInTheDocument();
+    expect(screen.getByText("62")).toBeInTheDocument();
+    expect(screen.getByText("标题与段落")).toBeInTheDocument();
   });
 
   it("filters the structure list to paragraphs that need confirmation", async () => {

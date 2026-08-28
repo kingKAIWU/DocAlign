@@ -59,6 +59,12 @@ DocAlign 是一个本地优先、确定性执行的 DOCX 自动排版与格式�
 - 轮询请求带超时和取消机制，终态后立即停止，不创建重复连接。
 - API 进程重启时会将中断任务标记为 `JOB_INTERRUPTED`，用户可明确重新提交。
 
+### 面向用户的结果解释
+
+- 完成页同时显示格式验证、原文与受保护结构校验、实际调整数量和剩余人工复核项。
+- 格式变更按页面版式、标题与段落、文字与字体、表格、页眉页脚、视觉清理和结构重排分类。
+- 任务结果通过版本化 OpenAPI 契约恢复；工作台可从结果摘要直接聚焦待确认段落。
+
 ## 内置整理方案
 
 | 方案 | 适用场景 | 主要策略 |
@@ -117,7 +123,7 @@ macOS 的完整安装、启动和恢复说明见 [docs/MACOS.md](docs/MACOS.md)�
 3. 检查并修正段落角色。
 4. 选择默认整理方案，或使用自然语言编译格式要求。
 5. 先运行“只做格式体检”，查看带位置编号的问题；也可以直接开始自动排版。
-6. 任务通过内容和格式验证后，下载 DOCX、JSON/Markdown 审计或格式画像。
+6. 阅读验证与改动摘要，处理剩余待确认段落，再下载 DOCX、JSON/Markdown 审计或格式画像。
 
 ## CLI
 
@@ -160,7 +166,7 @@ uv run docalign spec compile \
 | `POST /api/v1/documents/{id}/compliance` | 只读格式体检 |
 | `GET /api/v1/documents/{id}/format-manifest` | 导出格式画像 JSON |
 | `POST /api/v1/jobs` | 创建格式化任务 |
-| `GET /api/v1/jobs/{id}` | 查询任务状态 |
+| `GET /api/v1/jobs/{id}` | 查询任务状态、验证结论、改动分类和剩余复核项 |
 | `GET /api/v1/jobs/{id}/output` | 下载验证通过的 DOCX |
 | `GET /api/v1/jobs/{id}/audit.json` | 下载机器可读审计 |
 | `GET /api/v1/jobs/{id}/audit.md` | 下载人工审计报告 |

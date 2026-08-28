@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import json
 import logging
 import uuid
+from collections import Counter
 from pathlib import Path
 
 from docalign_core.analysis.classifier import (
@@ -25,6 +25,7 @@ from docalign_core.docx.safety import (
     validate_docx_package,
 )
 from docalign_core.docx.text_import import PlainTextImportError, create_docx_from_text
+from docalign_core.domain.audit import CONTENT_INTEGRITY_CODES, AuditReport
 from docalign_core.domain.compliance import ComplianceReport, build_compliance_report
 from docalign_core.domain.document_ir import (
     AnalysisResult,
@@ -63,6 +64,7 @@ from apps.api.db import (
     utcnow,
 )
 from apps.api.errors import ApiError
+from apps.api.schemas import JobResponse, JobResultSummary
 from apps.api.storage import LocalStorage
 
 logger = logging.getLogger(__name__)
@@ -475,35 +477,40 @@ class ApiService:
             session.expunge(record)
             return record
 
-    def job_payload(self, record: JobRecord) -> dict[str, object]:
+    def job_payload(self, record: JobRecord) -> JobResponse:
         completed = record.status == JobStatus.COMPLETED.value
         auto_layout_splits = 0
+        result_summary: JobResultSummary | None = None
         if record.audit_json_path and Path(record.audit_json_path).exists():
             try:
-                payload = json.loads(Path(record.audit_json_path).read_text(encoding="utf-8"))
-                auto_layout_splits = int(payload.get("summary", {}).get("auto_layout_splits", 0))
-            except (OSError, TypeError, ValueError, json.JSONDecodeError):
+                audit = AuditReport.model_validate_json(
+                    Path(record.audit_json_path).read_text(encoding="utf-8")
+                )
+                auto_layout_splits = audit.summary.auto_layout_splits
+                result_summary = _job_result_summary(audit)
+            except (OSError, UnicodeError, ValidationError):
                 auto_layout_splits = 0
-        return {
-            "job_id": record.id,
-            "document_id": record.document_id,
-            "analysis_id": record.analysis_id,
-            "spec_id": record.spec_id,
-            "status": record.status,
-            "progress": record.progress,
-            "auto_layout_splits": auto_layout_splits,
-            "output_document_url": (f"/api/v1/jobs/{record.id}/output" if completed else None),
-            "audit_json_url": (
+        return JobResponse(
+            job_id=record.id,
+            document_id=record.document_id,
+            analysis_id=record.analysis_id,
+            spec_id=record.spec_id,
+            status=JobStatus(record.status),
+            progress=record.progress,
+            auto_layout_splits=auto_layout_splits,
+            result_summary=result_summary,
+            output_document_url=f"/api/v1/jobs/{record.id}/output" if completed else None,
+            audit_json_url=(
                 f"/api/v1/jobs/{record.id}/audit.json" if record.audit_json_path else None
             ),
-            "audit_markdown_url": (
+            audit_markdown_url=(
                 f"/api/v1/jobs/{record.id}/audit.md" if record.audit_markdown_path else None
             ),
-            "error_code": record.error_code,
-            "error_message": record.error_message,
-            "created_at": record.created_at.isoformat(),
-            "updated_at": record.updated_at.isoformat(),
-        }
+            error_code=record.error_code,
+            error_message=record.error_message,
+            created_at=record.created_at,
+            updated_at=record.updated_at,
+        )
 
     def run_job(self, job_id: str) -> None:
         try:
@@ -604,6 +611,47 @@ def _summary(result: AnalysisResult) -> AnalysisSummary:
         model_provider=previous.model_provider,
         model_name=previous.model_name,
     )
+
+
+def _job_result_summary(audit: AuditReport) -> JobResultSummary:
+    categories = Counter(
+        _change_category(mutation.property_path)
+        for mutation in audit.mutations
+        if mutation.status == "changed"
+    )
+    return JobResultSummary(
+        validation_passed=audit.validation.valid,
+        content_integrity_passed=not any(
+            issue.code in CONTENT_INTEGRITY_CODES for issue in audit.validation.issues
+        ),
+        format_operations=audit.summary.format_operations,
+        changed_mutations=audit.summary.changed_mutations,
+        change_categories=dict(sorted(categories.items())),
+        warning_count=len(audit.warnings),
+        validation_issue_count=len(audit.validation.issues),
+        remaining_review_items=audit.summary.unknown_blocks,
+        paragraphs_before=audit.summary.paragraphs_before,
+        paragraphs_after=audit.summary.paragraphs_after,
+        auto_layout_splits=audit.summary.auto_layout_splits,
+    )
+
+
+def _change_category(property_path: str) -> str:
+    if property_path == "paragraph.structure":
+        return "structure"
+    if property_path.startswith("section."):
+        return "page_layout"
+    if property_path.startswith(("styles.", "paragraph.")):
+        return "paragraph_styles"
+    if property_path.startswith("runs."):
+        return "text_font"
+    if property_path.startswith(("table.", "cell.")):
+        return "tables"
+    if property_path.startswith(("header.", "footer.")):
+        return "header_footer"
+    if property_path.startswith("visual_cleanup."):
+        return "visual_cleanup"
+    return "other"
 
 
 def _display_filename(filename: str) -> str:

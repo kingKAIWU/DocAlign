@@ -3,8 +3,9 @@
 import { ChangeEvent, DragEvent, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 
+import { JobOutcomeSummary } from "@/components/job-outcome-summary";
 import { api, ApiError, API_BASE, apiUrl } from "@/lib/api";
-import { errorLabels, roleLabels, roles } from "@/lib/messages";
+import { errorLabels, jobStatusLabels, roleLabels, roles } from "@/lib/messages";
 import type {
   Analysis,
   Capabilities,
@@ -100,6 +101,7 @@ export function Workspace() {
   const [plainText, setPlainText] = useState("");
   const [plainFilename, setPlainFilename] = useState("未命名文档.docx");
   const previewRef = useRef<HTMLDivElement>(null);
+  const structurePanelRef = useRef<HTMLElement>(null);
   const pollAbortRef = useRef<AbortController | null>(null);
   const previewPath =
     job?.status === "completed" && job.output_document_url
@@ -698,7 +700,7 @@ export function Workspace() {
       </section>
 
       <section className="workspace-grid">
-        <aside className="panel structure-panel">
+        <aside className="panel structure-panel" ref={structurePanelRef}>
           <PanelHeading
             title="文档结构"
             meta={analysis
@@ -797,17 +799,26 @@ export function Workspace() {
           {job && (
             <div className={`job-card ${job.status}`}>
               <div>
-                <strong>{job.status === "completed" ? "输出已生成" : `任务 ${job.status}`}</strong>
+                <strong>{job.status === "completed" ? "输出已生成" : jobStatusLabels[job.status]}</strong>
                 <span>{job.progress}%</span>
               </div>
               <div className="progress"><i style={{ width: `${job.progress}%` }} /></div>
               {job.status === "completed" && (
                 <>
-                  <p>
-                    源文件未修改；{job.auto_layout_splits > 0
-                      ? `已安全重构 ${job.auto_layout_splits} 处连续正文。`
-                      : "未发现需要拆分的连续正文。"}
-                  </p>
+                  <JobOutcomeSummary
+                    job={job}
+                    onReview={analysis && unknownCount > 0
+                      ? () => {
+                          setShowOnlyUncertain(true);
+                          window.requestAnimationFrame(() => {
+                            structurePanelRef.current?.scrollIntoView({
+                              behavior: "smooth",
+                              block: "start",
+                            });
+                          });
+                        }
+                      : undefined}
+                  />
                   <div className="download-row">
                     <a className="button primary" href={apiUrl(job.output_document_url)} download>下载格式化 DOCX</a>
                     <a className="text-link" href={apiUrl(job.audit_json_url)}>查看审计</a>

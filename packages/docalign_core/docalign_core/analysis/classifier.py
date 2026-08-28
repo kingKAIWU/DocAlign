@@ -363,13 +363,7 @@ def build_analysis_summary(
     role_counts = Counter(
         block.detected_role.value for block in document_ir.blocks if isinstance(block, ParagraphIR)
     )
-    reviewable_unknown_count = sum(
-        1
-        for block in document_ir.blocks
-        if isinstance(block, ParagraphIR)
-        and block.detected_role == SemanticRole.UNKNOWN
-        and (not block.is_empty or block.contains_drawing)
-    )
+    reviewable_unknown_count = count_reviewable_unknowns(document_ir)
     return AnalysisSummary(
         paragraph_count=document_ir.metadata.paragraph_count,
         table_count=document_ir.metadata.table_count,
@@ -383,6 +377,16 @@ def build_analysis_summary(
         model_reviewed_paragraphs=model_reviewed_paragraphs,
         model_provider=model_provider,
         model_name=model_name,
+    )
+
+
+def count_reviewable_unknowns(document_ir: DocumentIR) -> int:
+    return sum(
+        1
+        for block in document_ir.blocks
+        if isinstance(block, ParagraphIR)
+        and block.detected_role == SemanticRole.UNKNOWN
+        and (not block.is_empty or block.contains_drawing)
     )
 
 

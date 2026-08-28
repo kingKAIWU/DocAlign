@@ -1,4 +1,15 @@
-import type { SemanticRole } from "./types";
+import type { Job, SemanticRole } from "./types";
+
+export const jobStatusLabels: Record<Job["status"], string> = {
+  queued: "等待处理",
+  analyzing: "正在分析",
+  planning: "正在生成排版计划",
+  formatting: "正在应用格式",
+  validating: "正在验证",
+  repairing: "正在自动修复",
+  completed: "已完成",
+  failed: "失败",
+};
 
 export const roleLabels: Record<SemanticRole, string> = {
   cover: "封面",

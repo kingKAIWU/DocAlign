@@ -80,20 +80,9 @@ export type Capabilities = {
   local_only: boolean;
 };
 
-export type Job = {
-  job_id: string;
-  document_id: string;
-  analysis_id: string;
-  spec_id: string;
-  status: string;
-  progress: number;
-  auto_layout_splits: number;
-  output_document_url: string | null;
-  audit_json_url: string | null;
-  audit_markdown_url: string | null;
-  error_code: string | null;
-  error_message: string | null;
-};
+export type Job = components["schemas"]["JobResponse"];
+
+export type JobResultSummary = components["schemas"]["JobResultSummary"];
 
 export type FormattingSpec = components["schemas"]["FormattingSpec"];
 

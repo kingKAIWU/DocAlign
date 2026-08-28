@@ -700,6 +700,75 @@ export interface components {
             /** Spec Id */
             spec_id: string;
         };
+        /** JobResponse */
+        JobResponse: {
+            /** Job Id */
+            job_id: string;
+            /** Document Id */
+            document_id: string;
+            /** Analysis Id */
+            analysis_id: string;
+            /** Spec Id */
+            spec_id: string;
+            status: components["schemas"]["JobStatus"];
+            /** Progress */
+            progress: number;
+            /** Auto Layout Splits */
+            auto_layout_splits: number;
+            result_summary: components["schemas"]["JobResultSummary"] | null;
+            /** Output Document Url */
+            output_document_url: string | null;
+            /** Audit Json Url */
+            audit_json_url: string | null;
+            /** Audit Markdown Url */
+            audit_markdown_url: string | null;
+            /** Error Code */
+            error_code: string | null;
+            /** Error Message */
+            error_message: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** JobResultSummary */
+        JobResultSummary: {
+            /** Validation Passed */
+            validation_passed: boolean;
+            /** Content Integrity Passed */
+            content_integrity_passed: boolean;
+            /** Format Operations */
+            format_operations: number;
+            /** Changed Mutations */
+            changed_mutations: number;
+            /** Change Categories */
+            change_categories: {
+                [key: string]: number;
+            };
+            /** Warning Count */
+            warning_count: number;
+            /** Validation Issue Count */
+            validation_issue_count: number;
+            /** Remaining Review Items */
+            remaining_review_items: number;
+            /** Paragraphs Before */
+            paragraphs_before: number | null;
+            /** Paragraphs After */
+            paragraphs_after: number | null;
+            /** Auto Layout Splits */
+            auto_layout_splits: number;
+        };
+        /**
+         * JobStatus
+         * @enum {string}
+         */
+        JobStatus: "queued" | "analyzing" | "planning" | "formatting" | "validating" | "repairing" | "completed" | "failed";
         /**
          * LineSpacingMode
          * @enum {string}
@@ -1623,9 +1692,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["JobResponse"];
                 };
             };
             /** @description Validation Error */
@@ -1691,9 +1758,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["JobResponse"];
                 };
             };
             /** @description Validation Error */

@@ -28,6 +28,7 @@ from apps.api.schemas import (
     CompileSpecRequest,
     ComplianceRequest,
     JobCreateRequest,
+    JobResponse,
     RoleOverrideRequest,
     StructuredSpecRequest,
     TextDocumentRequest,
@@ -224,7 +225,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return {"spec_id": spec_id, "spec": spec.model_dump(mode="json")}
 
     @application.post("/api/v1/jobs", status_code=202)
-    async def create_job(request: JobCreateRequest) -> dict[str, object]:
+    async def create_job(request: JobCreateRequest) -> JobResponse:
         record = service.create_job(request.document_id, request.analysis_id, request.spec_id)
         await runner.enqueue(record.id)
         return service.job_payload(record)
@@ -238,7 +239,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         )
 
     @application.get("/api/v1/jobs/{job_id}")
-    def get_job(job_id: str) -> dict[str, object]:
+    def get_job(job_id: str) -> JobResponse:
         return service.job_payload(service.get_job(job_id))
 
     @application.get("/api/v1/jobs/{job_id}/output")

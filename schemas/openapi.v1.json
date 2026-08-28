@@ -713,9 +713,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "type": "object",
-                  "title": "Response Create Job Api V1 Jobs Post"
+                  "$ref": "#/components/schemas/JobResponse"
                 }
               }
             }
@@ -803,9 +801,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "additionalProperties": true,
-                  "title": "Response Get Job Api V1 Jobs  Job Id  Get"
+                  "$ref": "#/components/schemas/JobResponse"
                 }
               }
             }
@@ -1663,6 +1659,238 @@
           "spec_id"
         ],
         "title": "JobCreateRequest"
+      },
+      "JobResponse": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "title": "Job Id"
+          },
+          "document_id": {
+            "type": "string",
+            "title": "Document Id"
+          },
+          "analysis_id": {
+            "type": "string",
+            "title": "Analysis Id"
+          },
+          "spec_id": {
+            "type": "string",
+            "title": "Spec Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/JobStatus"
+          },
+          "progress": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Progress"
+          },
+          "auto_layout_splits": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Auto Layout Splits"
+          },
+          "result_summary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JobResultSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "output_document_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output Document Url"
+          },
+          "audit_json_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Audit Json Url"
+          },
+          "audit_markdown_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Audit Markdown Url"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "job_id",
+          "document_id",
+          "analysis_id",
+          "spec_id",
+          "status",
+          "progress",
+          "auto_layout_splits",
+          "result_summary",
+          "output_document_url",
+          "audit_json_url",
+          "audit_markdown_url",
+          "error_code",
+          "error_message",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "JobResponse"
+      },
+      "JobResultSummary": {
+        "properties": {
+          "validation_passed": {
+            "type": "boolean",
+            "title": "Validation Passed"
+          },
+          "content_integrity_passed": {
+            "type": "boolean",
+            "title": "Content Integrity Passed"
+          },
+          "format_operations": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Format Operations"
+          },
+          "changed_mutations": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Changed Mutations"
+          },
+          "change_categories": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Change Categories"
+          },
+          "warning_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Warning Count"
+          },
+          "validation_issue_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Validation Issue Count"
+          },
+          "remaining_review_items": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Remaining Review Items"
+          },
+          "paragraphs_before": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Paragraphs Before"
+          },
+          "paragraphs_after": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Paragraphs After"
+          },
+          "auto_layout_splits": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Auto Layout Splits"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "validation_passed",
+          "content_integrity_passed",
+          "format_operations",
+          "changed_mutations",
+          "change_categories",
+          "warning_count",
+          "validation_issue_count",
+          "remaining_review_items",
+          "paragraphs_before",
+          "paragraphs_after",
+          "auto_layout_splits"
+        ],
+        "title": "JobResultSummary"
+      },
+      "JobStatus": {
+        "type": "string",
+        "enum": [
+          "queued",
+          "analyzing",
+          "planning",
+          "formatting",
+          "validating",
+          "repairing",
+          "completed",
+          "failed"
+        ],
+        "title": "JobStatus"
       },
       "LineSpacingMode": {
         "type": "string",

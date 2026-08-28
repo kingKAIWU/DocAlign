@@ -9,6 +9,14 @@ from docalign_core.domain.base import StrictModel
 from docalign_core.domain.enums import SemanticRole, Severity
 from docalign_core.domain.formatting_spec import SpecSource
 
+CONTENT_INTEGRITY_CODES = frozenset(
+    {
+        "CONTENT_INTEGRITY_FAILED",
+        "DOCUMENT_STRUCTURE_MISMATCH",
+        "PROTECTED_PACKAGE_PART_CHANGED",
+    }
+)
+
 
 class OperationType(StrEnum):
     SPLIT_BODY_PARAGRAPH = "split_body_paragraph"
