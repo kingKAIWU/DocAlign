@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   createFromText: vi.fn(),
   createSpec: vi.fn(),
   compileSpec: vi.fn(),
+  templateCandidate: vi.fn(),
   compliance: vi.fn(),
 }));
 
@@ -32,6 +33,7 @@ vi.mock("@/lib/api", () => ({
     overrideRoles: vi.fn(),
     createSpec: mocks.createSpec,
     compileSpec: mocks.compileSpec,
+    templateCandidate: mocks.templateCandidate,
     compliance: mocks.compliance,
     createJob: vi.fn(),
     job: mocks.job,
@@ -56,6 +58,7 @@ describe("Workspace", () => {
       default_cleanup_preset: true,
       audit_only: true,
       format_manifest: true,
+      template_rule_candidate: true,
       max_upload_mb: 20,
       local_only: true,
     });
@@ -116,6 +119,63 @@ describe("Workspace", () => {
     fireEvent.click(screen.getByRole("tab", { name: "自然语言编译" }));
     expect(screen.getByText("兼容模型未配置；默认整理模式仍可直接使用。")).toBeInTheDocument();
     expect(screen.getByText("本地处理")).toBeInTheDocument();
+  });
+
+  it("extracts a reference template and waits for explicit confirmation", async () => {
+    mocks.templateCandidate.mockResolvedValue({
+      schema_version: "template-rule-candidate.v1",
+      source_filename: "已确认样例.docx",
+      source_sha256: "1234567890abcdef",
+      safe_to_apply: true,
+      spec: {
+        schema_version: "formatting-spec.v1",
+        roles: {
+          body: { font: { east_asia: "仿宋", size_pt: 12 } },
+        },
+        auto_layout: { enabled: false },
+        source: {
+          type: "template",
+          reference_filename: "已确认样例.docx",
+        },
+      },
+      summary: {
+        source_requirement_count: 12,
+        auto_applicable_requirement_count: 10,
+        applied_requirement_count: 8,
+        mapped_role_count: 1,
+        coverage_percent: 80,
+      },
+      role_mappings: [
+        {
+          role: "body",
+          source_style_name: "正文",
+          paragraph_count: 3,
+          confidence: 1,
+          included_properties: ["font.east_asia", "font.size_pt"],
+        },
+      ],
+      applied_requirement_ids: ["R0001"],
+      ambiguities: ["页眉未自动复制。"],
+      unsupported_features: [],
+      warnings: [],
+    });
+
+    render(<Workspace />);
+    fireEvent.click(screen.getByRole("tab", { name: "参考样例提取" }));
+    const input = screen.getByLabelText("上传合格 Word 样例");
+    fireEvent.change(input, {
+      target: {
+        files: [new File(["reference"], "已确认样例.docx", { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" })],
+      },
+    });
+
+    expect(await screen.findByText("已确认样例.docx")).toBeInTheDocument();
+    const editor = screen.getByLabelText("结构化规则") as HTMLTextAreaElement;
+    expect(editor.value).not.toContain('"type": "template"');
+
+    fireEvent.click(screen.getByRole("button", { name: "确认采用候选规则" }));
+    expect(editor.value).toContain('"type": "template"');
+    expect(screen.getByRole("status")).toHaveTextContent("已采用“已确认样例.docx”");
   });
 
   it("clears a stale connection error after a successful retry", async () => {

@@ -8,13 +8,15 @@ DocAlign 是一个本地优先、确定性执行的 DOCX 自动排版与格式�
 
 ## 核心能力
 
-### 两种并列的整理模式
+### 三种并列的整理模式
 
 - **默认整理模式**：无需模型，按文档类型选择常规文档、紧凑信息、合同条款或宽表优先方案。
 - 每个整理方案都携带版本、维护方、复核日期、能力覆盖和明确限制；当前内置方案均标记为
   “通用方案 · 非机构合规”。
 - **自然语言编译模式**：把“正文宋体小四、标题黑体、清除所有背景”等要求编译为
   `FormattingSpec v1`，并展示已映射能力、假设、歧义和暂不支持项。
+- **参考样例提取模式**：独立上传一份确认合格的 DOCX，仅把一致页面参数和可稳定映射的已使用
+  样式转换为候选规则；展示覆盖、歧义和未复制内容，经用户明确确认后才采用。
 - 用户规则始终优先于预设规则；高级用户也可以直接编辑 JSON/YAML 规则。
 
 ### 自动结构排版
@@ -123,7 +125,7 @@ macOS 的完整安装、启动和恢复说明见 [docs/MACOS.md](docs/MACOS.md)�
 1. 上传 `.docx`，或者粘贴纯文本创建 Word 草稿。
 2. 运行确定性结构分析；需要时再主动启用智能分析。
 3. 检查并修正段落角色。
-4. 选择默认整理方案，或使用自然语言编译格式要求。
+4. 选择默认整理方案、使用自然语言编译格式要求，或从确认合格的 Word 样例提取候选规则。
 5. 先运行“只做格式体检”，查看带位置编号的问题；也可以直接开始自动排版。
 6. 阅读验证与改动摘要，处理剩余待确认段落，再下载 DOCX、JSON/Markdown 审计或格式画像。
 
@@ -165,6 +167,7 @@ uv run docalign spec compile \
 | `POST /api/v1/documents/{id}/analyze` | 确定性或智能结构分析 |
 | `PUT /api/v1/analyses/{id}/role-overrides` | 人工修正语义角色 |
 | `POST /api/v1/specs/compile` | 编译自然语言格式规则 |
+| `POST /api/v1/templates/candidate` | 临时解析合格 DOCX 并生成待确认候选规则 |
 | `POST /api/v1/documents/{id}/compliance` | 只读格式体检 |
 | `GET /api/v1/documents/{id}/format-manifest` | 导出格式画像 JSON |
 | `POST /api/v1/jobs` | 创建格式化任务 |
@@ -181,6 +184,7 @@ uv run docalign spec compile \
 - `audit-report.v1.schema.json`
 - `compliance-report.v1.schema.json`
 - `format-manifest.v1.schema.json`
+- `template-rule-candidate.v1.schema.json`
 
 ## 质量门与回归
 

@@ -144,6 +144,44 @@
         }
       }
     },
+    "/api/v1/templates/candidate": {
+      "post": {
+        "summary": "Create Template Candidate",
+        "operationId": "create_template_candidate_api_v1_templates_candidate_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_create_template_candidate_api_v1_templates_candidate_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateRuleCandidate"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/documents/from-text": {
       "post": {
         "summary": "Create Document From Text",
@@ -996,6 +1034,20 @@
         "type": "object",
         "title": "AutoLayoutSpec",
         "description": "Deterministic structural layout applied before role-based formatting.\n\nStructural edits are deliberately conservative: only plain body paragraphs may be split,\nand every split is followed by a fresh local role analysis and content-integrity check."
+      },
+      "Body_create_template_candidate_api_v1_templates_candidate_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_create_template_candidate_api_v1_templates_candidate_post"
       },
       "Body_upload_document_api_v1_documents_post": {
         "properties": {
@@ -2003,6 +2055,17 @@
             "type": "string",
             "title": "Target"
           },
+          "target_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Label"
+          },
           "property_path": {
             "type": "string",
             "title": "Property Path"
@@ -2625,6 +2688,28 @@
             ],
             "title": "Model"
           },
+          "reference_filename": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference Filename"
+          },
+          "reference_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference Sha256"
+          },
           "assumptions": {
             "items": {
               "type": "string"
@@ -2643,6 +2728,7 @@
           "system",
           "preset",
           "natural_language",
+          "template",
           "structured",
           "merged"
         ],
@@ -2788,6 +2874,157 @@
           "fixed"
         ],
         "title": "TableWidthPolicy"
+      },
+      "TemplateCandidateSummary": {
+        "properties": {
+          "source_requirement_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Source Requirement Count"
+          },
+          "auto_applicable_requirement_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Auto Applicable Requirement Count"
+          },
+          "applied_requirement_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Applied Requirement Count"
+          },
+          "mapped_role_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Mapped Role Count"
+          },
+          "coverage_percent": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Coverage Percent"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source_requirement_count",
+          "auto_applicable_requirement_count",
+          "applied_requirement_count",
+          "mapped_role_count",
+          "coverage_percent"
+        ],
+        "title": "TemplateCandidateSummary"
+      },
+      "TemplateRoleMapping": {
+        "properties": {
+          "role": {
+            "$ref": "#/components/schemas/SemanticRole"
+          },
+          "source_style_name": {
+            "type": "string",
+            "title": "Source Style Name"
+          },
+          "paragraph_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Paragraph Count"
+          },
+          "confidence": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence"
+          },
+          "included_properties": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Included Properties"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "role",
+          "source_style_name",
+          "paragraph_count",
+          "confidence"
+        ],
+        "title": "TemplateRoleMapping"
+      },
+      "TemplateRuleCandidate": {
+        "properties": {
+          "schema_version": {
+            "type": "string",
+            "const": "template-rule-candidate.v1",
+            "title": "Schema Version",
+            "default": "template-rule-candidate.v1"
+          },
+          "source_filename": {
+            "type": "string",
+            "title": "Source Filename"
+          },
+          "source_sha256": {
+            "type": "string",
+            "title": "Source Sha256"
+          },
+          "safe_to_apply": {
+            "type": "boolean",
+            "title": "Safe To Apply"
+          },
+          "spec": {
+            "$ref": "#/components/schemas/FormattingSpec"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/TemplateCandidateSummary"
+          },
+          "role_mappings": {
+            "items": {
+              "$ref": "#/components/schemas/TemplateRoleMapping"
+            },
+            "type": "array",
+            "title": "Role Mappings"
+          },
+          "applied_requirement_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Applied Requirement Ids"
+          },
+          "ambiguities": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Ambiguities"
+          },
+          "unsupported_features": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Unsupported Features"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source_filename",
+          "source_sha256",
+          "safe_to_apply",
+          "spec",
+          "summary"
+        ],
+        "title": "TemplateRuleCandidate"
       },
       "TextDocumentRequest": {
         "properties": {

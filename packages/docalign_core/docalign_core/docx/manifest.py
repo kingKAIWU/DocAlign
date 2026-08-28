@@ -39,6 +39,7 @@ def extract_format_manifest(
     def add(
         category: ManifestCategory,
         target: str,
+        target_label: str | None,
         property_path: str,
         expected: object,
         source_part: str,
@@ -52,6 +53,7 @@ def extract_format_manifest(
                 requirement_id=f"R{len(requirements) + 1:04d}",
                 category=category,
                 target=target,
+                target_label=target_label,
                 property_path=property_path,
                 expected=expected,
                 source_part=source_part,
@@ -81,6 +83,7 @@ def extract_format_manifest(
                     add(
                         "style",
                         target,
+                        style_name,
                         key,
                         value,
                         "word/styles.xml",
@@ -99,6 +102,7 @@ def extract_format_manifest(
                     add(
                         "section",
                         f"s{section_index}",
+                        f"section {section_index}",
                         key,
                         value,
                         "word/document.xml",
@@ -115,6 +119,7 @@ def extract_format_manifest(
                     add(
                         "table",
                         f"t{table_index}",
+                        f"table {table_index}",
                         key,
                         value,
                         "word/document.xml",
@@ -138,6 +143,7 @@ def extract_format_manifest(
                     add(
                         "numbering",
                         f"numbering-level:{level_index}",
+                        f"numbering level {level_index}",
                         key,
                         value,
                         "word/numbering.xml",
@@ -163,6 +169,7 @@ def extract_format_manifest(
                     add(
                         "header_footer",
                         f"{part_name}:p{paragraph_index}",
+                        f"{part_name} paragraph {paragraph_index}",
                         key,
                         value,
                         part_name,

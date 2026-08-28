@@ -7,6 +7,7 @@ import type {
   FormattingSpec,
   Job,
   SemanticRole,
+  TemplateRuleCandidate,
 } from "./types";
 
 export const API_BASE =
@@ -59,6 +60,11 @@ export const api = {
     const body = new FormData();
     body.append("file", file);
     return request<DocumentRecord>("/documents", { method: "POST", body });
+  },
+  templateCandidate: (file: File) => {
+    const body = new FormData();
+    body.append("file", file);
+    return request<TemplateRuleCandidate>("/templates/candidate", { method: "POST", body });
   },
   createFromText: (text: string, filename: string) =>
     request<DocumentRecord>("/documents/from-text", {

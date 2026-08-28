@@ -38,10 +38,27 @@ test("keeps advanced rules reachable in short desktop and mobile layouts", async
     .toBe("visible");
 });
 
+test("extracts candidate rules from a reference Word without replacing the workspace document", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("radio", { name: /常规文档/ })).toBeVisible({ timeout: 10_000 });
+
+  await page.getByRole("tab", { name: "参考样例提取" }).click();
+  await page.getByLabel("上传合格 Word 样例").setInputFiles(fixture);
+  await expect(page.getByText(/候选规则已提取：映射/)).toBeVisible();
+  await expect(page.getByLabel("样例候选规则摘要")).toBeVisible();
+  await expect(page.getByRole("button", { name: "分析结构" })).toBeDisabled();
+
+  const editor = page.getByLabel("结构化规则");
+  await expect(editor).not.toHaveValue(/"type": "template"/);
+  await page.getByRole("button", { name: "确认采用候选规则" }).click();
+  await expect(page.getByText(/已采用“academic-comprehensive.docx”生成的候选规则/)).toBeVisible();
+  await expect(editor).toHaveValue(/"type": "template"/);
+});
+
 test("completes the local structured formatting workflow and restores it", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "先理解文档，再智能排版" })).toBeVisible();
-  await page.locator('input[type="file"]').setInputFiles(fixture);
+  await page.getByLabel("上传待处理 Word 文档").setInputFiles(fixture);
   await expect(page.getByText("文档已安全上传，可以开始结构分析。未修改源文件。")).toBeVisible();
 
   await page.getByRole("button", { name: "分析结构" }).click();

@@ -106,6 +106,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/templates/candidate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Template Candidate */
+        post: operations["create_template_candidate_api_v1_templates_candidate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/documents/from-text": {
         parameters: {
             query?: never;
@@ -449,6 +466,11 @@ export interface components {
              * @default 480
              */
             max_body_chars: number;
+        };
+        /** Body_create_template_candidate_api_v1_templates_candidate_post */
+        Body_create_template_candidate_api_v1_templates_candidate_post: {
+            /** File */
+            file: string;
         };
         /** Body_upload_document_api_v1_documents_post */
         Body_upload_document_api_v1_documents_post: {
@@ -809,6 +831,8 @@ export interface components {
             category: "style" | "section" | "table" | "numbering" | "header_footer";
             /** Target */
             target: string;
+            /** Target Label */
+            target_label?: string | null;
             /** Property Path */
             property_path: string;
             /** Expected */
@@ -989,6 +1013,10 @@ export interface components {
             provider?: string | null;
             /** Model */
             model?: string | null;
+            /** Reference Filename */
+            reference_filename?: string | null;
+            /** Reference Sha256 */
+            reference_sha256?: string | null;
             /** Assumptions */
             assumptions?: string[];
         };
@@ -996,7 +1024,7 @@ export interface components {
          * SpecSourceType
          * @enum {string}
          */
-        SpecSourceType: "system" | "preset" | "natural_language" | "structured" | "merged";
+        SpecSourceType: "system" | "preset" | "natural_language" | "template" | "structured" | "merged";
         /** StructuredSpecRequest */
         StructuredSpecRequest: {
             /** Document Id */
@@ -1055,6 +1083,58 @@ export interface components {
          * @enum {string}
          */
         TableWidthPolicy: "preserve" | "fit_printable_width" | "fixed";
+        /** TemplateCandidateSummary */
+        TemplateCandidateSummary: {
+            /** Source Requirement Count */
+            source_requirement_count: number;
+            /** Auto Applicable Requirement Count */
+            auto_applicable_requirement_count: number;
+            /** Applied Requirement Count */
+            applied_requirement_count: number;
+            /** Mapped Role Count */
+            mapped_role_count: number;
+            /** Coverage Percent */
+            coverage_percent: number;
+        };
+        /** TemplateRoleMapping */
+        TemplateRoleMapping: {
+            role: components["schemas"]["SemanticRole"];
+            /** Source Style Name */
+            source_style_name: string;
+            /** Paragraph Count */
+            paragraph_count: number;
+            /** Confidence */
+            confidence: number;
+            /** Included Properties */
+            included_properties?: string[];
+        };
+        /** TemplateRuleCandidate */
+        TemplateRuleCandidate: {
+            /**
+             * Schema Version
+             * @default template-rule-candidate.v1
+             * @constant
+             */
+            schema_version: "template-rule-candidate.v1";
+            /** Source Filename */
+            source_filename: string;
+            /** Source Sha256 */
+            source_sha256: string;
+            /** Safe To Apply */
+            safe_to_apply: boolean;
+            spec: components["schemas"]["FormattingSpec"];
+            summary: components["schemas"]["TemplateCandidateSummary"];
+            /** Role Mappings */
+            role_mappings?: components["schemas"]["TemplateRoleMapping"][];
+            /** Applied Requirement Ids */
+            applied_requirement_ids?: string[];
+            /** Ambiguities */
+            ambiguities?: string[];
+            /** Unsupported Features */
+            unsupported_features?: string[];
+            /** Warnings */
+            warnings?: string[];
+        };
         /** TextDocumentRequest */
         TextDocumentRequest: {
             /** Text */
@@ -1270,6 +1350,39 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_template_candidate_api_v1_templates_candidate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_create_template_candidate_api_v1_templates_candidate_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateRuleCandidate"];
                 };
             };
             /** @description Validation Error */

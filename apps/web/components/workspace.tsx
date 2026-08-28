@@ -16,6 +16,7 @@ import type {
   Job,
   ParagraphBlock,
   SemanticRole,
+  TemplateRuleCandidate,
 } from "@/lib/types";
 
 const WORKSPACE_STORAGE_KEY = "docalign.workspace.v1";
@@ -73,7 +74,7 @@ export function Workspace() {
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [overrides, setOverrides] = useState<Record<string, SemanticRole>>({});
   const [instruction, setInstruction] = useState("");
-  const [ruleMode, setRuleMode] = useState<"default" | "natural-language">("default");
+  const [ruleMode, setRuleMode] = useState<"default" | "natural-language" | "template">("default");
   const [applyPreset, setApplyPreset] = useState(true);
   const [autoLayout, setAutoLayout] = useState(true);
   const [specText, setSpecText] = useState("");
@@ -83,6 +84,7 @@ export function Workspace() {
   const [serviceOnline, setServiceOnline] = useState<boolean | null>(null);
   const [connectionAttempt, setConnectionAttempt] = useState(0);
   const [compilationReport, setCompilationReport] = useState<CompilationReport | null>(null);
+  const [templateCandidate, setTemplateCandidate] = useState<TemplateRuleCandidate | null>(null);
   const [job, setJob] = useState<Job | null>(null);
   const [compliance, setCompliance] = useState<ComplianceReport | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -288,6 +290,9 @@ export function Workspace() {
   );
   const unknownCount = analysis?.summary.unknown_count ?? 0;
   const selectedPreset = presets.find((preset) => preset.preset_id === selectedPresetId);
+  const templateRoleMappings = templateCandidate?.role_mappings ?? [];
+  const templateAmbiguities = templateCandidate?.ambiguities ?? [];
+  const templateUnsupported = templateCandidate?.unsupported_features ?? [];
 
   async function upload(file: File) {
     setBusy("upload");
@@ -413,6 +418,37 @@ export function Workspace() {
     } finally {
       setBusy(null);
     }
+  }
+
+  async function extractTemplateCandidate(file: File) {
+    setBusy("template");
+    clearNotices();
+    try {
+      const candidate = await api.templateCandidate(file);
+      setTemplateCandidate(candidate);
+      setRuleMode("template");
+      setMessage(
+        `候选规则已提取：映射 ${candidate.summary.mapped_role_count} 个文档角色，` +
+        `纳入 ${candidate.summary.applied_requirement_count} 项可靠属性；尚未应用。`,
+      );
+    } catch (caught) {
+      setError(readableError(caught));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  function applyTemplateCandidate() {
+    if (!templateCandidate?.safe_to_apply) return;
+    setSpecText(JSON.stringify(templateCandidate.spec, null, 2));
+    setAutoLayout(templateCandidate.spec.auto_layout?.enabled ?? false);
+    setCompilationReport(null);
+    setCompliance(null);
+    clearNotices();
+    setMessage(
+      `已采用“${templateCandidate.source_filename}”生成的候选规则。` +
+      "你仍可在高级规则中检查或修改，然后再体检或排版。",
+    );
   }
 
   function selectCleanupPreset(preset: CleanupPreset, announce = true) {
@@ -600,7 +636,13 @@ export function Workspace() {
             <div className="upload-actions">
               <label className="button secondary">
                 {busy === "upload" ? "上传中…" : "选择文件"}
-                <input type="file" accept=".docx" onChange={handleFileInput} hidden />
+                <input
+                  type="file"
+                  accept=".docx"
+                  aria-label="上传待处理 Word 文档"
+                  onChange={handleFileInput}
+                  hidden
+                />
               </label>
               {!document && (
                 <button className="remove-document text-import-toggle" onClick={() => setShowTextImport((value) => !value)}>
@@ -842,6 +884,15 @@ export function Workspace() {
               >
                 自然语言编译
               </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={ruleMode === "template"}
+                className={ruleMode === "template" ? "active" : ""}
+                onClick={() => setRuleMode("template")}
+              >
+                参考样例提取
+              </button>
             </div>
             {ruleMode === "default" ? (
               <div className="default-mode-card" role="tabpanel">
@@ -922,7 +973,7 @@ export function Workspace() {
                   重新载入默认规则
                 </button>
               </div>
-            ) : (
+            ) : ruleMode === "natural-language" ? (
               <div role="tabpanel">
                 <label htmlFor="instruction">自然语言要求</label>
                 <textarea
@@ -951,6 +1002,79 @@ export function Workspace() {
                   {busy === "compile" ? "编译中…" : "编译为结构化规则"}
                 </button>
                 {!capabilities?.llm_configured && <p className="helper">兼容模型未配置；默认整理模式仍可直接使用。</p>}
+              </div>
+            ) : (
+              <div className="template-mode-card" role="tabpanel">
+                <strong>从已确认合格的 Word 样例提取</strong>
+                <p>
+                  选择一份排版已经确认正确的 DOCX。系统只生成待确认候选，不会覆盖当前文档，也不会自动复制不确定结构。
+                </p>
+                <label className={`template-upload ${busy === "template" ? "disabled" : ""}`}>
+                  <span>{busy === "template" ? "正在安全提取…" : "选择合格样例 DOCX"}</span>
+                  <input
+                    type="file"
+                    accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    aria-label="上传合格 Word 样例"
+                    disabled={Boolean(busy)}
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (file) void extractTemplateCandidate(file);
+                      event.target.value = "";
+                    }}
+                  />
+                </label>
+                <small className="template-privacy-note">
+                  本地临时解析 · 返回候选后立即清理参考文件 · 不替换当前待处理文档
+                </small>
+                {templateCandidate && (
+                  <div className="template-candidate" aria-label="样例候选规则摘要">
+                    <div className="template-candidate-heading">
+                      <div>
+                        <strong>{templateCandidate.source_filename}</strong>
+                        <small>SHA-256 {templateCandidate.source_sha256.slice(0, 12)}…</small>
+                      </div>
+                      <span>{templateCandidate.summary.coverage_percent}% 可靠属性已映射</span>
+                    </div>
+                    <p>
+                      {templateCandidate.summary.mapped_role_count} 个角色 · {templateCandidate.summary.applied_requirement_count} 项已纳入
+                      · {templateCandidate.summary.auto_applicable_requirement_count} 项可比较属性
+                    </p>
+                    {templateRoleMappings.length > 0 && (
+                      <ul className="template-role-mappings">
+                        {templateRoleMappings.map((mapping) => (
+                          <li key={`${mapping.role}-${mapping.source_style_name}`}>
+                            <strong>{roleLabels[mapping.role]}</strong>
+                            <span>← {mapping.source_style_name}</span>
+                            <small>{mapping.included_properties?.length ?? 0} 项 · {Math.round(mapping.confidence * 100)}%</small>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {(templateAmbiguities.length > 0 || templateUnsupported.length > 0) && (
+                      <details>
+                        <summary>
+                          查看待确认与未自动复制内容（{templateAmbiguities.length + templateUnsupported.length}）
+                        </summary>
+                        <ul>
+                          {[...templateAmbiguities, ...templateUnsupported].map((item) => (
+                            <li key={item}>{item}</li>
+                          ))}
+                        </ul>
+                      </details>
+                    )}
+                    <button
+                      type="button"
+                      className="button primary"
+                      disabled={!templateCandidate.safe_to_apply || Boolean(busy)}
+                      onClick={applyTemplateCandidate}
+                    >
+                      确认采用候选规则
+                    </button>
+                    {!templateCandidate.safe_to_apply && (
+                      <p className="compile-report-warning">没有提取到可安全应用的属性，请换一份样式更明确的参考文档。</p>
+                    )}
+                  </div>
+                )}
               </div>
             )}
             <label className="format-mode-option">
@@ -998,7 +1122,9 @@ export function Workspace() {
           </div>
           <div className="rule-section grow">
             <details className="advanced-rules">
-              <summary>高级规则 JSON · {ruleMode === "default" ? "整理方案" : "自然语言"}</summary>
+              <summary>
+                高级规则 JSON · {ruleMode === "default" ? "整理方案" : ruleMode === "natural-language" ? "自然语言" : "参考样例"}
+              </summary>
               <p className="helper">仅在需要精细控制时编辑；格式错误会在提交前给出明确提示。</p>
               <textarea
                 id="spec-json"

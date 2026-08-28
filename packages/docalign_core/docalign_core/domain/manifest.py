@@ -17,6 +17,7 @@ class ManifestRequirement(StrictModel):
         "header_footer",
     ]
     target: str
+    target_label: str | None = None
     property_path: str
     expected: object
     source_part: str

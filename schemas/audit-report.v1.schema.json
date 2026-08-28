@@ -272,6 +272,30 @@
           "default": null,
           "title": "Model"
         },
+        "reference_filename": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reference Filename"
+        },
+        "reference_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reference Sha256"
+        },
         "assumptions": {
           "items": {
             "type": "string"
@@ -288,6 +312,7 @@
         "system",
         "preset",
         "natural_language",
+        "template",
         "structured",
         "merged"
       ],

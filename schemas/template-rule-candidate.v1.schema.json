@@ -291,6 +291,126 @@
       "title": "FormattingProperty",
       "type": "string"
     },
+    "FormattingSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "formatting-spec.v1",
+          "default": "formatting-spec.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "document": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DocumentFormattingSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "baseline": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RoleFormattingSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "roles": {
+          "additionalProperties": {
+            "$ref": "#/$defs/RoleFormattingSpec"
+          },
+          "propertyNames": {
+            "$ref": "#/$defs/SemanticRole"
+          },
+          "title": "Roles",
+          "type": "object"
+        },
+        "tables": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TableFormattingSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "figures": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FigureFormattingSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "headers": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HeaderFooterFormattingSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "footers": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HeaderFooterFormattingSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "page_numbers": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PageNumberSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "visual_cleanup": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/VisualCleanupSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "auto_layout": {
+          "$ref": "#/$defs/AutoLayoutSpec"
+        },
+        "behavior": {
+          "$ref": "#/$defs/FormattingBehavior"
+        },
+        "source": {
+          "$ref": "#/$defs/SpecSource"
+        }
+      },
+      "title": "FormattingSpec",
+      "type": "object"
+    },
     "HeaderFooterFormattingSpec": {
       "additionalProperties": false,
       "properties": {
@@ -997,6 +1117,84 @@
       "title": "TableWidthPolicy",
       "type": "string"
     },
+    "TemplateCandidateSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "source_requirement_count": {
+          "minimum": 0,
+          "title": "Source Requirement Count",
+          "type": "integer"
+        },
+        "auto_applicable_requirement_count": {
+          "minimum": 0,
+          "title": "Auto Applicable Requirement Count",
+          "type": "integer"
+        },
+        "applied_requirement_count": {
+          "minimum": 0,
+          "title": "Applied Requirement Count",
+          "type": "integer"
+        },
+        "mapped_role_count": {
+          "minimum": 0,
+          "title": "Mapped Role Count",
+          "type": "integer"
+        },
+        "coverage_percent": {
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Coverage Percent",
+          "type": "number"
+        }
+      },
+      "required": [
+        "source_requirement_count",
+        "auto_applicable_requirement_count",
+        "applied_requirement_count",
+        "mapped_role_count",
+        "coverage_percent"
+      ],
+      "title": "TemplateCandidateSummary",
+      "type": "object"
+    },
+    "TemplateRoleMapping": {
+      "additionalProperties": false,
+      "properties": {
+        "role": {
+          "$ref": "#/$defs/SemanticRole"
+        },
+        "source_style_name": {
+          "title": "Source Style Name",
+          "type": "string"
+        },
+        "paragraph_count": {
+          "minimum": 0,
+          "title": "Paragraph Count",
+          "type": "integer"
+        },
+        "confidence": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "included_properties": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Included Properties",
+          "type": "array"
+        }
+      },
+      "required": [
+        "role",
+        "source_style_name",
+        "paragraph_count",
+        "confidence"
+      ],
+      "title": "TemplateRoleMapping",
+      "type": "object"
+    },
     "VisualCleanupSpec": {
       "additionalProperties": false,
       "properties": {
@@ -1045,119 +1243,72 @@
   "additionalProperties": false,
   "properties": {
     "schema_version": {
-      "const": "formatting-spec.v1",
-      "default": "formatting-spec.v1",
+      "const": "template-rule-candidate.v1",
+      "default": "template-rule-candidate.v1",
       "title": "Schema Version",
       "type": "string"
     },
-    "document": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/DocumentFormattingSpec"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null
+    "source_filename": {
+      "title": "Source Filename",
+      "type": "string"
     },
-    "baseline": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/RoleFormattingSpec"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null
+    "source_sha256": {
+      "title": "Source Sha256",
+      "type": "string"
     },
-    "roles": {
-      "additionalProperties": {
-        "$ref": "#/$defs/RoleFormattingSpec"
+    "safe_to_apply": {
+      "title": "Safe To Apply",
+      "type": "boolean"
+    },
+    "spec": {
+      "$ref": "#/$defs/FormattingSpec"
+    },
+    "summary": {
+      "$ref": "#/$defs/TemplateCandidateSummary"
+    },
+    "role_mappings": {
+      "items": {
+        "$ref": "#/$defs/TemplateRoleMapping"
       },
-      "propertyNames": {
-        "$ref": "#/$defs/SemanticRole"
+      "title": "Role Mappings",
+      "type": "array"
+    },
+    "applied_requirement_ids": {
+      "items": {
+        "type": "string"
       },
-      "title": "Roles",
-      "type": "object"
+      "title": "Applied Requirement Ids",
+      "type": "array"
     },
-    "tables": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/TableFormattingSpec"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null
+    "ambiguities": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Ambiguities",
+      "type": "array"
     },
-    "figures": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/FigureFormattingSpec"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null
+    "unsupported_features": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Unsupported Features",
+      "type": "array"
     },
-    "headers": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/HeaderFooterFormattingSpec"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null
-    },
-    "footers": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/HeaderFooterFormattingSpec"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null
-    },
-    "page_numbers": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/PageNumberSpec"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null
-    },
-    "visual_cleanup": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/VisualCleanupSpec"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null
-    },
-    "auto_layout": {
-      "$ref": "#/$defs/AutoLayoutSpec"
-    },
-    "behavior": {
-      "$ref": "#/$defs/FormattingBehavior"
-    },
-    "source": {
-      "$ref": "#/$defs/SpecSource"
+    "warnings": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Warnings",
+      "type": "array"
     }
   },
-  "title": "FormattingSpec",
+  "required": [
+    "source_filename",
+    "source_sha256",
+    "safe_to_apply",
+    "spec",
+    "summary"
+  ],
+  "title": "TemplateRuleCandidate",
   "type": "object"
 }

@@ -14,6 +14,7 @@ from docalign_core.domain.formatting_spec import (
     default_cleanup_spec,
 )
 from docalign_core.domain.manifest import FormatManifest
+from docalign_core.domain.template_candidate import TemplateRuleCandidate
 from fastapi import FastAPI, Request, UploadFile
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
@@ -109,6 +110,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "default_cleanup_preset": True,
             "audit_only": True,
             "format_manifest": True,
+            "template_rule_candidate": True,
             "max_upload_mb": settings.max_upload_mb,
             "local_only": True,
         }
@@ -134,6 +136,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @application.post("/api/v1/documents", status_code=201)
     async def upload_document(file: UploadFile) -> dict[str, object]:
         return await service.create_document(file)
+
+    @application.post("/api/v1/templates/candidate")
+    async def create_template_candidate(file: UploadFile) -> TemplateRuleCandidate:
+        return await service.compile_template_candidate(file)
 
     @application.post("/api/v1/documents/from-text", status_code=201)
     def create_document_from_text(request: TextDocumentRequest) -> dict[str, object]:

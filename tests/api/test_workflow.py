@@ -42,6 +42,26 @@ def test_complete_structured_api_workflow(academic_docx: Path, tmp_path: Path) -
         assert capabilities["auto_layout"] is True
         assert capabilities["audit_only"] is True
         assert capabilities["format_manifest"] is True
+        assert capabilities["template_rule_candidate"] is True
+
+        with academic_docx.open("rb") as reference:
+            template_candidate = client.post(
+                "/api/v1/templates/candidate",
+                files={
+                    "file": (
+                        "approved-reference.docx",
+                        reference,
+                        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    )
+                },
+            )
+        assert template_candidate.status_code == 200, template_candidate.text
+        candidate_payload = template_candidate.json()
+        assert candidate_payload["schema_version"] == "template-rule-candidate.v1"
+        assert candidate_payload["source_filename"] == "approved-reference.docx"
+        assert candidate_payload["spec"]["source"]["type"] == "template"
+        assert candidate_payload["warnings"]
+        assert not list((data_dir / "uploads").glob("template_*"))
 
         with academic_docx.open("rb") as source:
             upload = client.post(

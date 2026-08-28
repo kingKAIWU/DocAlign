@@ -48,6 +48,18 @@
           "title": "Target",
           "type": "string"
         },
+        "target_label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Target Label"
+        },
         "property_path": {
           "title": "Property Path",
           "type": "string"

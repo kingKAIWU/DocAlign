@@ -66,6 +66,7 @@ class SpecSourceType(StrEnum):
     SYSTEM = "system"
     PRESET = "preset"
     NATURAL_LANGUAGE = "natural_language"
+    TEMPLATE = "template"
     STRUCTURED = "structured"
     MERGED = "merged"
 
@@ -268,6 +269,8 @@ class SpecSource(StrictModel):
     compiler_version: str | None = None
     provider: str | None = None
     model: str | None = None
+    reference_filename: str | None = None
+    reference_sha256: str | None = None
     assumptions: list[str] = Field(default_factory=list)
 
 

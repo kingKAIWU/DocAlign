@@ -76,6 +76,7 @@ export type Capabilities = {
   default_cleanup_preset: boolean;
   audit_only: boolean;
   format_manifest: boolean;
+  template_rule_candidate: boolean;
   max_upload_mb: number;
   local_only: boolean;
 };
@@ -87,6 +88,8 @@ export type JobResultSummary = components["schemas"]["JobResultSummary"];
 export type CleanupPreset = components["schemas"]["CleanupPresetCatalogItem"];
 
 export type FormattingSpec = components["schemas"]["FormattingSpec"];
+
+export type TemplateRuleCandidate = components["schemas"]["TemplateRuleCandidate"];
 
 export type ComplianceViolation = {
   code: string;

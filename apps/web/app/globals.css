@@ -122,7 +122,7 @@ a { color: inherit; }
 .rule-section { padding: 13px; border-bottom: 1px solid var(--line); }
 .rule-section.grow { min-height: 0; flex: 0 0 auto; }
 .rule-section label { display: block; margin-bottom: 7px; font-size: 10px; font-weight: 750; color: var(--ink); }
-.rule-mode-tabs { margin-bottom: 10px; display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line-strong); border-radius: 5px; overflow: hidden; }
+.rule-mode-tabs { margin-bottom: 10px; display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line-strong); border-radius: 5px; overflow: hidden; }
 .rule-mode-tabs button { min-height: 34px; padding: 7px 8px; border: 0; color: var(--muted); background: #f5f3ed; cursor: pointer; font-size: 10px; font-weight: 750; }
 .rule-mode-tabs button + button { border-left: 1px solid var(--line-strong); }
 .rule-mode-tabs button.active { color: white; background: var(--green); }
@@ -149,6 +149,30 @@ a { color: inherit; }
 .preset-trust-card ul { margin: 6px 0 0; padding-left: 15px; }
 .preset-trust-card li { margin: 3px 0; }
 .preset-trust-card a { color: var(--green-2); text-decoration: underline; }
+.template-mode-card { margin-bottom: 9px; padding: 11px; border: 1px solid #c7d8cf; border-radius: 6px; background: #f2f7f4; }
+.template-mode-card > strong { color: var(--green-2); font-size: 11px; }
+.template-mode-card > p { margin: 6px 0 9px; color: var(--muted); font-size: 9px; line-height: 1.55; }
+.template-upload { width: 100%; min-height: 38px; margin: 0 !important; padding: 8px 10px; display: flex !important; align-items: center; justify-content: center; border: 1px dashed #8fb3a3; border-radius: 5px; color: var(--green-2) !important; background: white; cursor: pointer; }
+.template-upload:hover { border-color: var(--green); background: #f8fcfa; }
+.template-upload.disabled { cursor: not-allowed; opacity: .5; }
+.template-upload input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+.template-privacy-note { display: block; margin-top: 6px; color: var(--muted); font-size: 8px; line-height: 1.45; }
+.template-candidate { margin-top: 10px; padding-top: 10px; border-top: 1px solid #c7d8cf; }
+.template-candidate-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.template-candidate-heading > div { min-width: 0; display: grid; gap: 2px; }
+.template-candidate-heading strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; }
+.template-candidate-heading small { color: var(--muted); font: 7px/1.4 ui-monospace, monospace; }
+.template-candidate-heading > span { flex: 0 0 auto; padding: 3px 5px; border-radius: 999px; color: var(--green-2); background: #dcece5; font-size: 7px; font-weight: 750; }
+.template-candidate > p { margin: 7px 0; color: var(--muted); font-size: 8px; }
+.template-role-mappings { margin: 7px 0; padding: 0; display: grid; gap: 4px; list-style: none; }
+.template-role-mappings li { padding: 6px 7px; display: grid; grid-template-columns: minmax(56px,.7fr) minmax(0,1fr) auto; align-items: center; gap: 5px; border: 1px solid #d8e4dd; border-radius: 4px; background: rgba(255,255,255,.7); font-size: 8px; }
+.template-role-mappings strong { color: var(--green-2); }
+.template-role-mappings span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); }
+.template-role-mappings small { color: var(--muted); font-size: 7px; }
+.template-candidate details { margin: 8px 0; color: var(--muted); font-size: 8px; line-height: 1.5; }
+.template-candidate summary { cursor: pointer; color: #725119; font-weight: 700; }
+.template-candidate details ul { margin: 6px 0 0; padding-left: 16px; }
+.template-candidate .button { width: 100%; margin-top: 3px; padding-block: 8px; }
 .advanced-rules { min-height: 0; }
 .advanced-rules summary { min-height: 28px; display: flex; align-items: center; gap: 10px; cursor: pointer; color: var(--ink); font-size: 10px; font-weight: 750; }
 .advanced-rules summary::after { content: "展开"; margin-left: auto; color: var(--muted); font-size: 8px; font-weight: 600; }

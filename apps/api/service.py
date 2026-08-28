@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import tempfile
 import uuid
 from collections import Counter
 from pathlib import Path
@@ -24,6 +25,7 @@ from docalign_core.docx.safety import (
     sha256_file,
     validate_docx_package,
 )
+from docalign_core.docx.template_candidate import compile_template_rule_candidate
 from docalign_core.docx.text_import import PlainTextImportError, create_docx_from_text
 from docalign_core.domain.audit import CONTENT_INTEGRITY_CODES, AuditReport
 from docalign_core.domain.compliance import ComplianceReport, build_compliance_report
@@ -40,6 +42,7 @@ from docalign_core.domain.formatting_spec import (
     merge_specs,
 )
 from docalign_core.domain.manifest import FormatManifest
+from docalign_core.domain.template_candidate import TemplateRuleCandidate
 from docalign_core.llm.base import (
     DocumentSummary,
     RequirementCompilationError,
@@ -131,6 +134,26 @@ class ApiService:
         with self.database.session_factory.begin() as session:
             session.add(record)
         return self.document_payload(record)
+
+    async def compile_template_candidate(self, upload: UploadFile) -> TemplateRuleCandidate:
+        filename = _display_filename(upload.filename or "reference.docx")
+        if not filename.lower().endswith(".docx"):
+            raise ApiError(415, "UNSUPPORTED_FILE_TYPE", "Only .docx files are supported.")
+        with tempfile.TemporaryDirectory(prefix="docalign-template-") as directory:
+            target = Path(directory) / "reference.docx"
+            size = 0
+            with target.open("wb") as output:
+                while chunk := await upload.read(1024 * 1024):
+                    size += len(chunk)
+                    if size > self.safety_limits.max_file_bytes:
+                        raise ApiError(
+                            413,
+                            "FILE_TOO_LARGE",
+                            "The uploaded DOCX exceeds the configured limit.",
+                        )
+                    output.write(chunk)
+            validate_docx_package(target, self.safety_limits)
+            return compile_template_rule_candidate(target, source_filename=filename)
 
     def create_text_document(self, text: str, filename: str) -> dict[str, object]:
         display_name = _display_filename(filename)
