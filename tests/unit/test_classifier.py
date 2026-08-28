@@ -28,6 +28,19 @@ def test_parser_preserves_block_order_and_classifier_roles(academic_docx: Path) 
     assert analysis.summary.image_count == 1
 
 
+def test_empty_paragraphs_are_not_counted_as_needing_review(tmp_path: Path) -> None:
+    source = tmp_path / "empty-paragraphs.docx"
+    document = Document()
+    document.add_paragraph("")
+    document.add_paragraph("")
+    document.save(source)
+
+    analysis = analyze_document(parse_docx(source))
+
+    assert analysis.summary.role_counts[SemanticRole.UNKNOWN.value] == 2
+    assert analysis.summary.unknown_count == 0
+
+
 def test_node_ids_are_stable_for_same_source(academic_docx: Path) -> None:
     first = parse_docx(academic_docx)
     second = parse_docx(academic_docx)

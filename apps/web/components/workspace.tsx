@@ -95,6 +95,7 @@ export function Workspace() {
   const [message, setMessage] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [dragging, setDragging] = useState(false);
+  const [showOnlyUncertain, setShowOnlyUncertain] = useState(false);
   const [showTextImport, setShowTextImport] = useState(false);
   const [plainText, setPlainText] = useState("");
   const [plainFilename, setPlainFilename] = useState("未命名文档.docx");
@@ -279,6 +280,18 @@ export function Workspace() {
       ) ?? [],
     [analysis],
   );
+  const visibleBlocks = useMemo(
+    () =>
+      analysis?.document_ir.blocks.filter(
+        (block) =>
+          !showOnlyUncertain ||
+          (block.kind === "paragraph" &&
+            block.detected_role === "unknown" &&
+            (!block.is_empty || block.contains_drawing)),
+      ) ?? [],
+    [analysis, showOnlyUncertain],
+  );
+  const unknownCount = analysis?.summary.unknown_count ?? 0;
 
   async function upload(file: File) {
     setBusy("upload");
@@ -311,6 +324,7 @@ export function Workspace() {
   function acceptDocument(nextDocument: DocumentRecord, notice: string) {
     setDocument(nextDocument);
     setAnalysis(null);
+    setShowOnlyUncertain(false);
     setOverrides({});
     setJob(null);
     setCompilationReport(null);
@@ -332,6 +346,7 @@ export function Workspace() {
     try {
       const result = await api.analyze(document.document_id, mode);
       setAnalysis(result);
+      setShowOnlyUncertain(false);
       setOverrides({});
       setCompliance(null);
       storeWorkspace({
@@ -686,38 +701,63 @@ export function Workspace() {
         <aside className="panel structure-panel">
           <PanelHeading
             title="文档结构"
-            meta={analysis ? `${analysis.summary.analysis_mode === "smart" ? "智能" : "规则"} · ${paragraphs.length} 段` : "等待分析"}
+            meta={analysis
+              ? `${analysis.summary.analysis_mode === "smart" ? "智能" : "规则"} · ${paragraphs.length} 段${unknownCount ? ` · ${unknownCount} 待确认` : ""}`
+              : "等待分析"}
           />
           {!analysis ? (
             <EmptyState icon="01" title="尚未分析" text="上传文档后运行结构分析，识别标题、正文、图表题和参考文献。" />
           ) : (
-            <div className="structure-list">
-              {analysis.document_ir.blocks.map((block) => {
-                if (block.kind === "table") {
-                  return <div className="structure-table" key={block.node_id}>{block.locator} · 表格 · {block.rows} × {block.columns_estimate}</div>;
-                }
-                if (block.kind === "unsupported") {
-                  return <div className="structure-warning" key={block.node_id}>{block.locator} · 未识别结构 · 已保留</div>;
-                }
-                return (
-                  <article className={`structure-item ${block.detected_role === "unknown" ? "uncertain" : ""}`} key={block.node_id}>
-                    <div className="structure-copy">
-                      <span>{block.text || (block.contains_drawing ? "[图片]" : "[空段落]")}</span>
-                      <small title={block.role_evidence.join(" · ")}>
-                        {block.locator} · {Math.round(block.role_confidence * 100)}% · {block.role_source}
-                      </small>
-                    </div>
-                    <select
-                      aria-label={`修改段落角色：${block.text}`}
-                      value={block.detected_role}
-                      onChange={(event) => void changeRole(block.node_id, event.target.value as SemanticRole)}
-                    >
-                      {roles.map((role) => <option value={role} key={role}>{roleLabels[role]}</option>)}
-                    </select>
-                  </article>
-                );
-              })}
-            </div>
+            <>
+              <div className={`structure-review-bar ${unknownCount ? "needs-review" : "ready"}`}>
+                <div>
+                  <strong>{unknownCount ? `${unknownCount} 个段落待确认` : "结构识别已就绪"}</strong>
+                  <span>
+                    {unknownCount
+                      ? "建议在排版前确认这些段落；未确认内容将按正文基线处理。"
+                      : "标题、正文和特殊内容已完成结构识别。"}
+                  </span>
+                </div>
+                {(unknownCount > 0 || showOnlyUncertain) && (
+                  <button
+                    type="button"
+                    aria-pressed={showOnlyUncertain}
+                    onClick={() => setShowOnlyUncertain((current) => !current)}
+                  >
+                    {showOnlyUncertain ? "查看全部段落" : "仅看待确认"}
+                  </button>
+                )}
+              </div>
+              <div className="structure-list">
+                {visibleBlocks.length === 0 && showOnlyUncertain ? (
+                  <div className="structure-list-empty">待确认段落已全部处理。</div>
+                ) : visibleBlocks.map((block) => {
+                  if (block.kind === "table") {
+                    return <div className="structure-table" key={block.node_id}>{block.locator} · 表格 · {block.rows} × {block.columns_estimate}</div>;
+                  }
+                  if (block.kind === "unsupported") {
+                    return <div className="structure-warning" key={block.node_id}>{block.locator} · 未识别结构 · 已保留</div>;
+                  }
+                  return (
+                    <article className={`structure-item ${block.detected_role === "unknown" ? "uncertain" : ""}`} key={block.node_id}>
+                      <div className="structure-copy">
+                        <span>{block.text || (block.contains_drawing ? "[图片]" : "[空段落]")}</span>
+                        <small title={block.role_evidence.join(" · ")}>
+                          {block.locator} · {Math.round(block.role_confidence * 100)}% · {block.role_source}
+                        </small>
+                      </div>
+                      <select
+                        aria-label={`修改段落角色：${block.text}`}
+                        value={block.detected_role}
+                        onChange={(event) => void changeRole(block.node_id, event.target.value as SemanticRole)}
+                      >
+                        {roles.map((role) => <option value={role} key={role}>{roleLabels[role]}</option>)}
+                      </select>
+                    </article>
+                  );
+                })}
+              </div>
+            </>
           )}
         </aside>
 

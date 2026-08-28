@@ -201,6 +201,90 @@ describe("Workspace", () => {
     expect(screen.getByText("输出已生成")).toBeInTheDocument();
   });
 
+  it("filters the structure list to paragraphs that need confirmation", async () => {
+    window.localStorage.setItem(
+      "docalign.workspace.v1",
+      JSON.stringify({ document_id: "doc_review", analysis_id: "analysis_review" }),
+    );
+    mocks.document.mockResolvedValue({
+      document_id: "doc_review",
+      filename: "review.docx",
+      sha256: "review-sha",
+      size_bytes: 1024,
+      status: "uploaded",
+    });
+    mocks.analysis.mockResolvedValue({
+      analysis_id: "analysis_review",
+      document_ir: {
+        source_filename: "review.docx",
+        warnings: [],
+        blocks: [
+          {
+            kind: "paragraph",
+            node_id: "p1",
+            locator: "p1",
+            text: "已经识别的标题",
+            detected_role: "heading_1",
+            role_confidence: 0.99,
+            role_source: "deterministic",
+            role_evidence: ["numbered-heading"],
+            is_empty: false,
+            contains_drawing: false,
+          },
+          {
+            kind: "paragraph",
+            node_id: "p2",
+            locator: "p2",
+            text: "需要确认的段落",
+            detected_role: "unknown",
+            role_confidence: 0.45,
+            role_source: "fallback",
+            role_evidence: ["low-confidence"],
+            is_empty: false,
+            contains_drawing: false,
+          },
+          {
+            kind: "paragraph",
+            node_id: "p3",
+            locator: "p3",
+            text: "",
+            detected_role: "unknown",
+            role_confidence: 1,
+            role_source: "deterministic",
+            role_evidence: ["empty"],
+            is_empty: true,
+            contains_drawing: false,
+          },
+        ],
+      },
+      summary: {
+        paragraph_count: 3,
+        table_count: 0,
+        image_count: 0,
+        unknown_count: 1,
+        role_counts: { heading_1: 1, unknown: 2 },
+        analysis_mode: "deterministic",
+        document_kind: "other",
+        document_kind_confidence: 0.5,
+        model_reviewed_paragraphs: 0,
+        model_provider: null,
+        model_name: null,
+      },
+    });
+
+    render(<Workspace />);
+    expect(await screen.findByText("1 个段落待确认")).toBeInTheDocument();
+    expect(screen.getByText("已经识别的标题")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "仅看待确认" }));
+    expect(screen.queryByText("已经识别的标题")).not.toBeInTheDocument();
+    expect(screen.queryByText("[空段落]")).not.toBeInTheDocument();
+    expect(screen.getByText("需要确认的段落")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "查看全部段落" }));
+    expect(screen.getByText("已经识别的标题")).toBeInTheDocument();
+  });
+
   it("resumes one job poll after refresh and reaches the terminal state", async () => {
     window.localStorage.setItem(
       "docalign.workspace.v1",

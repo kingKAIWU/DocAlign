@@ -212,4 +212,5 @@ uv run python tests/fixtures/domain-corpus/run_corpus.py \
 - 未配置兼容模型时，默认整理、确定性分析、格式体检和完整格式化流程仍然可用。
 
 更多信息见 [PRIVACY.md](PRIVACY.md)。开源项目对照、已吸收的工程思想和后续路线见
-[docs/OPEN_SOURCE_BENCHMARK.md](docs/OPEN_SOURCE_BENCHMARK.md)。
+[docs/OPEN_SOURCE_BENCHMARK.md](docs/OPEN_SOURCE_BENCHMARK.md)。目标用户、市场定位、场景覆盖、
+成熟度缺口和验收门槛见 [产品市场与成熟度审计](docs/PRODUCT_MARKET_AUDIT.md)。

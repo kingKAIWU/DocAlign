@@ -26,6 +26,12 @@ OUTPUT_LABELS = {
     "08-financial-statement": "08-财务宽表",
 }
 
+CONTENT_INTEGRITY_CODES = {
+    "CONTENT_INTEGRITY_FAILED",
+    "DOCUMENT_STRUCTURE_MISMATCH",
+    "PROTECTED_PACKAGE_PART_CHANGED",
+}
+
 
 def _visual_pollution(path: Path) -> dict[str, int]:
     totals = {
@@ -126,7 +132,11 @@ def run(
                 "output": output.name,
                 "source_pollution": _visual_pollution(source),
                 "output_pollution": _visual_pollution(output),
-                "content_preserved": (
+                "content_preserved": not any(
+                    issue.code in CONTENT_INTEGRITY_CODES
+                    for issue in result.audit.validation.issues
+                ),
+                "exact_fingerprint_preserved": (
                     source_ir.content_fingerprint.digest == output_ir.content_fingerprint.digest
                 ),
                 "validation_valid": result.audit.validation.valid,
@@ -143,6 +153,7 @@ def run(
                 "tables": analysis.summary.table_count,
                 "images": analysis.summary.image_count,
                 "role_counts": analysis.summary.role_counts,
+                "reviewable_unknowns": analysis.summary.unknown_count,
                 "warnings": [warning.code for warning in analysis.warnings],
                 "auto_layout_splits": result.audit.summary.auto_layout_splits,
                 "changed_mutations": result.audit.summary.changed_mutations,

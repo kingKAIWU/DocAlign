@@ -91,7 +91,15 @@ a { color: inherit; }
 .empty-state strong { color: var(--ink); font-family: var(--font-serif); }
 .empty-state p { max-width: 270px; margin: 8px 0 0; font-size: 11px; line-height: 1.75; }
 
-.structure-list { overflow: auto; padding: 8px; }
+.structure-review-bar { flex: 0 0 auto; padding: 10px 12px; display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; border-bottom: 1px solid var(--line); background: #f5f7f5; }
+.structure-review-bar.needs-review { background: #fbf3e4; }
+.structure-review-bar > div { min-width: 0; display: grid; gap: 3px; }
+.structure-review-bar strong { color: var(--ink); font-size: 10px; }
+.structure-review-bar span { color: var(--muted); font-size: 8px; line-height: 1.45; }
+.structure-review-bar button { flex: 0 0 auto; padding: 5px 7px; border: 1px solid var(--line-strong); border-radius: 4px; color: var(--green-2); background: var(--surface); cursor: pointer; font-size: 8px; font-weight: 750; }
+.structure-review-bar button[aria-pressed="true"] { color: white; border-color: var(--green); background: var(--green); }
+.structure-list { min-height: 0; flex: 1; overflow: auto; padding: 8px; }
+.structure-list-empty { padding: 30px 12px; color: var(--muted); text-align: center; font-size: 10px; }
 .structure-item { margin-bottom: 5px; padding: 9px 8px 9px 10px; display: grid; grid-template-columns: minmax(0,1fr) 94px; align-items: center; gap: 8px; border-left: 2px solid transparent; background: var(--surface-2); }
 .structure-item:hover { border-left-color: var(--green); }
 .structure-item.uncertain { border-left-color: var(--amber); background: #fbf3e4; }
