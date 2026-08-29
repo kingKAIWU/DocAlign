@@ -12,6 +12,7 @@ import type {
   RulePackCatalogItem,
   RulePackDetail,
   SemanticRole,
+  SupportDiagnosticReport,
   TemplateRuleCandidate,
   WorkspaceStorageReport,
 } from "./types";
@@ -195,6 +196,11 @@ export const api = {
     }),
   workspaceStorage: (signal?: AbortSignal) =>
     request<WorkspaceStorageReport>("/workspace/storage", {
+      signal,
+      cache: "no-store",
+    }),
+  diagnostics: (signal?: AbortSignal) =>
+    request<SupportDiagnosticReport>("/diagnostics", {
       signal,
       cache: "no-store",
     }),

@@ -2,11 +2,12 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import SettingsPage from "@/app/settings/page";
-import type { WorkspaceStorageReport } from "@/lib/types";
+import type { SupportDiagnosticReport, WorkspaceStorageReport } from "@/lib/types";
 
 const mocks = vi.hoisted(() => ({
   capabilities: vi.fn(),
   workspaceStorage: vi.fn(),
+  diagnostics: vi.fn(),
   deleteBatch: vi.fn(),
   deleteDocument: vi.fn(),
 }));
@@ -85,6 +86,68 @@ const report: WorkspaceStorageReport = {
   unbatched_documents_truncated: false,
 };
 
+const diagnosticReport: SupportDiagnosticReport = {
+  schema_version: "support-diagnostic.v1",
+  generated_at: "2026-08-29T08:00:00Z",
+  overall: "attention",
+  runtime: {
+    application_version: "0.1.0",
+    python_version: "3.12.14",
+    operating_system: "Darwin",
+    operating_system_release: "25.4.0",
+    architecture: "arm64",
+  },
+  configuration: {
+    local_only: true,
+    database_backend: "sqlite",
+    llm_configured: false,
+    job_concurrency: 1,
+    max_upload_mb: 20,
+    max_batch_files: 20,
+    max_batch_total_mb: 200,
+  },
+  data_summary: {
+    docalign_bytes: 12 * 1024 * 1024,
+    disk_total_bytes: 500 * 1024 * 1024 * 1024,
+    disk_free_bytes: 200 * 1024 * 1024 * 1024,
+    storage_pressure: "normal",
+    documents: 3,
+    analyses: 3,
+    jobs: 3,
+    active_jobs: 0,
+    failed_jobs: 1,
+    batches: 1,
+    rule_packs: 2,
+  },
+  checks: [
+    {
+      check_id: "database_connection",
+      status: "pass",
+      title: "本地数据库",
+      detail: "连接正常，基础查询已通过。",
+      remediation: null,
+    },
+    {
+      check_id: "artifact_references",
+      status: "warning",
+      title: "本地产物引用",
+      detail: "发现 1 个数据库记录指向的本地产物缺失。未收集文件名或路径。",
+      remediation: "保留本诊断 JSON 并寻求支持。",
+    },
+  ],
+  recent_error_codes: [{ code: "JOB_INTERRUPTED", count: 1 }],
+  excluded_data: [
+    "document_content",
+    "filenames",
+    "record_identifiers",
+    "local_paths",
+    "database_connection_string",
+    "model_endpoint",
+    "credentials",
+    "raw_logs",
+  ],
+};
+
 describe("SettingsPage storage center", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -98,6 +161,8 @@ describe("SettingsPage storage center", () => {
     });
     mocks.deleteBatch.mockResolvedValue(undefined);
     mocks.deleteDocument.mockResolvedValue(undefined);
+    mocks.workspaceStorage.mockResolvedValue(report);
+    mocks.diagnostics.mockResolvedValue(diagnosticReport);
   });
 
   afterEach(() => cleanup());
@@ -140,5 +205,26 @@ describe("SettingsPage storage center", () => {
     await waitFor(() => expect(mocks.deleteDocument).toHaveBeenCalledWith("doc_1"));
     expect(window.localStorage.getItem("docalign.workspace.v1")).toBeNull();
     expect(window.confirm).toHaveBeenCalledTimes(2);
+  });
+
+  it("runs a privacy-safe diagnostic and exposes an explicit local download", async () => {
+    render(<SettingsPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: "运行诊断" }));
+
+    expect(await screen.findByText("建议关注")).toBeInTheDocument();
+    const diagnosticCard = screen
+      .getByRole("heading", { name: "本机诊断与支持报告" })
+      .closest<HTMLElement>(".diagnostic-card");
+    expect(diagnosticCard).not.toBeNull();
+    expect(within(diagnosticCard!).getByText("本地数据库")).toBeInTheDocument();
+    expect(within(diagnosticCard!).getByText("本地产物引用")).toBeInTheDocument();
+    expect(within(diagnosticCard!).getByText("JOB_INTERRUPTED × 1")).toBeInTheDocument();
+    expect(within(diagnosticCard!).getByText(/明确排除正文、文件名、记录 ID/)).toBeInTheDocument();
+    expect(within(diagnosticCard!).getByRole("link", { name: "下载安全诊断 JSON" })).toHaveAttribute(
+      "href",
+      "http://127.0.0.1:8000/api/v1/diagnostics/export",
+    );
+    expect(mocks.diagnostics).toHaveBeenCalledTimes(1);
   });
 });

@@ -9,6 +9,7 @@ from docalign_core.config import Settings
 from docalign_core.docx.safety import DocxSafetyError
 from docalign_core.domain.batch import BatchAudit
 from docalign_core.domain.compliance import ComplianceReport
+from docalign_core.domain.diagnostics import SupportDiagnosticReport
 from docalign_core.domain.formatting_spec import (
     FormattingSpec,
     cleanup_preset_catalog,
@@ -27,6 +28,7 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 
 from apps.api.batches import BatchService
 from apps.api.db import Database
+from apps.api.diagnostics import DiagnosticService
 from apps.api.errors import ApiError
 from apps.api.migrations import upgrade_database
 from apps.api.runner import JobRunner
@@ -61,6 +63,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     service = ApiService(settings, database, storage)
     batch_service = BatchService(service, settings, database, storage)
     workspace_service = WorkspaceService(database, storage, batch_service)
+    diagnostic_service = DiagnosticService(settings, database, storage)
     runner = JobRunner(service, settings.job_concurrency)
 
     @asynccontextmanager
@@ -84,6 +87,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.state.service = service
     application.state.batch_service = batch_service
     application.state.workspace_service = workspace_service
+    application.state.diagnostic_service = diagnostic_service
     application.state.runner = runner
     application.add_middleware(
         CORSMiddleware,
@@ -136,6 +140,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "max_upload_mb": settings.max_upload_mb,
             "local_only": True,
         }
+
+    @application.get("/api/v1/diagnostics")
+    def diagnostics() -> SupportDiagnosticReport:
+        return diagnostic_service.report()
+
+    @application.get("/api/v1/diagnostics/export")
+    def export_diagnostics(response: Response) -> SupportDiagnosticReport:
+        response.headers["Content-Disposition"] = (
+            'attachment; filename="docalign-support-diagnostic.json"'
+        )
+        return diagnostic_service.report()
 
     @application.get("/api/v1/workspace/storage")
     def workspace_storage(

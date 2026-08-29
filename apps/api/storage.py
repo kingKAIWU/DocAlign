@@ -4,15 +4,20 @@ import os
 import shutil
 from pathlib import Path
 
-from docalign_core.domain.workspace import StorageCategory, StorageCategoryId
+from docalign_core.domain.workspace import (
+    StorageCategory,
+    StorageCategoryId,
+    StoragePressure,
+)
 
 
 class LocalStorage:
-    def __init__(self, root: Path) -> None:
+    def __init__(self, root: Path, *, create: bool = True) -> None:
         self.root = root.resolve()
-        self.root.mkdir(parents=True, exist_ok=True)
-        for name in ("uploads", "analyses", "jobs", "outputs", "batches"):
-            (self.root / name).mkdir(exist_ok=True)
+        if create:
+            self.root.mkdir(parents=True, exist_ok=True)
+            for name in ("uploads", "analyses", "jobs", "outputs", "batches"):
+                (self.root / name).mkdir(exist_ok=True)
 
     def upload_path(self, document_id: str) -> Path:
         path = self.root / "uploads" / document_id / "source.docx"
@@ -155,6 +160,17 @@ class LocalStorage:
 def _looks_like_sqlite_file(filename: str) -> bool:
     lowered = filename.lower()
     return lowered.endswith((".db", ".sqlite", ".sqlite3", ".db-wal", ".db-shm"))
+
+
+def storage_pressure(total_bytes: int, free_bytes: int) -> StoragePressure:
+    if total_bytes <= 0:
+        return StoragePressure.NORMAL
+    free_ratio = free_bytes / total_bytes
+    if free_bytes < 1024**3 or free_ratio < 0.02:
+        return StoragePressure.CRITICAL
+    if free_bytes < 5 * 1024**3 or free_ratio < 0.10:
+        return StoragePressure.WARNING
+    return StoragePressure.NORMAL
 
 
 def _path_usage(path: Path) -> tuple[int, int]:

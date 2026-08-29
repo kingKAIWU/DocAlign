@@ -1,0 +1,318 @@
+{
+  "$defs": {
+    "DiagnosticCheck": {
+      "additionalProperties": false,
+      "properties": {
+        "check_id": {
+          "pattern": "^[a-z0-9_]{1,64}$",
+          "title": "Check Id",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/DiagnosticCheckStatus"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "detail": {
+          "title": "Detail",
+          "type": "string"
+        },
+        "remediation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Remediation"
+        }
+      },
+      "required": [
+        "check_id",
+        "status",
+        "title",
+        "detail"
+      ],
+      "title": "DiagnosticCheck",
+      "type": "object"
+    },
+    "DiagnosticCheckStatus": {
+      "enum": [
+        "pass",
+        "warning",
+        "fail"
+      ],
+      "title": "DiagnosticCheckStatus",
+      "type": "string"
+    },
+    "DiagnosticConfiguration": {
+      "additionalProperties": false,
+      "properties": {
+        "local_only": {
+          "const": true,
+          "default": true,
+          "title": "Local Only",
+          "type": "boolean"
+        },
+        "database_backend": {
+          "title": "Database Backend",
+          "type": "string"
+        },
+        "llm_configured": {
+          "title": "Llm Configured",
+          "type": "boolean"
+        },
+        "job_concurrency": {
+          "minimum": 1,
+          "title": "Job Concurrency",
+          "type": "integer"
+        },
+        "max_upload_mb": {
+          "minimum": 1,
+          "title": "Max Upload Mb",
+          "type": "integer"
+        },
+        "max_batch_files": {
+          "minimum": 1,
+          "title": "Max Batch Files",
+          "type": "integer"
+        },
+        "max_batch_total_mb": {
+          "minimum": 1,
+          "title": "Max Batch Total Mb",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "database_backend",
+        "llm_configured",
+        "job_concurrency",
+        "max_upload_mb",
+        "max_batch_files",
+        "max_batch_total_mb"
+      ],
+      "title": "DiagnosticConfiguration",
+      "type": "object"
+    },
+    "DiagnosticDataSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "docalign_bytes": {
+          "minimum": 0,
+          "title": "Docalign Bytes",
+          "type": "integer"
+        },
+        "disk_total_bytes": {
+          "minimum": 0,
+          "title": "Disk Total Bytes",
+          "type": "integer"
+        },
+        "disk_free_bytes": {
+          "minimum": 0,
+          "title": "Disk Free Bytes",
+          "type": "integer"
+        },
+        "storage_pressure": {
+          "$ref": "#/$defs/StoragePressure"
+        },
+        "documents": {
+          "minimum": 0,
+          "title": "Documents",
+          "type": "integer"
+        },
+        "analyses": {
+          "minimum": 0,
+          "title": "Analyses",
+          "type": "integer"
+        },
+        "jobs": {
+          "minimum": 0,
+          "title": "Jobs",
+          "type": "integer"
+        },
+        "active_jobs": {
+          "minimum": 0,
+          "title": "Active Jobs",
+          "type": "integer"
+        },
+        "failed_jobs": {
+          "minimum": 0,
+          "title": "Failed Jobs",
+          "type": "integer"
+        },
+        "batches": {
+          "minimum": 0,
+          "title": "Batches",
+          "type": "integer"
+        },
+        "rule_packs": {
+          "minimum": 0,
+          "title": "Rule Packs",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "docalign_bytes",
+        "disk_total_bytes",
+        "disk_free_bytes",
+        "storage_pressure",
+        "documents",
+        "analyses",
+        "jobs",
+        "active_jobs",
+        "failed_jobs",
+        "batches",
+        "rule_packs"
+      ],
+      "title": "DiagnosticDataSummary",
+      "type": "object"
+    },
+    "DiagnosticErrorCodeCount": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "pattern": "^[A-Z0-9_]{1,64}$",
+          "title": "Code",
+          "type": "string"
+        },
+        "count": {
+          "minimum": 1,
+          "title": "Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "code",
+        "count"
+      ],
+      "title": "DiagnosticErrorCodeCount",
+      "type": "object"
+    },
+    "DiagnosticOverall": {
+      "enum": [
+        "ready",
+        "attention",
+        "action_required"
+      ],
+      "title": "DiagnosticOverall",
+      "type": "string"
+    },
+    "DiagnosticRuntime": {
+      "additionalProperties": false,
+      "properties": {
+        "application_version": {
+          "title": "Application Version",
+          "type": "string"
+        },
+        "python_version": {
+          "title": "Python Version",
+          "type": "string"
+        },
+        "operating_system": {
+          "title": "Operating System",
+          "type": "string"
+        },
+        "operating_system_release": {
+          "title": "Operating System Release",
+          "type": "string"
+        },
+        "architecture": {
+          "title": "Architecture",
+          "type": "string"
+        }
+      },
+      "required": [
+        "application_version",
+        "python_version",
+        "operating_system",
+        "operating_system_release",
+        "architecture"
+      ],
+      "title": "DiagnosticRuntime",
+      "type": "object"
+    },
+    "StoragePressure": {
+      "enum": [
+        "normal",
+        "warning",
+        "critical"
+      ],
+      "title": "StoragePressure",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "support-diagnostic.v1",
+      "default": "support-diagnostic.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "generated_at": {
+      "format": "date-time",
+      "title": "Generated At",
+      "type": "string"
+    },
+    "overall": {
+      "$ref": "#/$defs/DiagnosticOverall"
+    },
+    "runtime": {
+      "$ref": "#/$defs/DiagnosticRuntime"
+    },
+    "configuration": {
+      "$ref": "#/$defs/DiagnosticConfiguration"
+    },
+    "data_summary": {
+      "$ref": "#/$defs/DiagnosticDataSummary"
+    },
+    "checks": {
+      "items": {
+        "$ref": "#/$defs/DiagnosticCheck"
+      },
+      "title": "Checks",
+      "type": "array"
+    },
+    "recent_error_codes": {
+      "items": {
+        "$ref": "#/$defs/DiagnosticErrorCodeCount"
+      },
+      "title": "Recent Error Codes",
+      "type": "array"
+    },
+    "excluded_data": {
+      "items": {
+        "enum": [
+          "document_content",
+          "filenames",
+          "record_identifiers",
+          "local_paths",
+          "database_connection_string",
+          "model_endpoint",
+          "credentials",
+          "raw_logs"
+        ],
+        "type": "string"
+      },
+      "title": "Excluded Data",
+      "type": "array"
+    }
+  },
+  "required": [
+    "generated_at",
+    "overall",
+    "runtime",
+    "configuration",
+    "data_summary",
+    "checks",
+    "recent_error_codes",
+    "excluded_data"
+  ],
+  "title": "SupportDiagnosticReport",
+  "type": "object"
+}

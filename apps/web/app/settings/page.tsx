@@ -8,6 +8,7 @@ import type {
   Capabilities,
   StorageBatchItem,
   StorageDocumentItem,
+  SupportDiagnosticReport,
   WorkspaceStorageReport,
 } from "@/lib/types";
 
@@ -31,9 +32,16 @@ const batchStatusLabels: Record<StorageBatchItem["status"], string> = {
   failed: "失败",
 };
 
+const diagnosticOverallLabels: Record<SupportDiagnosticReport["overall"], string> = {
+  ready: "诊断正常",
+  attention: "建议关注",
+  action_required: "需要处理",
+};
+
 export default function SettingsPage() {
   const [capabilities, setCapabilities] = useState<Capabilities | null>(null);
   const [storage, setStorage] = useState<WorkspaceStorageReport | null>(null);
+  const [diagnostic, setDiagnostic] = useState<SupportDiagnosticReport | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -58,6 +66,19 @@ export default function SettingsPage() {
     setError("");
     try {
       setStorage(await api.workspaceStorage());
+    } catch (caught) {
+      setError(readableError(caught));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function runDiagnostics() {
+    setBusy("diagnostics");
+    setError("");
+    setMessage("");
+    try {
+      setDiagnostic(await api.diagnostics());
     } catch (caught) {
       setError(readableError(caught));
     } finally {
@@ -140,6 +161,29 @@ export default function SettingsPage() {
           <div className="storage-records">
             <span>{storage.records.documents} 份文档</span><span>{storage.records.batches} 个批次</span><span>{storage.records.jobs} 个作业</span><span>{storage.records.rule_packs} 个规则包</span>
           </div>
+        </>}
+      </section>
+
+      <section className="settings-card diagnostic-card">
+        <div className="storage-heading">
+          <div><p className="eyebrow">LOCAL DIAGNOSTICS</p><h2>本机诊断与支持报告</h2><p>检查数据库、版本、数据目录、磁盘和本地产物；不会自动上传任何信息。</p></div>
+          <button className="button secondary" disabled={Boolean(busy)} onClick={() => void runDiagnostics()}>{busy === "diagnostics" ? "正在诊断…" : diagnostic ? "重新诊断" : "运行诊断"}</button>
+        </div>
+        {!diagnostic ? <div className="diagnostic-empty">遇到启动、保存或任务异常时先运行诊断。应用无法打开时可在项目目录执行 <code>uv run python -m scripts.diagnose --out docalign-support-diagnostic.json</code>。</div> : <>
+          <div className={`diagnostic-summary ${diagnostic.overall}`}>
+            <span><small>综合结果</small><strong>{diagnosticOverallLabels[diagnostic.overall]}</strong></span>
+            <span><small>DocAlign</small><strong>v{diagnostic.runtime.application_version}</strong></span>
+            <span><small>运行环境</small><strong>{diagnostic.runtime.operating_system} · {diagnostic.runtime.architecture}</strong></span>
+            <a className="button secondary" href={`${API_BASE}/diagnostics/export`}>下载安全诊断 JSON</a>
+          </div>
+          <div className="diagnostic-checks">
+            {diagnostic.checks.map((check) => <div className={`diagnostic-check ${check.status}`} key={check.check_id}>
+              <span>{check.status === "pass" ? "通过" : check.status === "warning" ? "关注" : "失败"}</span>
+              <div><strong>{check.title}</strong><p>{check.detail}</p>{check.remediation && <small>处理建议：{check.remediation}</small>}</div>
+            </div>)}
+          </div>
+          {diagnostic.recent_error_codes.length > 0 && <div className="diagnostic-errors"><b>近 30 天错误代码</b>{diagnostic.recent_error_codes.map((item) => <code key={item.code}>{item.code} × {item.count}</code>)}</div>}
+          <p className="diagnostic-privacy">报告仅含运行版本、系统类型、配置状态、汇总数量、检查结果和错误代码；明确排除正文、文件名、记录 ID、完整路径、数据库连接串、模型端点、密钥和原始日志。请先自行检查 JSON，再决定是否发送给支持人员。</p>
         </>}
       </section>
 
@@ -226,7 +270,7 @@ function formatDate(value: string): string {
 function readableError(caught: unknown): string {
   if (caught instanceof ApiError) return caught.message;
   if (caught instanceof Error) return caught.message;
-  return "读取本地存储信息失败。";
+  return "读取本地服务信息失败。";
 }
 
 function clearMatchingLocalRecord(key: string, field: string, id: string): void {

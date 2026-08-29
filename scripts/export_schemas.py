@@ -7,6 +7,7 @@ from pathlib import Path
 from docalign_core.domain.audit import AuditReport
 from docalign_core.domain.batch import BatchAudit
 from docalign_core.domain.compliance import ComplianceReport
+from docalign_core.domain.diagnostics import SupportDiagnosticReport
 from docalign_core.domain.document_ir import DocumentIR
 from docalign_core.domain.formatting_spec import FormattingSpec
 from docalign_core.domain.manifest import FormatManifest
@@ -27,6 +28,7 @@ def main() -> None:
         "audit-report.v1.schema.json": AuditReport,
         "batch-audit.v2.schema.json": BatchAudit,
         "compliance-report.v1.schema.json": ComplianceReport,
+        "support-diagnostic.v1.schema.json": SupportDiagnosticReport,
         "format-manifest.v1.schema.json": FormatManifest,
         "template-rule-candidate.v1.schema.json": TemplateRuleCandidate,
         "rule-pack.v1.schema.json": RulePackArtifact,

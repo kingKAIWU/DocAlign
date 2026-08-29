@@ -7,7 +7,6 @@ from docalign_core.domain.enums import JobStatus
 from docalign_core.domain.workspace import (
     StorageBatchItem,
     StorageDocumentItem,
-    StoragePressure,
     StorageRecordCounts,
     WorkspaceStorageReport,
 )
@@ -26,7 +25,7 @@ from apps.api.db import (
     utcnow,
 )
 from apps.api.errors import ApiError
-from apps.api.storage import LocalStorage
+from apps.api.storage import LocalStorage, storage_pressure
 
 _TERMINAL_BATCHES = {
     BatchStatus.COMPLETED,
@@ -142,7 +141,7 @@ class WorkspaceService:
             reclaimable_bytes=min(reclaimable_bytes, docalign_bytes),
             disk_total_bytes=disk_total,
             disk_free_bytes=disk_free,
-            pressure=_storage_pressure(disk_total, disk_free),
+            pressure=storage_pressure(disk_total, disk_free),
             categories=categories,
             records=StorageRecordCounts(
                 documents=document_count,
@@ -201,14 +200,3 @@ class WorkspaceService:
     @staticmethod
     def _count(session: Session, model: type[Any]) -> int:
         return int(session.scalar(select(func.count()).select_from(model)) or 0)
-
-
-def _storage_pressure(total_bytes: int, free_bytes: int) -> StoragePressure:
-    if total_bytes <= 0:
-        return StoragePressure.NORMAL
-    free_ratio = free_bytes / total_bytes
-    if free_bytes < 1024**3 or free_ratio < 0.02:
-        return StoragePressure.CRITICAL
-    if free_bytes < 5 * 1024**3 or free_ratio < 0.10:
-        return StoragePressure.WARNING
-    return StoragePressure.NORMAL

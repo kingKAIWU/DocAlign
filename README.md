@@ -88,6 +88,19 @@ DocAlign 是一个本地优先、确定性执行的 DOCX 自动排版与格式�
 - 处理中的文档不能删除，避免任务运行时丢失源文件；终态批次删除仍保留跨文档复用的规则包。
 - 存储统计不读取文档正文、不把完整本地路径返回浏览器，也不会跟随数据目录中的符号链接。
 
+### 可审阅的本机诊断
+
+- “设置”页面可主动运行数据库连接、迁移版本、数据目录权限、磁盘空间和本地产物引用检查，并给出
+  普通用户可执行的处理建议。
+- 诊断只生成本地 `support-diagnostic.v1` JSON，不自动上传；下载前明确说明所含字段和排除范围。
+- 报告不包含正文、文件名、文档/任务 ID、完整路径、数据库连接串、模型端点、密钥或原始日志；
+  错误信息只按安全错误代码汇总。
+- 网站无法打开时，可在项目目录运行下列离线诊断。该命令不会为缺失的工作区创建数据库或数据目录：
+
+```bash
+uv run python -m scripts.diagnose --out docalign-support-diagnostic.json
+```
+
 ### 面向用户的结果解释
 
 - 完成页同时显示格式验证、原文与受保护结构校验、实际调整数量和剩余人工复核项。
@@ -220,6 +233,8 @@ uv run docalign spec compile \
 | `GET /api/v1/jobs/{id}/output` | 下载验证通过的 DOCX |
 | `GET /api/v1/jobs/{id}/audit.json` | 下载机器可读审计 |
 | `GET /api/v1/jobs/{id}/audit.md` | 下载人工审计报告 |
+| `GET /api/v1/diagnostics` | 运行隐私安全的本机诊断 |
+| `GET /api/v1/diagnostics/export` | 下载可先审阅的支持诊断 JSON |
 | `GET /api/v1/workspace/storage` | 获取分类存储、磁盘余量和可清理项目清单 |
 
 完整接口定义位于 [schemas/openapi.v1.json](schemas/openapi.v1.json)，生成的独立数据模型包括：
@@ -231,6 +246,7 @@ uv run docalign spec compile \
 - `format-manifest.v1.schema.json`
 - `template-rule-candidate.v1.schema.json`
 - `rule-pack.v1.schema.json`
+- `support-diagnostic.v1.schema.json`
 - `workspace-storage.v1.schema.json`
 
 ## 质量门与回归
@@ -265,6 +281,7 @@ uv run python tests/fixtures/domain-corpus/run_corpus.py \
 
 - 上传文件、分析、临时规则、独立规则包、输出和审计默认存储在 `DOCALIGN_DATA_DIR`，不进入云存储。
 - 本地资料默认保留，只有用户确认删除具体文档或终态批次后才清理；活动任务关联文档会拒绝删除。
+- 支持诊断由用户主动运行且只在本机生成，不自动发送；用户应先检查 JSON 再决定是否分享。
 - 不执行宏或嵌入对象，不直接覆盖源文件，不重建表格，不承诺浏览器预览与 Microsoft Word
   像素级一致。
 - 自然语言编译仅发送格式要求和紧凑文档摘要；智能分析只在用户主动确认后发送段落文字与

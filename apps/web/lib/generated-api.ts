@@ -38,6 +38,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/diagnostics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Diagnostics */
+        get: operations["diagnostics_api_v1_diagnostics_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/diagnostics/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export Diagnostics */
+        get: operations["export_diagnostics_api_v1_diagnostics_export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspace/storage": {
         parameters: {
             query?: never;
@@ -905,6 +939,93 @@ export interface components {
              */
             truncated: boolean;
         };
+        /** DiagnosticCheck */
+        DiagnosticCheck: {
+            /** Check Id */
+            check_id: string;
+            status: components["schemas"]["DiagnosticCheckStatus"];
+            /** Title */
+            title: string;
+            /** Detail */
+            detail: string;
+            /** Remediation */
+            remediation?: string | null;
+        };
+        /**
+         * DiagnosticCheckStatus
+         * @enum {string}
+         */
+        DiagnosticCheckStatus: "pass" | "warning" | "fail";
+        /** DiagnosticConfiguration */
+        DiagnosticConfiguration: {
+            /**
+             * Local Only
+             * @default true
+             * @constant
+             */
+            local_only: true;
+            /** Database Backend */
+            database_backend: string;
+            /** Llm Configured */
+            llm_configured: boolean;
+            /** Job Concurrency */
+            job_concurrency: number;
+            /** Max Upload Mb */
+            max_upload_mb: number;
+            /** Max Batch Files */
+            max_batch_files: number;
+            /** Max Batch Total Mb */
+            max_batch_total_mb: number;
+        };
+        /** DiagnosticDataSummary */
+        DiagnosticDataSummary: {
+            /** Docalign Bytes */
+            docalign_bytes: number;
+            /** Disk Total Bytes */
+            disk_total_bytes: number;
+            /** Disk Free Bytes */
+            disk_free_bytes: number;
+            storage_pressure: components["schemas"]["StoragePressure"];
+            /** Documents */
+            documents: number;
+            /** Analyses */
+            analyses: number;
+            /** Jobs */
+            jobs: number;
+            /** Active Jobs */
+            active_jobs: number;
+            /** Failed Jobs */
+            failed_jobs: number;
+            /** Batches */
+            batches: number;
+            /** Rule Packs */
+            rule_packs: number;
+        };
+        /** DiagnosticErrorCodeCount */
+        DiagnosticErrorCodeCount: {
+            /** Code */
+            code: string;
+            /** Count */
+            count: number;
+        };
+        /**
+         * DiagnosticOverall
+         * @enum {string}
+         */
+        DiagnosticOverall: "ready" | "attention" | "action_required";
+        /** DiagnosticRuntime */
+        DiagnosticRuntime: {
+            /** Application Version */
+            application_version: string;
+            /** Python Version */
+            python_version: string;
+            /** Operating System */
+            operating_system: string;
+            /** Operating System Release */
+            operating_system_release: string;
+            /** Architecture */
+            architecture: string;
+        };
         /** DocumentFormattingSpec */
         DocumentFormattingSpec: {
             page?: components["schemas"]["PageFormattingSpec"];
@@ -1646,6 +1767,30 @@ export interface components {
             document_id?: string | null;
             spec: components["schemas"]["FormattingSpec"];
         };
+        /** SupportDiagnosticReport */
+        SupportDiagnosticReport: {
+            /**
+             * Schema Version
+             * @default support-diagnostic.v1
+             * @constant
+             */
+            schema_version: "support-diagnostic.v1";
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            overall: components["schemas"]["DiagnosticOverall"];
+            runtime: components["schemas"]["DiagnosticRuntime"];
+            configuration: components["schemas"]["DiagnosticConfiguration"];
+            data_summary: components["schemas"]["DiagnosticDataSummary"];
+            /** Checks */
+            checks: components["schemas"]["DiagnosticCheck"][];
+            /** Recent Error Codes */
+            recent_error_codes: components["schemas"]["DiagnosticErrorCodeCount"][];
+            /** Excluded Data */
+            excluded_data: ("document_content" | "filenames" | "record_identifiers" | "local_paths" | "database_connection_string" | "model_endpoint" | "credentials" | "raw_logs")[];
+        };
         /** TableFormattingSpec */
         TableFormattingSpec: {
             alignment?: components["schemas"]["Alignment"] | null;
@@ -1909,6 +2054,46 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+        };
+    };
+    diagnostics_api_v1_diagnostics_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupportDiagnosticReport"];
+                };
+            };
+        };
+    };
+    export_diagnostics_api_v1_diagnostics_export_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupportDiagnosticReport"];
                 };
             };
         };

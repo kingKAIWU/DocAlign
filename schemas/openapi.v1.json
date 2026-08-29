@@ -46,6 +46,42 @@
         }
       }
     },
+    "/api/v1/diagnostics": {
+      "get": {
+        "summary": "Diagnostics",
+        "operationId": "diagnostics_api_v1_diagnostics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupportDiagnosticReport"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/diagnostics/export": {
+      "get": {
+        "summary": "Export Diagnostics",
+        "operationId": "export_diagnostics_api_v1_diagnostics_export_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SupportDiagnosticReport"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspace/storage": {
       "get": {
         "summary": "Workspace Storage",
@@ -2284,6 +2320,241 @@
         ],
         "title": "ComplianceSummary"
       },
+      "DiagnosticCheck": {
+        "properties": {
+          "check_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9_]{1,64}$",
+            "title": "Check Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/DiagnosticCheckStatus"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          },
+          "remediation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remediation"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "check_id",
+          "status",
+          "title",
+          "detail"
+        ],
+        "title": "DiagnosticCheck"
+      },
+      "DiagnosticCheckStatus": {
+        "type": "string",
+        "enum": [
+          "pass",
+          "warning",
+          "fail"
+        ],
+        "title": "DiagnosticCheckStatus"
+      },
+      "DiagnosticConfiguration": {
+        "properties": {
+          "local_only": {
+            "type": "boolean",
+            "const": true,
+            "title": "Local Only",
+            "default": true
+          },
+          "database_backend": {
+            "type": "string",
+            "title": "Database Backend"
+          },
+          "llm_configured": {
+            "type": "boolean",
+            "title": "Llm Configured"
+          },
+          "job_concurrency": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Job Concurrency"
+          },
+          "max_upload_mb": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Max Upload Mb"
+          },
+          "max_batch_files": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Max Batch Files"
+          },
+          "max_batch_total_mb": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Max Batch Total Mb"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "database_backend",
+          "llm_configured",
+          "job_concurrency",
+          "max_upload_mb",
+          "max_batch_files",
+          "max_batch_total_mb"
+        ],
+        "title": "DiagnosticConfiguration"
+      },
+      "DiagnosticDataSummary": {
+        "properties": {
+          "docalign_bytes": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Docalign Bytes"
+          },
+          "disk_total_bytes": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Disk Total Bytes"
+          },
+          "disk_free_bytes": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Disk Free Bytes"
+          },
+          "storage_pressure": {
+            "$ref": "#/components/schemas/StoragePressure"
+          },
+          "documents": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Documents"
+          },
+          "analyses": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Analyses"
+          },
+          "jobs": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Jobs"
+          },
+          "active_jobs": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Active Jobs"
+          },
+          "failed_jobs": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Failed Jobs"
+          },
+          "batches": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Batches"
+          },
+          "rule_packs": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Rule Packs"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "docalign_bytes",
+          "disk_total_bytes",
+          "disk_free_bytes",
+          "storage_pressure",
+          "documents",
+          "analyses",
+          "jobs",
+          "active_jobs",
+          "failed_jobs",
+          "batches",
+          "rule_packs"
+        ],
+        "title": "DiagnosticDataSummary"
+      },
+      "DiagnosticErrorCodeCount": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[A-Z0-9_]{1,64}$",
+            "title": "Code"
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Count"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "count"
+        ],
+        "title": "DiagnosticErrorCodeCount"
+      },
+      "DiagnosticOverall": {
+        "type": "string",
+        "enum": [
+          "ready",
+          "attention",
+          "action_required"
+        ],
+        "title": "DiagnosticOverall"
+      },
+      "DiagnosticRuntime": {
+        "properties": {
+          "application_version": {
+            "type": "string",
+            "title": "Application Version"
+          },
+          "python_version": {
+            "type": "string",
+            "title": "Python Version"
+          },
+          "operating_system": {
+            "type": "string",
+            "title": "Operating System"
+          },
+          "operating_system_release": {
+            "type": "string",
+            "title": "Operating System Release"
+          },
+          "architecture": {
+            "type": "string",
+            "title": "Architecture"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "application_version",
+          "python_version",
+          "operating_system",
+          "operating_system_release",
+          "architecture"
+        ],
+        "title": "DiagnosticRuntime"
+      },
       "DocumentFormattingSpec": {
         "properties": {
           "page": {
@@ -4482,6 +4753,77 @@
           "spec"
         ],
         "title": "StructuredSpecRequest"
+      },
+      "SupportDiagnosticReport": {
+        "properties": {
+          "schema_version": {
+            "type": "string",
+            "const": "support-diagnostic.v1",
+            "title": "Schema Version",
+            "default": "support-diagnostic.v1"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "overall": {
+            "$ref": "#/components/schemas/DiagnosticOverall"
+          },
+          "runtime": {
+            "$ref": "#/components/schemas/DiagnosticRuntime"
+          },
+          "configuration": {
+            "$ref": "#/components/schemas/DiagnosticConfiguration"
+          },
+          "data_summary": {
+            "$ref": "#/components/schemas/DiagnosticDataSummary"
+          },
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/DiagnosticCheck"
+            },
+            "type": "array",
+            "title": "Checks"
+          },
+          "recent_error_codes": {
+            "items": {
+              "$ref": "#/components/schemas/DiagnosticErrorCodeCount"
+            },
+            "type": "array",
+            "title": "Recent Error Codes"
+          },
+          "excluded_data": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "document_content",
+                "filenames",
+                "record_identifiers",
+                "local_paths",
+                "database_connection_string",
+                "model_endpoint",
+                "credentials",
+                "raw_logs"
+              ]
+            },
+            "type": "array",
+            "title": "Excluded Data"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "generated_at",
+          "overall",
+          "runtime",
+          "configuration",
+          "data_summary",
+          "checks",
+          "recent_error_codes",
+          "excluded_data"
+        ],
+        "title": "SupportDiagnosticReport"
       },
       "TableFormattingSpec": {
         "properties": {

@@ -117,6 +117,10 @@ export type StorageBatchItem = components["schemas"]["StorageBatchItem"];
 
 export type StorageDocumentItem = components["schemas"]["StorageDocumentItem"];
 
+export type SupportDiagnosticReport = components["schemas"]["SupportDiagnosticReport"];
+
+export type DiagnosticCheck = components["schemas"]["DiagnosticCheck"];
+
 export type ComplianceViolation = {
   code: string;
   severity: "info" | "warning" | "error" | "fatal";
