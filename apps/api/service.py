@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 import tempfile
 import uuid
-from collections import Counter
 from pathlib import Path
 
 from docalign_core.analysis.classifier import (
@@ -27,7 +26,7 @@ from docalign_core.docx.safety import (
 )
 from docalign_core.docx.template_candidate import compile_template_rule_candidate
 from docalign_core.docx.text_import import PlainTextImportError, create_docx_from_text
-from docalign_core.domain.audit import CONTENT_INTEGRITY_CODES, AuditReport
+from docalign_core.domain.audit import AuditReport
 from docalign_core.domain.compliance import ComplianceReport, build_compliance_report
 from docalign_core.domain.document_ir import (
     AnalysisResult,
@@ -57,6 +56,7 @@ from fastapi import UploadFile
 from pydantic import ValidationError
 from sqlalchemy import delete, select
 
+from apps.api.change_summary import build_job_result_summary
 from apps.api.db import (
     AnalysisRecord,
     Database,
@@ -510,7 +510,7 @@ class ApiService:
                     Path(record.audit_json_path).read_text(encoding="utf-8")
                 )
                 auto_layout_splits = audit.summary.auto_layout_splits
-                result_summary = _job_result_summary(audit)
+                result_summary = build_job_result_summary(audit)
             except (OSError, UnicodeError, ValidationError):
                 auto_layout_splits = 0
         return JobResponse(
@@ -634,47 +634,6 @@ def _summary(result: AnalysisResult) -> AnalysisSummary:
         model_provider=previous.model_provider,
         model_name=previous.model_name,
     )
-
-
-def _job_result_summary(audit: AuditReport) -> JobResultSummary:
-    categories = Counter(
-        _change_category(mutation.property_path)
-        for mutation in audit.mutations
-        if mutation.status == "changed"
-    )
-    return JobResultSummary(
-        validation_passed=audit.validation.valid,
-        content_integrity_passed=not any(
-            issue.code in CONTENT_INTEGRITY_CODES for issue in audit.validation.issues
-        ),
-        format_operations=audit.summary.format_operations,
-        changed_mutations=audit.summary.changed_mutations,
-        change_categories=dict(sorted(categories.items())),
-        warning_count=len(audit.warnings),
-        validation_issue_count=len(audit.validation.issues),
-        remaining_review_items=audit.summary.unknown_blocks,
-        paragraphs_before=audit.summary.paragraphs_before,
-        paragraphs_after=audit.summary.paragraphs_after,
-        auto_layout_splits=audit.summary.auto_layout_splits,
-    )
-
-
-def _change_category(property_path: str) -> str:
-    if property_path == "paragraph.structure":
-        return "structure"
-    if property_path.startswith("section."):
-        return "page_layout"
-    if property_path.startswith(("styles.", "paragraph.")):
-        return "paragraph_styles"
-    if property_path.startswith("runs."):
-        return "text_font"
-    if property_path.startswith(("table.", "cell.")):
-        return "tables"
-    if property_path.startswith(("header.", "footer.")):
-        return "header_footer"
-    if property_path.startswith("visual_cleanup."):
-        return "visual_cleanup"
-    return "other"
 
 
 def _display_filename(filename: str) -> str:

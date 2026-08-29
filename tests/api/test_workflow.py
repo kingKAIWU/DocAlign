@@ -198,6 +198,24 @@ def test_complete_structured_api_workflow(academic_docx: Path, tmp_path: Path) -
         assert sum(result_summary["change_categories"].values()) == result_summary[
             "changed_mutations"
         ]
+        assert 0 < len(result_summary["change_details"]) <= 32
+        assert isinstance(result_summary["change_details_truncated"], bool)
+        assert any(item["locator"] for item in result_summary["change_details"])
+        assert all(item["property_path"] for item in result_summary["change_details"])
+        assert all(
+            item["before_value"] != item["after_value"]
+            for item in result_summary["change_details"]
+        )
+        assert any(
+            item["property_path"] == "section.layout"
+            and "mm" in (item["after_value"] or "")
+            for item in result_summary["change_details"]
+        )
+        assert any(
+            item["property_path"].startswith("runs.")
+            and "中文字体" in (item["after_value"] or "")
+            for item in result_summary["change_details"]
+        )
 
         output = client.get(f"/api/v1/jobs/{job_id}/output")
         assert output.status_code == 200
@@ -212,6 +230,8 @@ def test_complete_structured_api_workflow(academic_docx: Path, tmp_path: Path) -
         audit_markdown = client.get(f"/api/v1/jobs/{job_id}/audit.md")
         assert audit_markdown.status_code == 200
         assert "DocAlign 格式化审计" in audit_markdown.text
+        assert "## 实际格式变更" in audit_markdown.text
+        assert "paragraph.style" in audit_markdown.text
 
         deleted = client.delete(f"/api/v1/documents/{document_id}")
         assert deleted.status_code == 204

@@ -45,6 +45,17 @@ describe("JobPage", () => {
         format_operations: 12,
         changed_mutations: 8,
         change_categories: { paragraph_styles: 8 },
+        change_details: [
+          {
+            locator: "p1",
+            node_id: "node_1",
+            category: "paragraph_styles",
+            property_path: "paragraph.style",
+            before_value: "Normal",
+            after_value: "DA Body",
+          },
+        ],
+        change_details_truncated: false,
         warning_count: 0,
         validation_issue_count: 0,
         remaining_review_items: 0,
@@ -69,5 +80,6 @@ describe("JobPage", () => {
     expect(await screen.findByText("已完成")).toBeInTheDocument();
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
     expect(screen.getByText("格式验证通过")).toBeInTheDocument();
+    expect(screen.getByText("查看具体改动（1）")).toBeInTheDocument();
   });
 });

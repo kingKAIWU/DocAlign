@@ -1743,6 +1743,73 @@
         "type": "object",
         "title": "HeaderFooterFormattingSpec"
       },
+      "JobChangeDetail": {
+        "properties": {
+          "locator": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Locator"
+          },
+          "node_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Node Id"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "property_path": {
+            "type": "string",
+            "title": "Property Path"
+          },
+          "before_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Before Value"
+          },
+          "after_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "After Value"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "locator",
+          "node_id",
+          "category",
+          "property_path",
+          "before_value",
+          "after_value"
+        ],
+        "title": "JobChangeDetail"
+      },
       "JobCreateRequest": {
         "properties": {
           "document_id": {
@@ -1923,6 +1990,17 @@
             "type": "object",
             "title": "Change Categories"
           },
+          "change_details": {
+            "items": {
+              "$ref": "#/components/schemas/JobChangeDetail"
+            },
+            "type": "array",
+            "title": "Change Details"
+          },
+          "change_details_truncated": {
+            "type": "boolean",
+            "title": "Change Details Truncated"
+          },
           "warning_count": {
             "type": "integer",
             "minimum": 0.0,
@@ -1976,6 +2054,8 @@
           "format_operations",
           "changed_mutations",
           "change_categories",
+          "change_details",
+          "change_details_truncated",
           "warning_count",
           "validation_issue_count",
           "remaining_review_items",

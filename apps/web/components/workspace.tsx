@@ -93,6 +93,7 @@ export function Workspace() {
   const [dragging, setDragging] = useState(false);
   const [showOnlyUncertain, setShowOnlyUncertain] = useState(false);
   const [showTextImport, setShowTextImport] = useState(false);
+  const [highlightedLocator, setHighlightedLocator] = useState<string | null>(null);
   const [plainText, setPlainText] = useState("");
   const [plainFilename, setPlainFilename] = useState("未命名文档.docx");
   const previewRef = useRef<HTMLDivElement>(null);
@@ -330,6 +331,7 @@ export function Workspace() {
     setJob(null);
     setCompilationReport(null);
     setCompliance(null);
+    setHighlightedLocator(null);
     storeWorkspace({ document_id: nextDocument.document_id });
     setMessage(notice);
   }
@@ -350,6 +352,7 @@ export function Workspace() {
       setShowOnlyUncertain(false);
       setOverrides({});
       setCompliance(null);
+      setHighlightedLocator(null);
       storeWorkspace({
         document_id: document.document_id,
         analysis_id: result.analysis_id,
@@ -449,6 +452,19 @@ export function Workspace() {
       `已采用“${templateCandidate.source_filename}”生成的候选规则。` +
       "你仍可在高级规则中检查或修改，然后再体检或排版。",
     );
+  }
+
+  function locateChange(locator: string) {
+    const topLevelLocator = locator.split(".")[0];
+    if (!/^(?:p|t|u)\d+$/.test(topLevelLocator)) return;
+    setShowOnlyUncertain(false);
+    setHighlightedLocator(topLevelLocator);
+    window.requestAnimationFrame(() => {
+      window.document.getElementById(`structure-${topLevelLocator}`)?.scrollIntoView?.({
+        behavior: "smooth",
+        block: "center",
+      });
+    });
   }
 
   function selectCleanupPreset(preset: CleanupPreset, announce = true) {
@@ -771,13 +787,17 @@ export function Workspace() {
                   <div className="structure-list-empty">待确认段落已全部处理。</div>
                 ) : visibleBlocks.map((block) => {
                   if (block.kind === "table") {
-                    return <div className="structure-table" key={block.node_id}>{block.locator} · 表格 · {block.rows} × {block.columns_estimate}</div>;
+                    return <div id={`structure-${block.locator}`} className={`structure-table ${highlightedLocator === block.locator ? "change-focus" : ""}`} key={block.node_id}>{block.locator} · 表格 · {block.rows} × {block.columns_estimate}</div>;
                   }
                   if (block.kind === "unsupported") {
-                    return <div className="structure-warning" key={block.node_id}>{block.locator} · 未识别结构 · 已保留</div>;
+                    return <div id={`structure-${block.locator}`} className={`structure-warning ${highlightedLocator === block.locator ? "change-focus" : ""}`} key={block.node_id}>{block.locator} · 未识别结构 · 已保留</div>;
                   }
                   return (
-                    <article className={`structure-item ${block.detected_role === "unknown" ? "uncertain" : ""}`} key={block.node_id}>
+                    <article
+                      id={`structure-${block.locator}`}
+                      className={`structure-item ${block.detected_role === "unknown" ? "uncertain" : ""} ${highlightedLocator === block.locator ? "change-focus" : ""}`}
+                      key={block.node_id}
+                    >
                       <div className="structure-copy">
                         <span>{block.text || (block.contains_drawing ? "[图片]" : "[空段落]")}</span>
                         <small title={block.role_evidence.join(" · ")}>
@@ -843,6 +863,7 @@ export function Workspace() {
                 <>
                   <JobOutcomeSummary
                     job={job}
+                    onLocate={analysis ? locateChange : undefined}
                     onReview={analysis && unknownCount > 0
                       ? () => {
                           setShowOnlyUncertain(true);

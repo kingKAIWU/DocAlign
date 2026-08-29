@@ -731,6 +731,21 @@ export interface components {
             font?: components["schemas"]["FontSpec"] | null;
             paragraph?: components["schemas"]["ParagraphSpec"] | null;
         };
+        /** JobChangeDetail */
+        JobChangeDetail: {
+            /** Locator */
+            locator: string | null;
+            /** Node Id */
+            node_id: string | null;
+            /** Category */
+            category: string;
+            /** Property Path */
+            property_path: string;
+            /** Before Value */
+            before_value: string | null;
+            /** After Value */
+            after_value: string | null;
+        };
         /** JobCreateRequest */
         JobCreateRequest: {
             /** Document Id */
@@ -791,6 +806,10 @@ export interface components {
             change_categories: {
                 [key: string]: number;
             };
+            /** Change Details */
+            change_details: components["schemas"]["JobChangeDetail"][];
+            /** Change Details Truncated */
+            change_details_truncated: boolean;
             /** Warning Count */
             warning_count: number;
             /** Validation Issue Count */

@@ -78,6 +78,11 @@ test("completes the local structured formatting workflow and restores it", async
   await expect(resultSummary.getByText("格式验证通过")).toBeVisible();
   await expect(resultSummary.getByText("原文与受保护结构通过")).toBeVisible();
   await expect(resultSummary.getByText("项实际格式调整")).toBeVisible();
+  await resultSummary.getByText(/查看具体改动/).click();
+  const firstChangeLocator = resultSummary.getByRole("button", { name: /定位到/ }).first();
+  await expect(firstChangeLocator).toBeVisible();
+  await firstChangeLocator.click();
+  await expect(page.locator(".structure-item.change-focus, .structure-table.change-focus")).toBeVisible();
   const auditUrl = await page.getByRole("link", { name: "查看审计" }).getAttribute("href");
   expect(auditUrl).toBeTruthy();
   const audit = await page.request.get(auditUrl!);

@@ -237,9 +237,27 @@ describe("Workspace", () => {
     });
     mocks.analysis.mockResolvedValue({
       analysis_id: "analysis_1",
-      document_ir: { source_filename: "restored.docx", blocks: [], warnings: [] },
+      document_ir: {
+        source_filename: "restored.docx",
+        warnings: [],
+        blocks: [
+          {
+            kind: "paragraph",
+            node_id: "node_1",
+            locator: "p1",
+            index: 0,
+            text: "第一段正文",
+            detected_role: "body",
+            role_confidence: 0.99,
+            role_source: "deterministic",
+            role_evidence: ["body"],
+            contains_drawing: false,
+            is_empty: false,
+          },
+        ],
+      },
       summary: {
-        paragraph_count: 0,
+        paragraph_count: 1,
         table_count: 0,
         image_count: 0,
         unknown_count: 0,
@@ -270,6 +288,17 @@ describe("Workspace", () => {
           page_layout: 2,
           visual_cleanup: 6,
         },
+        change_details: [
+          {
+            locator: "p1",
+            node_id: "node_1",
+            category: "paragraph_styles",
+            property_path: "paragraph.style",
+            before_value: "Normal",
+            after_value: "DA Body",
+          },
+        ],
+        change_details_truncated: false,
         warning_count: 0,
         validation_issue_count: 0,
         remaining_review_items: 0,
@@ -292,6 +321,11 @@ describe("Workspace", () => {
     expect(screen.getByText("原文与受保护结构通过")).toBeInTheDocument();
     expect(screen.getByText("62")).toBeInTheDocument();
     expect(screen.getByText("标题与段落")).toBeInTheDocument();
+    fireEvent.click(screen.getByText("查看具体改动（1）"));
+    expect(screen.getByText("Normal")).toBeInTheDocument();
+    expect(screen.getByText("DA Body")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "定位到 p1" }));
+    expect(screen.getByText("第一段正文").closest("article")).toHaveClass("change-focus");
   });
 
   it("filters the structure list to paragraphs that need confirmation", async () => {

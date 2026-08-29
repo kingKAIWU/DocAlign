@@ -48,12 +48,23 @@ class JobCreateRequest(ApiModel):
     spec_id: str
 
 
+class JobChangeDetail(ApiModel):
+    locator: str | None
+    node_id: str | None
+    category: str
+    property_path: str
+    before_value: str | None
+    after_value: str | None
+
+
 class JobResultSummary(ApiModel):
     validation_passed: bool
     content_integrity_passed: bool
     format_operations: int = Field(ge=0)
     changed_mutations: int = Field(ge=0)
     change_categories: dict[str, int]
+    change_details: list[JobChangeDetail]
+    change_details_truncated: bool
     warning_count: int = Field(ge=0)
     validation_issue_count: int = Field(ge=0)
     remaining_review_items: int = Field(ge=0)

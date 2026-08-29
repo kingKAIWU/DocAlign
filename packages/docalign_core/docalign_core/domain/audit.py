@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from enum import StrEnum
 from typing import Literal
 
@@ -145,6 +146,16 @@ class AuditReport(StrictModel):
             "",
         ]
         lines.extend(f"- {role}: {count}" for role, count in sorted(self.roles.items()))
+        changed = [mutation for mutation in self.mutations if mutation.status == "changed"]
+        if changed:
+            lines.extend(["", "## 实际格式变更", ""])
+            for mutation in changed[:50]:
+                lines.append(
+                    f"- `{mutation.locator or '全文'}` · `{mutation.property_path}`："
+                    f"{_markdown_value(mutation.before)} → {_markdown_value(mutation.after)}"
+                )
+            if len(changed) > 50:
+                lines.append(f"- 其余 {len(changed) - 50} 项请查看 `audit.json`。")
         lines.extend(["", "## 警告与验证问题", ""])
         if not self.warnings and not self.validation.issues:
             lines.append("无。")
@@ -166,3 +177,11 @@ class AuditReport(StrictModel):
 
 def _markdown_locator(locator: str | None) -> str:
     return f"（`{locator}`）" if locator else ""
+
+
+def _markdown_value(value: object | None) -> str:
+    if value is None:
+        return "未设置"
+    rendered = json.dumps(value, ensure_ascii=False, sort_keys=True, default=str)
+    compact = " ".join(rendered.split()).replace("`", "'")
+    return f"{compact[:157]}…" if len(compact) > 160 else compact

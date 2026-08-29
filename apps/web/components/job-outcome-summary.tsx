@@ -14,9 +14,33 @@ const changeCategoryLabels: Record<string, string> = {
 type JobOutcomeSummaryProps = {
   job: Job;
   onReview?: () => void;
+  onLocate?: (locator: string) => void;
 };
 
-export function JobOutcomeSummary({ job, onReview }: JobOutcomeSummaryProps) {
+const changePropertyLabels: Record<string, string> = {
+  "paragraph.structure": "正文安全分段",
+  "paragraph.style": "段落样式",
+  "paragraph.alignment": "段落对齐",
+  "section.layout": "页面版式",
+  "table.format": "表格布局",
+  "header.format": "页眉格式",
+  "footer.format": "页脚格式",
+  "footer.page_number": "页码",
+  "visual_cleanup.text_color_hex": "文字颜色",
+  "visual_cleanup.remove_text_highlight": "文字高亮",
+  "visual_cleanup.remove_character_shading": "字符底纹",
+  "visual_cleanup.remove_paragraph_shading": "段落底纹",
+  "visual_cleanup.remove_table_cell_shading": "表格底纹",
+  "visual_cleanup.remove_page_background": "页面背景",
+};
+
+function changePropertyLabel(propertyPath: string): string {
+  if (propertyPath.startsWith("styles.")) return "角色样式";
+  if (propertyPath.startsWith("runs.")) return "文字字体与强调";
+  return changePropertyLabels[propertyPath] ?? "其他格式";
+}
+
+export function JobOutcomeSummary({ job, onReview, onLocate }: JobOutcomeSummaryProps) {
   const summary = job.result_summary;
   if (!summary) {
     return (
@@ -37,6 +61,7 @@ export function JobOutcomeSummary({ job, onReview }: JobOutcomeSummaryProps) {
     summary.paragraphs_after !== null
       ? `${summary.paragraphs_before} → ${summary.paragraphs_after} 段`
       : null;
+  const changeDetails = summary.change_details ?? [];
 
   return (
     <section className="outcome-summary" aria-label="排版结果摘要">
@@ -72,6 +97,46 @@ export function JobOutcomeSummary({ job, onReview }: JobOutcomeSummaryProps) {
             ))}
           </ul>
         </div>
+      )}
+      {changeDetails.length > 0 && (
+        <details className="outcome-details">
+          <summary>
+            查看具体改动（{changeDetails.length}{summary.change_details_truncated ? ` / ${summary.changed_mutations}` : ""}）
+          </summary>
+          <ol>
+            {changeDetails.map((detail, index) => {
+              const canLocate = Boolean(
+                detail.locator && onLocate && /^(?:p|t|u)\d+(?:\.|$)/.test(detail.locator),
+              );
+              return (
+                <li key={`${detail.locator ?? "document"}-${detail.property_path}-${index}`}>
+                  <div className="outcome-detail-heading">
+                    {canLocate ? (
+                      <button
+                        type="button"
+                        onClick={() => onLocate?.(detail.locator!)}
+                        aria-label={`定位到 ${detail.locator}`}
+                      >
+                        {detail.locator}
+                      </button>
+                    ) : (
+                      <code>{detail.locator ?? "全文"}</code>
+                    )}
+                    <strong>{changePropertyLabel(detail.property_path)}</strong>
+                  </div>
+                  <div className="outcome-detail-values">
+                    <span>{detail.before_value ?? "未设置"}</span>
+                    <i aria-hidden="true">→</i>
+                    <b>{detail.after_value ?? "已移除"}</b>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+          {summary.change_details_truncated && (
+            <p>为保持任务恢复轻量，仅展示前 32 项；完整改动保留在审计 JSON。</p>
+          )}
+        </details>
       )}
       {summary.auto_layout_splits > 0 && (
         <p className="outcome-note">
