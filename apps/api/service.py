@@ -218,10 +218,31 @@ class ApiService:
         }
 
     def delete_document(self, document_id: str) -> None:
+        active_statuses = {
+            JobStatus.QUEUED.value,
+            JobStatus.ANALYZING.value,
+            JobStatus.PLANNING.value,
+            JobStatus.FORMATTING.value,
+            JobStatus.VALIDATING.value,
+            JobStatus.REPAIRING.value,
+            JobStatus.CANCELING.value,
+        }
         with self.database.session_factory.begin() as session:
             document = session.get(DocumentRecord, document_id)
             if document is None:
                 raise ApiError(404, "DOCUMENT_NOT_FOUND", "Document not found.")
+            active_job_id = session.scalar(
+                select(JobRecord.id).where(
+                    JobRecord.document_id == document_id,
+                    JobRecord.status.in_(active_statuses),
+                )
+            )
+            if active_job_id is not None:
+                raise ApiError(
+                    409,
+                    "DOCUMENT_JOB_ACTIVE",
+                    "Wait for the active processing job to finish before deleting this document.",
+                )
             analysis_ids = list(
                 session.scalars(
                     select(AnalysisRecord.id).where(AnalysisRecord.document_id == document_id)

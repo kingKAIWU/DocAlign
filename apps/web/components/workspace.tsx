@@ -682,8 +682,8 @@ export function Workspace() {
                 </button>
               )}
               {document && (
-                <button className="remove-document" disabled={Boolean(busy)} onClick={deleteWorkspace}>
-                  删除本地文档
+                <button className="remove-document" disabled={Boolean(busy) || jobActive} onClick={deleteWorkspace}>
+                  {jobActive ? "任务完成后可删除" : "删除本地文档"}
                 </button>
               )}
             </div>

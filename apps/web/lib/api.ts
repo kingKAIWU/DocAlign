@@ -13,6 +13,7 @@ import type {
   RulePackDetail,
   SemanticRole,
   TemplateRuleCandidate,
+  WorkspaceStorageReport,
 } from "./types";
 
 export const API_BASE =
@@ -189,6 +190,11 @@ export const api = {
   },
   batch: (batchId: string, signal?: AbortSignal) =>
     request<BatchAudit>(`/batches/${batchId}`, {
+      signal,
+      cache: "no-store",
+    }),
+  workspaceStorage: (signal?: AbortSignal) =>
+    request<WorkspaceStorageReport>("/workspace/storage", {
       signal,
       cache: "no-store",
     }),

@@ -12,6 +12,7 @@ from docalign_core.domain.formatting_spec import FormattingSpec
 from docalign_core.domain.manifest import FormatManifest
 from docalign_core.domain.rule_pack import RulePackArtifact
 from docalign_core.domain.template_candidate import TemplateRuleCandidate
+from docalign_core.domain.workspace import WorkspaceStorageReport
 
 
 def main() -> None:
@@ -29,6 +30,7 @@ def main() -> None:
         "format-manifest.v1.schema.json": FormatManifest,
         "template-rule-candidate.v1.schema.json": TemplateRuleCandidate,
         "rule-pack.v1.schema.json": RulePackArtifact,
+        "workspace-storage.v1.schema.json": WorkspaceStorageReport,
     }
     for filename, model in models.items():
         target = output / filename

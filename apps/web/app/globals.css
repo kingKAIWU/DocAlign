@@ -285,8 +285,11 @@ a { color: inherit; }
 .text-link { color: var(--green); font-size: 10px; font-weight: 700; }
 .app-footer { max-width: 1500px; margin: 12px auto 0; display: flex; justify-content: space-between; color: #8b918e; font-size: 8px; letter-spacing: .05em; }
 
-.settings-shell { width: min(820px, calc(100% - 40px)); margin: 0 auto; padding: 42px 0 80px; }
+.settings-shell { width: min(1040px, calc(100% - 40px)); margin: 0 auto; padding: 42px 0 80px; }
+.settings-nav { margin-bottom: 54px; display: flex; align-items: center; justify-content: space-between; }
+.settings-nav a { font-size: 12px; }
 .back-link { display: inline-block; margin-bottom: 54px; font-size: 12px; }
+.settings-nav .back-link { margin-bottom: 0; }
 .settings-intro { margin: 13px 0 35px; color: var(--muted); }
 .settings-card { margin-top: 14px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); }
 .setting-row { min-height: 58px; padding: 0 18px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); font-size: 12px; }
@@ -297,6 +300,43 @@ a { color: inherit; }
 .prose-card h2 { margin: 0 0 10px; font: 600 18px/1.2 var(--font-serif); }
 .prose-card p { color: var(--muted); font-size: 12px; line-height: 1.8; }
 .prose-card pre { overflow: auto; padding: 14px; color: #dcece5; background: #20332d; font: 10px/1.7 ui-monospace, monospace; }
+.storage-card { padding: 22px; }
+.storage-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
+.storage-heading .eyebrow { margin: 0 0 5px; color: var(--green); font-size: 8px; font-weight: 800; letter-spacing: .12em; }
+.storage-heading h2, .storage-list-card h2 { margin: 0; font: 600 20px/1.2 var(--font-serif); }
+.storage-heading > div > p:last-child, .storage-list-card > div:first-child p { margin: 7px 0 0; color: var(--muted); font-size: 10px; line-height: 1.6; }
+.storage-loading { margin-top: 18px; padding: 24px; color: var(--muted); background: var(--surface-2); text-align: center; font-size: 11px; }
+.storage-overview { margin-top: 20px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.storage-overview > span { min-width: 0; padding: 13px; display: grid; gap: 6px; border: 1px solid var(--line); background: var(--surface-2); }
+.storage-overview small { color: var(--muted); font-size: 8px; }
+.storage-overview strong { overflow: hidden; text-overflow: ellipsis; color: var(--green-2); font: 600 20px/1 var(--font-serif); }
+.storage-overview .warning strong { color: #9c6b16; }
+.storage-overview .critical strong { color: var(--red); }
+.storage-pressure { margin-top: 10px; padding: 10px 12px; border-left: 3px solid; font-size: 10px; line-height: 1.6; }
+.storage-pressure.warning { border-color: var(--amber); color: #725119; background: #fff8ed; }
+.storage-pressure.critical { border-color: var(--red); color: var(--red); background: #fff4f2; }
+.storage-categories { margin-top: 18px; display: grid; gap: 8px; }
+.storage-categories > div { display: grid; grid-template-columns: minmax(130px, .8fr) minmax(180px, 2fr) 80px; align-items: center; gap: 12px; }
+.storage-categories > div > span { min-width: 0; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.storage-categories b { font-size: 9px; }
+.storage-categories small { color: var(--muted); font-size: 7px; white-space: nowrap; }
+.storage-categories i { height: 6px; overflow: hidden; border-radius: 999px; background: var(--line); }
+.storage-categories em { height: 100%; display: block; border-radius: inherit; background: var(--green); }
+.storage-categories > div > strong { text-align: right; font: 700 8px/1 ui-monospace, monospace; }
+.storage-records { margin-top: 17px; padding-top: 13px; display: flex; flex-wrap: wrap; gap: 7px 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: 8px; }
+.storage-cleanup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.storage-list-card { min-width: 0; padding: 20px; }
+.storage-list { max-height: 410px; margin-top: 16px; overflow: auto; display: grid; gap: 6px; scrollbar-gutter: stable; }
+.storage-item { min-width: 0; padding: 11px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid var(--line); background: var(--surface-2); }
+.storage-item > div { min-width: 0; display: grid; gap: 4px; }
+.storage-item > div strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; }
+.storage-item small { color: var(--muted); font-size: 7px; line-height: 1.4; }
+.storage-item small.active-note { color: #9c6b16; }
+.storage-item > span { flex: 0 0 auto; display: grid; justify-items: end; gap: 7px; }
+.storage-item > span > b { color: var(--green-2); font: 700 8px/1 ui-monospace, monospace; }
+.storage-item .button { min-width: 58px; padding: 6px 9px; font-size: 8px; }
+.storage-empty { padding: 30px 12px; color: var(--muted); background: var(--surface-2); text-align: center; font-size: 10px; }
+.storage-truncated { margin: 10px 0 0; color: var(--muted); font-size: 8px; }
 .job-error { margin: 16px; padding: 14px; color: var(--red); background: #f8e9e7; }
 .job-error p { margin-bottom: 0; }
 .job-connection-note { margin: 16px; padding: 10px 12px; color: #725119; border: 1px solid #dec490; border-radius: 5px; background: #fff8ed; font-size: 10px; line-height: 1.5; }
@@ -412,6 +452,14 @@ a { color: inherit; }
   .panel { min-height: 520px; }
   .preview-panel { min-height: 680px; }
   .app-footer { flex-direction: column; gap: 5px; }
+  .settings-shell { width: min(100% - 24px, 1040px); padding-top: 24px; }
+  .settings-nav { margin-bottom: 38px; }
+  .storage-heading { align-items: stretch; flex-direction: column; gap: 14px; }
+  .storage-overview { grid-template-columns: 1fr 1fr; }
+  .storage-categories > div { grid-template-columns: minmax(105px, 1fr) minmax(90px, 1.4fr) 62px; gap: 8px; }
+  .storage-categories > div > span { align-items: flex-start; flex-direction: column; gap: 2px; }
+  .storage-cleanup-grid { grid-template-columns: 1fr; }
+  .storage-list { max-height: none; }
   .batch-hero { padding: 28px 0 20px; align-items: flex-start; flex-direction: column; }
   .batch-setup-grid { grid-template-columns: 1fr; }
   .batch-card { padding: 15px; }

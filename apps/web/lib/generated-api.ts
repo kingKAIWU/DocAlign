@@ -38,6 +38,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspace/storage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Workspace Storage */
+        get: operations["workspace_storage_api_v1_workspace_storage_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/presets/generic-academic-cn": {
         parameters: {
             query?: never;
@@ -1545,6 +1562,84 @@ export interface components {
          * @enum {string}
          */
         SpecSourceType: "system" | "preset" | "natural_language" | "template" | "structured" | "merged";
+        /** StorageBatchItem */
+        StorageBatchItem: {
+            /** Batch Id */
+            batch_id: string;
+            /** Name */
+            name: string;
+            status: components["schemas"]["BatchStatus"];
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Bytes */
+            bytes: number;
+            /** Item Count */
+            item_count: number;
+            /** Completed */
+            completed: number;
+            /** Failed */
+            failed: number;
+            /** Canceled */
+            canceled: number;
+        };
+        /** StorageCategory */
+        StorageCategory: {
+            category: components["schemas"]["StorageCategoryId"];
+            /** Bytes */
+            bytes: number;
+            /** File Count */
+            file_count: number;
+        };
+        /**
+         * StorageCategoryId
+         * @enum {string}
+         */
+        StorageCategoryId: "source_documents" | "analyses" | "job_audits" | "outputs" | "batch_packages" | "database" | "other";
+        /** StorageDocumentItem */
+        StorageDocumentItem: {
+            /** Document Id */
+            document_id: string;
+            /** Filename */
+            filename: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Bytes */
+            bytes: number;
+            /** Analysis Count */
+            analysis_count: number;
+            /** Job Count */
+            job_count: number;
+            /** Active Job Count */
+            active_job_count: number;
+            /** Deletable */
+            deletable: boolean;
+        };
+        /**
+         * StoragePressure
+         * @enum {string}
+         */
+        StoragePressure: "normal" | "warning" | "critical";
+        /** StorageRecordCounts */
+        StorageRecordCounts: {
+            /** Documents */
+            documents: number;
+            /** Analyses */
+            analyses: number;
+            /** Jobs */
+            jobs: number;
+            /** Batches */
+            batches: number;
+            /** Active Batches */
+            active_batches: number;
+            /** Rule Packs */
+            rule_packs: number;
+        };
         /** StructuredSpecRequest */
         StructuredSpecRequest: {
             /** Document Id */
@@ -1731,6 +1826,40 @@ export interface components {
              */
             remove_page_background: boolean;
         };
+        /** WorkspaceStorageReport */
+        WorkspaceStorageReport: {
+            /**
+             * Schema Version
+             * @default workspace-storage.v1
+             * @constant
+             */
+            schema_version: "workspace-storage.v1";
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            /** Docalign Bytes */
+            docalign_bytes: number;
+            /** Reclaimable Bytes */
+            reclaimable_bytes: number;
+            /** Disk Total Bytes */
+            disk_total_bytes: number;
+            /** Disk Free Bytes */
+            disk_free_bytes: number;
+            pressure: components["schemas"]["StoragePressure"];
+            /** Categories */
+            categories: components["schemas"]["StorageCategory"][];
+            records: components["schemas"]["StorageRecordCounts"];
+            /** Terminal Batches */
+            terminal_batches: components["schemas"]["StorageBatchItem"][];
+            /** Terminal Batches Truncated */
+            terminal_batches_truncated: boolean;
+            /** Unbatched Documents */
+            unbatched_documents: components["schemas"]["StorageDocumentItem"][];
+            /** Unbatched Documents Truncated */
+            unbatched_documents_truncated: boolean;
+        };
     };
     responses: never;
     parameters: never;
@@ -1780,6 +1909,37 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+        };
+    };
+    workspace_storage_api_v1_workspace_storage_get: {
+        parameters: {
+            query?: {
+                item_limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceStorageReport"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

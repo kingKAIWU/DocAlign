@@ -80,6 +80,14 @@ DocAlign 是一个本地优先、确定性执行的 DOCX 自动排版与格式�
 - API 启动前自动把当前 `DOCALIGN_DATABASE_URL` 升级到最新迁移版本；升级失败时不会带着半旧表结构
   继续提供服务。
 
+### 可检查的本地存储
+
+- “设置”页面按源 DOCX、分析、任务审计、输出、批次包和数据库分类显示本机占用，并提示剩余磁盘空间。
+- 页面分别列出已结束批次与未归入批次的文档，先展示可回收空间，再由用户逐项确认删除；默认不会
+  自动过期或清理资料。
+- 处理中的文档不能删除，避免任务运行时丢失源文件；终态批次删除仍保留跨文档复用的规则包。
+- 存储统计不读取文档正文、不把完整本地路径返回浏览器，也不会跟随数据目录中的符号链接。
+
 ### 面向用户的结果解释
 
 - 完成页同时显示格式验证、原文与受保护结构校验、实际调整数量和剩余人工复核项。
@@ -212,6 +220,7 @@ uv run docalign spec compile \
 | `GET /api/v1/jobs/{id}/output` | 下载验证通过的 DOCX |
 | `GET /api/v1/jobs/{id}/audit.json` | 下载机器可读审计 |
 | `GET /api/v1/jobs/{id}/audit.md` | 下载人工审计报告 |
+| `GET /api/v1/workspace/storage` | 获取分类存储、磁盘余量和可清理项目清单 |
 
 完整接口定义位于 [schemas/openapi.v1.json](schemas/openapi.v1.json)，生成的独立数据模型包括：
 
@@ -222,6 +231,7 @@ uv run docalign spec compile \
 - `format-manifest.v1.schema.json`
 - `template-rule-candidate.v1.schema.json`
 - `rule-pack.v1.schema.json`
+- `workspace-storage.v1.schema.json`
 
 ## 质量门与回归
 
@@ -254,6 +264,7 @@ uv run python tests/fixtures/domain-corpus/run_corpus.py \
 ## 隐私与安全边界
 
 - 上传文件、分析、临时规则、独立规则包、输出和审计默认存储在 `DOCALIGN_DATA_DIR`，不进入云存储。
+- 本地资料默认保留，只有用户确认删除具体文档或终态批次后才清理；活动任务关联文档会拒绝删除。
 - 不执行宏或嵌入对象，不直接覆盖源文件，不重建表格，不承诺浏览器预览与 Microsoft Word
   像素级一致。
 - 自然语言编译仅发送格式要求和紧凑文档摘要；智能分析只在用户主动确认后发送段落文字与

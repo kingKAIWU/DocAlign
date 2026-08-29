@@ -53,6 +53,7 @@ export const errorLabels: Record<string, string> = {
   TEXT_TOO_LARGE: "纯文本超过当前大小限制。",
   REQUIREMENT_PARSE_FAILED: "模型未能生成有效的格式规则。",
   ANALYSIS_SOURCE_MISMATCH: "分析结果与当前源文档不匹配，请重新分析。",
+  DOCUMENT_JOB_ACTIVE: "文档仍在处理中，请等待任务结束后再删除。",
   OUTPUT_VALIDATION_FAILED: "输出未通过格式验证，请查看审计报告。",
   CONTENT_INTEGRITY_FAILED: "检测到未授权内容变化，输出已阻止。",
   AUTO_LAYOUT_INTEGRITY_FAILED: "自动排版触及了受保护内容，输出已阻止并保留源文件。",

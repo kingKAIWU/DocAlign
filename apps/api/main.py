@@ -18,7 +18,8 @@ from docalign_core.domain.formatting_spec import (
 from docalign_core.domain.manifest import FormatManifest
 from docalign_core.domain.rule_pack import RulePackArtifact
 from docalign_core.domain.template_candidate import TemplateRuleCandidate
-from fastapi import FastAPI, File, Form, Request, UploadFile
+from docalign_core.domain.workspace import WorkspaceStorageReport
+from fastapi import FastAPI, File, Form, Query, Request, UploadFile
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -49,6 +50,7 @@ from apps.api.schemas import (
 )
 from apps.api.service import ApiService
 from apps.api.storage import LocalStorage
+from apps.api.workspace import WorkspaceService
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -58,6 +60,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     storage = LocalStorage(settings.data_dir)
     service = ApiService(settings, database, storage)
     batch_service = BatchService(service, settings, database, storage)
+    workspace_service = WorkspaceService(database, storage, batch_service)
     runner = JobRunner(service, settings.job_concurrency)
 
     @asynccontextmanager
@@ -80,6 +83,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.state.storage = storage
     application.state.service = service
     application.state.batch_service = batch_service
+    application.state.workspace_service = workspace_service
     application.state.runner = runner
     application.add_middleware(
         CORSMiddleware,
@@ -132,6 +136,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "max_upload_mb": settings.max_upload_mb,
             "local_only": True,
         }
+
+    @application.get("/api/v1/workspace/storage")
+    def workspace_storage(
+        item_limit: int = Query(default=50, ge=1, le=200),
+    ) -> WorkspaceStorageReport:
+        return workspace_service.storage_report(item_limit=item_limit)
 
     @application.get("/api/v1/presets/generic-academic-cn")
     def generic_academic_preset() -> dict[str, object]:

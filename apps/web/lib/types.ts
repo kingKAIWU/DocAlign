@@ -111,6 +111,12 @@ export type BatchItem = components["schemas"]["BatchAuditItem"];
 
 export type BatchAudit = components["schemas"]["BatchAudit"];
 
+export type WorkspaceStorageReport = components["schemas"]["WorkspaceStorageReport"];
+
+export type StorageBatchItem = components["schemas"]["StorageBatchItem"];
+
+export type StorageDocumentItem = components["schemas"]["StorageDocumentItem"];
+
 export type ComplianceViolation = {
   code: string;
   severity: "info" | "warning" | "error" | "fatal";

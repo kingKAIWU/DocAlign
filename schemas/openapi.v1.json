@@ -46,6 +46,48 @@
         }
       }
     },
+    "/api/v1/workspace/storage": {
+      "get": {
+        "summary": "Workspace Storage",
+        "operationId": "workspace_storage_api_v1_workspace_storage_get",
+        "parameters": [
+          {
+            "name": "item_limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Item Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceStorageReport"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/presets/generic-academic-cn": {
       "get": {
         "summary": "Generic Academic Preset",
@@ -4212,6 +4254,211 @@
         ],
         "title": "SpecSourceType"
       },
+      "StorageBatchItem": {
+        "properties": {
+          "batch_id": {
+            "type": "string",
+            "title": "Batch Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "status": {
+            "$ref": "#/components/schemas/BatchStatus"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Bytes"
+          },
+          "item_count": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Item Count"
+          },
+          "completed": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Completed"
+          },
+          "failed": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Failed"
+          },
+          "canceled": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Canceled"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "batch_id",
+          "name",
+          "status",
+          "updated_at",
+          "bytes",
+          "item_count",
+          "completed",
+          "failed",
+          "canceled"
+        ],
+        "title": "StorageBatchItem"
+      },
+      "StorageCategory": {
+        "properties": {
+          "category": {
+            "$ref": "#/components/schemas/StorageCategoryId"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Bytes"
+          },
+          "file_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "File Count"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "category",
+          "bytes",
+          "file_count"
+        ],
+        "title": "StorageCategory"
+      },
+      "StorageCategoryId": {
+        "type": "string",
+        "enum": [
+          "source_documents",
+          "analyses",
+          "job_audits",
+          "outputs",
+          "batch_packages",
+          "database",
+          "other"
+        ],
+        "title": "StorageCategoryId"
+      },
+      "StorageDocumentItem": {
+        "properties": {
+          "document_id": {
+            "type": "string",
+            "title": "Document Id"
+          },
+          "filename": {
+            "type": "string",
+            "title": "Filename"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Bytes"
+          },
+          "analysis_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Analysis Count"
+          },
+          "job_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Job Count"
+          },
+          "active_job_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Active Job Count"
+          },
+          "deletable": {
+            "type": "boolean",
+            "title": "Deletable"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "document_id",
+          "filename",
+          "created_at",
+          "bytes",
+          "analysis_count",
+          "job_count",
+          "active_job_count",
+          "deletable"
+        ],
+        "title": "StorageDocumentItem"
+      },
+      "StoragePressure": {
+        "type": "string",
+        "enum": [
+          "normal",
+          "warning",
+          "critical"
+        ],
+        "title": "StoragePressure"
+      },
+      "StorageRecordCounts": {
+        "properties": {
+          "documents": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Documents"
+          },
+          "analyses": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Analyses"
+          },
+          "jobs": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Jobs"
+          },
+          "batches": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Batches"
+          },
+          "active_batches": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Active Batches"
+          },
+          "rule_packs": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Rule Packs"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "documents",
+          "analyses",
+          "jobs",
+          "batches",
+          "active_batches",
+          "rule_packs"
+        ],
+        "title": "StorageRecordCounts"
+      },
       "StructuredSpecRequest": {
         "properties": {
           "document_id": {
@@ -4674,6 +4921,93 @@
         "additionalProperties": false,
         "type": "object",
         "title": "VisualCleanupSpec"
+      },
+      "WorkspaceStorageReport": {
+        "properties": {
+          "schema_version": {
+            "type": "string",
+            "const": "workspace-storage.v1",
+            "title": "Schema Version",
+            "default": "workspace-storage.v1"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "docalign_bytes": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Docalign Bytes"
+          },
+          "reclaimable_bytes": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Reclaimable Bytes"
+          },
+          "disk_total_bytes": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Disk Total Bytes"
+          },
+          "disk_free_bytes": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Disk Free Bytes"
+          },
+          "pressure": {
+            "$ref": "#/components/schemas/StoragePressure"
+          },
+          "categories": {
+            "items": {
+              "$ref": "#/components/schemas/StorageCategory"
+            },
+            "type": "array",
+            "title": "Categories"
+          },
+          "records": {
+            "$ref": "#/components/schemas/StorageRecordCounts"
+          },
+          "terminal_batches": {
+            "items": {
+              "$ref": "#/components/schemas/StorageBatchItem"
+            },
+            "type": "array",
+            "title": "Terminal Batches"
+          },
+          "terminal_batches_truncated": {
+            "type": "boolean",
+            "title": "Terminal Batches Truncated"
+          },
+          "unbatched_documents": {
+            "items": {
+              "$ref": "#/components/schemas/StorageDocumentItem"
+            },
+            "type": "array",
+            "title": "Unbatched Documents"
+          },
+          "unbatched_documents_truncated": {
+            "type": "boolean",
+            "title": "Unbatched Documents Truncated"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "generated_at",
+          "docalign_bytes",
+          "reclaimable_bytes",
+          "disk_total_bytes",
+          "disk_free_bytes",
+          "pressure",
+          "categories",
+          "records",
+          "terminal_batches",
+          "terminal_batches_truncated",
+          "unbatched_documents",
+          "unbatched_documents_truncated"
+        ],
+        "title": "WorkspaceStorageReport"
       }
     }
   }
