@@ -197,6 +197,10 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ request_id: requestId }),
     }),
+  cancelBatch: (batchId: string) =>
+    request<BatchAudit>(`/batches/${batchId}/cancel`, { method: "POST" }),
+  deleteBatch: (batchId: string) =>
+    request<void>(`/batches/${batchId}`, { method: "DELETE" }),
   deleteDocument: (documentId: string) =>
     request<void>(`/documents/${documentId}`, { method: "DELETE" }),
 };

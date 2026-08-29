@@ -7,6 +7,8 @@ export const jobStatusLabels: Record<Job["status"], string> = {
   formatting: "正在应用格式",
   validating: "正在验证",
   repairing: "正在自动修复",
+  canceling: "正在安全停止",
+  canceled: "已取消",
   completed: "已完成",
   failed: "失败",
 };
@@ -60,6 +62,9 @@ export const errorLabels: Record<string, string> = {
   BATCH_JOB_MISSING: "处理任务记录缺失，请检查本地数据或重新建立批次。",
   BATCH_TOTAL_TOO_LARGE: "本批文件总大小超过当前限制。",
   BATCH_OUTPUT_MISSING: "已完成的输出文件在本地存储中缺失。",
+  BATCH_CANCELED: "该批次已取消，不能再提交重试。",
+  BATCH_NOT_ACTIVE: "该批次已结束，无需取消。",
+  BATCH_NOT_TERMINAL: "请先取消批次并等待其完全停止，再删除本地数据。",
   FORMATTING_SPEC_CONFLICT: "排版规则中存在互斥的段落设置，请重新编译规则后再试。",
   TABLE_FORMAT_VALIDATION_FAILED: "表格整体属性不符合当前规则。",
   TABLE_FONT_VALIDATION_FAILED: "表格内字体或字号不符合当前规则。",

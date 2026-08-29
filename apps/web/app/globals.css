@@ -348,7 +348,7 @@ a { color: inherit; }
 .batch-overview p { margin: 0 0 4px; color: var(--green); font-size: 8px; font-weight: 800; letter-spacing: .12em; }
 .batch-overview h2 { margin: 0; font: 600 21px/1.2 var(--font-serif); }
 .batch-overview > div:first-child > span { display: block; margin-top: 5px; color: var(--muted); font-size: 8px; }
-.batch-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 7px; }
+.batch-metrics { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 7px; }
 .batch-metrics span { padding: 9px; display: grid; gap: 3px; border: 1px solid var(--line); color: var(--muted); font-size: 7px; }
 .batch-metrics b { color: var(--green-2); font: 650 19px/1 var(--font-serif); }
 .batch-actions { display: grid; justify-items: stretch; gap: 6px; }
@@ -360,6 +360,7 @@ a { color: inherit; }
 .batch-result-header { min-height: 38px; padding: 0 16px; color: var(--muted); background: var(--surface-2); border-bottom: 1px solid var(--line); font-size: 8px; font-weight: 750; }
 .batch-result-row { min-height: 82px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
 .batch-result-row.failed { background: #fff9f7; }
+.batch-result-row.canceled { background: #f6f7f6; }
 .batch-result-row > div:first-child { min-width: 0; display: flex; align-items: center; gap: 11px; }
 .batch-result-row > div:first-child > b { color: var(--green); font: 700 10px/1 ui-monospace, monospace; }
 .batch-result-row > div:first-child > span { min-width: 0; display: grid; gap: 4px; }
@@ -377,6 +378,8 @@ a { color: inherit; }
 .batch-item-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .batch-item-actions .button { padding: 6px 8px; font-size: 8px; }
 .batch-footer-note { margin: 0; padding: 11px 16px; color: var(--muted); background: var(--surface-2); font: 7px/1.5 ui-monospace, monospace; overflow-wrap: anywhere; }
+.button.danger { border-color: #cba39c; color: var(--red); background: #fff9f7; }
+.button.danger:hover:not(:disabled) { border-color: var(--red); background: #f8e9e7; }
 
 @media (max-width: 1100px) {
   .hero-row { grid-template-columns: 1fr; gap: 22px; }

@@ -322,6 +322,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def get_batch(batch_id: str) -> BatchAudit:
         return batch_service.get_batch(batch_id)
 
+    @application.post("/api/v1/batches/{batch_id}/cancel", status_code=202)
+    def cancel_batch(batch_id: str) -> BatchAudit:
+        return batch_service.cancel_batch(batch_id)
+
+    @application.delete("/api/v1/batches/{batch_id}", status_code=204)
+    def delete_batch(batch_id: str) -> Response:
+        batch_service.delete_batch(batch_id)
+        return Response(status_code=204)
+
     @application.post("/api/v1/batches/{batch_id}/items/{item_id}/retry", status_code=202)
     async def retry_batch_item(
         batch_id: str, item_id: str, request: BatchRetryRequest

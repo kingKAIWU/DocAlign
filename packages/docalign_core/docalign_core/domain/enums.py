@@ -69,5 +69,7 @@ class JobStatus(StrEnum):
     FORMATTING = "formatting"
     VALIDATING = "validating"
     REPAIRING = "repairing"
+    CANCELING = "canceling"
+    CANCELED = "canceled"
     COMPLETED = "completed"
     FAILED = "failed"

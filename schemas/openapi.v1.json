@@ -1129,6 +1129,75 @@
             }
           }
         }
+      },
+      "delete": {
+        "summary": "Delete Batch",
+        "operationId": "delete_batch_api_v1_batches__batch_id__delete",
+        "parameters": [
+          {
+            "name": "batch_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Batch Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/batches/{batch_id}/cancel": {
+      "post": {
+        "summary": "Cancel Batch",
+        "operationId": "cancel_batch_api_v1_batches__batch_id__cancel_post",
+        "parameters": [
+          {
+            "name": "batch_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Batch Id"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchAudit"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/batches/{batch_id}/items/{item_id}/retry": {
@@ -1537,9 +1606,9 @@
         "properties": {
           "schema_version": {
             "type": "string",
-            "const": "batch-audit.v1",
+            "const": "batch-audit.v2",
             "title": "Schema Version",
-            "default": "batch-audit.v1"
+            "default": "batch-audit.v2"
           },
           "batch_id": {
             "type": "string",
@@ -1821,6 +1890,11 @@
             "minimum": 0.0,
             "title": "Failed"
           },
+          "canceled": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Canceled"
+          },
           "active": {
             "type": "integer",
             "minimum": 0.0,
@@ -1833,6 +1907,7 @@
           "total",
           "completed",
           "failed",
+          "canceled",
           "active"
         ],
         "title": "BatchAuditSummary"
@@ -1847,6 +1922,8 @@
           "formatting",
           "validating",
           "repairing",
+          "canceling",
+          "canceled",
           "completed",
           "failed"
         ],
@@ -1872,6 +1949,8 @@
         "enum": [
           "preparing",
           "processing",
+          "canceling",
+          "canceled",
           "completed",
           "completed_with_errors",
           "failed"
@@ -2955,6 +3034,8 @@
           "formatting",
           "validating",
           "repairing",
+          "canceling",
+          "canceled",
           "completed",
           "failed"
         ],

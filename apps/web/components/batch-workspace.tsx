@@ -15,7 +15,7 @@ import type {
 } from "@/lib/types";
 
 const STORAGE_KEY = "docalign.batch.v1";
-const TERMINAL = new Set(["completed", "completed_with_errors", "failed"]);
+const TERMINAL = new Set(["completed", "completed_with_errors", "failed", "canceled"]);
 
 type PendingRetry = { request_id: string; attempt_count: number };
 type StoredBatch = { batch_id: string; pending_retries?: Record<string, PendingRetry> };
@@ -29,6 +29,8 @@ const itemStatusLabels: Record<BatchItemStatus, string> = {
   formatting: "应用格式",
   validating: "验证结果",
   repairing: "自动修复",
+  canceling: "正在安全停止",
+  canceled: "已取消",
   completed: "已完成",
   failed: "处理失败",
 };
@@ -301,6 +303,41 @@ export function BatchWorkspace() {
     }
   }
 
+  async function cancelBatch() {
+    if (!batch || TERMINAL.has(batch.status) || batch.status === "canceling") return;
+    if (!window.confirm("确定取消这个批次吗？正在处理的文件会在当前安全阶段结束后停止，已完成文件会保留。")) return;
+    setBusy("cancel");
+    setError("");
+    try {
+      applyBatch(await api.cancelBatch(batch.batch_id));
+      setMessage("已发出取消请求；正在处理的文件会安全停止并丢弃未完成输出。 ");
+    } catch (caught) {
+      setError(readableError(caught));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function deleteBatch() {
+    if (!batch || !TERMINAL.has(batch.status)) return;
+    if (!window.confirm("确定永久删除这个本地批次吗？源文件、分析记录、作业、输出和审计文件都将被清理，此操作无法撤销。")) return;
+    setBusy("delete");
+    setError("");
+    try {
+      await api.deleteBatch(batch.batch_id);
+      window.localStorage.removeItem(STORAGE_KEY);
+      pendingRetriesRef.current = {};
+      pendingCreateRef.current = null;
+      setBatch(null);
+      setFiles([]);
+      setMessage("本地批次及其文件已全部删除。 ");
+    } catch (caught) {
+      setError(readableError(caught));
+    } finally {
+      setBusy(null);
+    }
+  }
+
   function startNewBatch() {
     if (batch && !TERMINAL.has(batch.status)) return;
     window.localStorage.removeItem(STORAGE_KEY);
@@ -413,6 +450,8 @@ export function BatchWorkspace() {
           busy={busy}
           onRefresh={() => void refreshBatch()}
           onRetry={(item) => void retryItem(item)}
+          onCancel={() => void cancelBatch()}
+          onDelete={() => void deleteBatch()}
         />
       )}
     </main>
@@ -424,12 +463,17 @@ function BatchProgress({
   busy,
   onRefresh,
   onRetry,
+  onCancel,
+  onDelete,
 }: {
   batch: BatchAudit;
   busy: string | null;
   onRefresh: () => void;
   onRetry: (item: BatchItem) => void;
+  onCancel: () => void;
+  onDelete: () => void;
 }) {
+  const terminal = TERMINAL.has(batch.status);
   return (
     <section className="batch-progress-shell">
       <div className="batch-overview">
@@ -437,6 +481,7 @@ function BatchProgress({
         <div className="batch-metrics">
           <span><b>{batch.summary.completed}</b>完成</span>
           <span><b>{batch.summary.failed}</b>失败</span>
+          <span><b>{batch.summary.canceled}</b>取消</span>
           <span><b>{batch.summary.active}</b>处理中</span>
           <span><b>{batch.progress}%</b>总进度</span>
         </div>
@@ -444,6 +489,8 @@ function BatchProgress({
           <button className="button secondary" disabled={busy === "refresh"} onClick={onRefresh}>刷新状态</button>
           <a className={`button primary ${batch.output_zip_url ? "" : "disabled"}`} href={apiUrl(batch.output_zip_url)}>下载完成文件 ZIP</a>
           <a className="text-link" href={apiUrl(batch.audit_json_url)}>下载批次审计 JSON</a>
+          {!terminal && <button className="button danger" disabled={busy === "cancel" || batch.status === "canceling"} onClick={onCancel}>{batch.status === "canceling" ? "正在安全停止…" : "取消批次"}</button>}
+          {terminal && <button className="button danger" disabled={busy === "delete"} onClick={onDelete}>{busy === "delete" ? "正在删除…" : "删除本地批次"}</button>}
         </div>
       </div>
       <div className="batch-total-progress"><i style={{ width: `${batch.progress}%` }} /></div>
@@ -454,7 +501,7 @@ function BatchProgress({
             <div><b>{String(item.position).padStart(2, "0")}</b><span><strong>{item.filename}</strong><small>{item.attempt_count ? `已尝试 ${item.attempt_count} 次` : "上传校验未通过"}</small></span></div>
             <div><strong>{itemStatusLabels[item.status]}</strong><div className="batch-item-progress"><i style={{ width: `${item.progress}%` }} /></div><small>{item.error_code ? (errorLabels[item.error_code] ?? item.error_message) : item.error_message}</small></div>
             <div className="batch-validation">
-              {item.status === "completed" ? <><span className={item.validation_passed ? "passed" : "failed"}>格式{item.validation_passed ? "通过" : "异常"}</span><span className={item.content_integrity_passed ? "passed" : "failed"}>内容{item.content_integrity_passed ? "安全" : "异常"}</span><small>{item.changed_mutations ?? 0} 项实际变更</small></> : <small>{item.status === "failed" ? "未生成输出" : "完成后显示验证结果"}</small>}
+              {item.status === "completed" ? <><span className={item.validation_passed ? "passed" : "failed"}>格式{item.validation_passed ? "通过" : "异常"}</span><span className={item.content_integrity_passed ? "passed" : "failed"}>内容{item.content_integrity_passed ? "安全" : "异常"}</span><small>{item.changed_mutations ?? 0} 项实际变更</small></> : <small>{item.status === "failed" ? "未生成输出" : item.status === "canceled" ? "已取消，未生成输出" : item.status === "canceling" ? "正在安全停止" : "完成后显示验证结果"}</small>}
             </div>
             <div className="batch-item-actions">
               {item.output_document_url && <a className="text-link" href={apiUrl(item.output_document_url)}>下载 DOCX</a>}

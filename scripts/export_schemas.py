@@ -24,7 +24,7 @@ def main() -> None:
         "formatting-spec.v1.schema.json": FormattingSpec,
         "document-ir.v1.schema.json": DocumentIR,
         "audit-report.v1.schema.json": AuditReport,
-        "batch-audit.v1.schema.json": BatchAudit,
+        "batch-audit.v2.schema.json": BatchAudit,
         "compliance-report.v1.schema.json": ComplianceReport,
         "format-manifest.v1.schema.json": FormatManifest,
         "template-rule-candidate.v1.schema.json": TemplateRuleCandidate,

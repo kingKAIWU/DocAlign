@@ -49,6 +49,13 @@ class LocalStorage:
             self._remove(self.root / "jobs" / job_id)
             self._remove(self.root / "outputs" / job_id)
 
+    def delete_batch_artifacts(self, batch_id: str) -> None:
+        self._remove(self.root / "batches" / batch_id)
+
+    def delete_job_artifacts(self, job_id: str) -> None:
+        self._remove(self.root / "jobs" / job_id)
+        self._remove(self.root / "outputs" / job_id)
+
     def _remove(self, path: Path) -> None:
         resolved = path.resolve()
         if self.root not in resolved.parents:

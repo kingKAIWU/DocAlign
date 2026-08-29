@@ -12,6 +12,8 @@ from docalign_core.domain.base import StrictModel
 class BatchStatus(StrEnum):
     PREPARING = "preparing"
     PROCESSING = "processing"
+    CANCELING = "canceling"
+    CANCELED = "canceled"
     COMPLETED = "completed"
     COMPLETED_WITH_ERRORS = "completed_with_errors"
     FAILED = "failed"
@@ -25,6 +27,8 @@ class BatchItemStatus(StrEnum):
     FORMATTING = "formatting"
     VALIDATING = "validating"
     REPAIRING = "repairing"
+    CANCELING = "canceling"
+    CANCELED = "canceled"
     COMPLETED = "completed"
     FAILED = "failed"
 
@@ -33,6 +37,7 @@ class BatchAuditSummary(StrictModel):
     total: int = Field(ge=1)
     completed: int = Field(ge=0)
     failed: int = Field(ge=0)
+    canceled: int = Field(ge=0)
     active: int = Field(ge=0)
 
 
@@ -58,7 +63,7 @@ class BatchAuditItem(StrictModel):
 
 
 class BatchAudit(StrictModel):
-    schema_version: Literal["batch-audit.v1"] = "batch-audit.v1"
+    schema_version: Literal["batch-audit.v2"] = "batch-audit.v2"
     batch_id: str
     request_id: str
     name: str

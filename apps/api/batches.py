@@ -25,6 +25,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 
 from apps.api.db import (
+    AnalysisRecord,
     BatchAttemptRecord,
     BatchItemRecord,
     BatchRecord,
@@ -191,13 +192,21 @@ class BatchService:
 
         completed = sum(item.status == BatchItemStatus.COMPLETED for item in payload_items)
         failed = sum(item.status == BatchItemStatus.FAILED for item in payload_items)
-        active = len(payload_items) - completed - failed
+        canceled = sum(item.status == BatchItemStatus.CANCELED for item in payload_items)
+        active = len(payload_items) - completed - failed - canceled
         if active:
-            status = (
-                BatchStatus.PREPARING
-                if any(item.status == BatchItemStatus.PREPARING for item in payload_items)
-                else BatchStatus.PROCESSING
-            )
+            if batch.cancel_requested_at is not None or any(
+                item.status == BatchItemStatus.CANCELING for item in payload_items
+            ):
+                status = BatchStatus.CANCELING
+            else:
+                status = (
+                    BatchStatus.PREPARING
+                    if any(item.status == BatchItemStatus.PREPARING for item in payload_items)
+                    else BatchStatus.PROCESSING
+                )
+        elif canceled:
+            status = BatchStatus.CANCELED
         elif completed == len(payload_items):
             status = BatchStatus.COMPLETED
         elif failed == len(payload_items):
@@ -217,12 +226,14 @@ class BatchService:
             rule_pack_name=batch.rule_pack_name,
             rule_pack_spec_sha256=batch.rule_pack_spec_sha256,
             summary=BatchAuditSummary(
-                total=len(payload_items), completed=completed, failed=failed, active=active
+                total=len(payload_items),
+                completed=completed,
+                failed=failed,
+                canceled=canceled,
+                active=active,
             ),
             items=payload_items,
-            output_zip_url=(
-                f"/api/v1/batches/{batch.id}/outputs.zip" if completed else None
-            ),
+            output_zip_url=(f"/api/v1/batches/{batch.id}/outputs.zip" if completed else None),
             audit_json_url=f"/api/v1/batches/{batch.id}/audit.json",
             created_at=batch.created_at,
             updated_at=updated_at,
@@ -237,10 +248,17 @@ class BatchService:
             item = session.get(BatchItemRecord, item_id)
             if item is None or item.batch_id != batch_id:
                 raise ApiError(404, "BATCH_ITEM_NOT_FOUND", "Batch item not found.")
-            existing_attempt = session.scalar(
-                select(BatchAttemptRecord).where(
-                    BatchAttemptRecord.request_id == request_id
+            batch = session.get(BatchRecord, batch_id)
+            if batch is None:
+                raise ApiError(404, "BATCH_NOT_FOUND", "Batch not found.")
+            if batch.cancel_requested_at is not None:
+                raise ApiError(
+                    409,
+                    "BATCH_CANCELED",
+                    "Canceled batches cannot accept new retry attempts.",
                 )
+            existing_attempt = session.scalar(
+                select(BatchAttemptRecord).where(BatchAttemptRecord.request_id == request_id)
             )
             if existing_attempt is not None:
                 if existing_attempt.batch_item_id != item_id:
@@ -255,7 +273,9 @@ class BatchService:
             current_status = (
                 item.status
                 if item.status == BatchItemStatus.PREPARING.value
-                else job.status if job is not None else item.status
+                else job.status
+                if job is not None
+                else item.status
             )
             if current_status != BatchItemStatus.FAILED.value or not item.document_id:
                 raise ApiError(
@@ -271,9 +291,6 @@ class BatchService:
                 else item.attempt_count + 1
             )
             reserve_attempt = existing_attempt is None
-            batch = session.get(BatchRecord, batch_id)
-            if batch is None:
-                raise ApiError(404, "BATCH_NOT_FOUND", "Batch not found.")
             pack_id = batch.rule_pack_id
             revision = batch.rule_pack_revision
 
@@ -290,9 +307,7 @@ class BatchService:
                     )
                     current = session.get(BatchItemRecord, item_id)
                     if current is None:
-                        raise ApiError(
-                            404, "BATCH_ITEM_NOT_FOUND", "Batch item not found."
-                        )
+                        raise ApiError(404, "BATCH_ITEM_NOT_FOUND", "Batch item not found.")
                     current.attempt_count = attempt_number
                     current.status = BatchItemStatus.PREPARING.value
                     current.error_code = None
@@ -316,11 +331,10 @@ class BatchService:
                     attempt_number = concurrent.attempt_number
 
         artifact = self.core.get_rule_pack_artifact(pack_id, revision)
+        canceled_during_prepare = False
         try:
             if analysis_id is None:
-                analysis_id, _ = await self.core.analyze(
-                    document_id, AnalysisMode.DETERMINISTIC
-                )
+                analysis_id, _ = await self.core.analyze(document_id, AnalysisMode.DETERMINISTIC)
             spec_id, _ = self.core.create_spec(artifact.spec, document_id)
             job_record = self.core.create_job(document_id, analysis_id, spec_id)
             with self.database.session_factory.begin() as session:
@@ -328,9 +342,7 @@ class BatchService:
                 if current is None:
                     raise ApiError(404, "BATCH_ITEM_NOT_FOUND", "Batch item not found.")
                 attempt = session.scalar(
-                    select(BatchAttemptRecord).where(
-                        BatchAttemptRecord.request_id == request_id
-                    )
+                    select(BatchAttemptRecord).where(BatchAttemptRecord.request_id == request_id)
                 )
                 if attempt is None or attempt.batch_item_id != item_id:
                     raise ApiError(
@@ -339,10 +351,26 @@ class BatchService:
                         "The retry reservation could not be recovered.",
                     )
                 attempt.job_id = job_record.id
+                batch = session.get(BatchRecord, batch_id)
+                if batch is None:
+                    raise ApiError(404, "BATCH_NOT_FOUND", "Batch not found.")
+                if batch.cancel_requested_at is not None:
+                    queued_job = session.get(JobRecord, job_record.id)
+                    if queued_job is not None:
+                        queued_job.cancel_requested = True
+                        queued_job.status = JobStatus.CANCELED.value
+                        queued_job.progress = 100
+                        queued_job.updated_at = utcnow()
+                    current.status = BatchItemStatus.CANCELED.value
+                    current.error_code = None
+                    current.error_message = None
+                    current.updated_at = utcnow()
+                    canceled_during_prepare = True
+                else:
+                    current.status = BatchItemStatus.QUEUED.value
                 current.analysis_id = analysis_id
                 current.current_job_id = job_record.id
                 current.attempt_count = attempt_number
-                current.status = BatchItemStatus.QUEUED.value
                 current.error_code = None
                 current.error_message = None
                 current.updated_at = utcnow()
@@ -361,7 +389,127 @@ class BatchService:
                 "BATCH_RETRY_PREPARATION_FAILED",
                 "The retry could not be prepared. It is safe to try again.",
             ) from exc
-        return self.get_batch(batch_id), [job_record.id]
+        return self.get_batch(batch_id), ([] if canceled_during_prepare else [job_record.id])
+
+    def cancel_batch(self, batch_id: str) -> BatchAudit:
+        terminal_jobs = {
+            JobStatus.COMPLETED.value,
+            JobStatus.FAILED.value,
+            JobStatus.CANCELED.value,
+        }
+        with self.database.session_factory.begin() as session:
+            batch = session.get(BatchRecord, batch_id)
+            if batch is None:
+                raise ApiError(404, "BATCH_NOT_FOUND", "Batch not found.")
+            items = list(
+                session.scalars(select(BatchItemRecord).where(BatchItemRecord.batch_id == batch_id))
+            )
+            jobs = {
+                item.current_job_id: session.get(JobRecord, item.current_job_id)
+                for item in items
+                if item.current_job_id
+            }
+            active = False
+            for item in items:
+                job = jobs.get(item.current_job_id) if item.current_job_id else None
+                if item.status == BatchItemStatus.PREPARING.value:
+                    active = True
+                    item.status = BatchItemStatus.CANCELED.value
+                    item.current_job_id = None
+                    item.error_code = None
+                    item.error_message = None
+                    item.updated_at = utcnow()
+                    continue
+                if job is not None:
+                    if job.status in terminal_jobs:
+                        continue
+                    active = True
+                    job.cancel_requested = True
+                    job.error_code = None
+                    job.error_message = None
+                    job.updated_at = utcnow()
+                    if job.status == JobStatus.QUEUED.value:
+                        job.status = JobStatus.CANCELED.value
+                        job.progress = 100
+                        item.status = BatchItemStatus.CANCELED.value
+                    else:
+                        job.status = JobStatus.CANCELING.value
+                        item.status = BatchItemStatus.CANCELING.value
+                    item.error_code = None
+                    item.error_message = None
+                    item.updated_at = utcnow()
+                elif item.status not in {
+                    BatchItemStatus.COMPLETED.value,
+                    BatchItemStatus.FAILED.value,
+                    BatchItemStatus.CANCELED.value,
+                }:
+                    active = True
+                    item.status = BatchItemStatus.CANCELED.value
+                    item.error_code = None
+                    item.error_message = None
+                    item.updated_at = utcnow()
+
+            if not active and batch.cancel_requested_at is None:
+                raise ApiError(
+                    409,
+                    "BATCH_NOT_ACTIVE",
+                    "Only an active batch can be canceled.",
+                )
+            if batch.cancel_requested_at is None:
+                batch.cancel_requested_at = utcnow()
+            batch.updated_at = utcnow()
+        return self.get_batch(batch_id)
+
+    def delete_batch(self, batch_id: str) -> None:
+        audit = self.get_batch(batch_id)
+        if audit.status not in {
+            BatchStatus.COMPLETED,
+            BatchStatus.COMPLETED_WITH_ERRORS,
+            BatchStatus.FAILED,
+            BatchStatus.CANCELED,
+        }:
+            raise ApiError(
+                409,
+                "BATCH_NOT_TERMINAL",
+                "Cancel the active batch and wait for it to stop before deleting it.",
+            )
+
+        with self.database.session_factory.begin() as session:
+            batch = session.get(BatchRecord, batch_id)
+            if batch is None:
+                raise ApiError(404, "BATCH_NOT_FOUND", "Batch not found.")
+            document_ids = list(
+                session.scalars(
+                    select(BatchItemRecord.document_id).where(
+                        BatchItemRecord.batch_id == batch_id,
+                        BatchItemRecord.document_id.is_not(None),
+                    )
+                )
+            )
+            artifacts: list[tuple[str, list[str], list[str]]] = []
+            for document_id in document_ids:
+                if document_id is None:
+                    continue
+                analysis_ids = list(
+                    session.scalars(
+                        select(AnalysisRecord.id).where(AnalysisRecord.document_id == document_id)
+                    )
+                )
+                job_ids = list(
+                    session.scalars(
+                        select(JobRecord.id).where(JobRecord.document_id == document_id)
+                    )
+                )
+                artifacts.append((document_id, analysis_ids, job_ids))
+            session.delete(batch)
+            for document_id, _, _ in artifacts:
+                document = session.get(DocumentRecord, document_id)
+                if document is not None:
+                    session.delete(document)
+            session.flush()
+            for document_id, analysis_ids, job_ids in artifacts:
+                self.storage.delete_document_artifacts(document_id, analysis_ids, job_ids)
+            self.storage.delete_batch_artifacts(batch_id)
 
     def queued_job_ids(self, batch_id: str) -> list[str]:
         with self.database.session_factory() as session:
@@ -376,9 +524,7 @@ class BatchService:
         audit = self.get_batch(batch_id)
         completed = [item for item in audit.items if item.status == BatchItemStatus.COMPLETED]
         if not completed:
-            raise ApiError(
-                409, "BATCH_HAS_NO_OUTPUTS", "This batch has no completed documents."
-            )
+            raise ApiError(409, "BATCH_HAS_NO_OUTPUTS", "This batch has no completed documents.")
         target = self.storage.batch_output_zip_path(batch_id)
         temporary = target.with_suffix(".zip.tmp")
         try:
@@ -442,19 +588,29 @@ class BatchService:
                 self._enforce_batch_total(item_id, document_id)
 
             if analysis_id is None:
-                analysis_id, _ = await self.core.analyze(
-                    document_id, AnalysisMode.DETERMINISTIC
-                )
+                analysis_id, _ = await self.core.analyze(document_id, AnalysisMode.DETERMINISTIC)
             spec_id, _ = self.core.create_spec(spec, document_id)
             job = self.core.create_job(document_id, analysis_id, spec_id)
             with self.database.session_factory.begin() as session:
                 current = session.get(BatchItemRecord, item_id)
                 if current is None:
                     raise ApiError(404, "BATCH_ITEM_NOT_FOUND", "Batch item not found.")
+                batch = session.get(BatchRecord, current.batch_id)
+                if batch is None:
+                    raise ApiError(404, "BATCH_NOT_FOUND", "Batch not found.")
                 current.analysis_id = analysis_id
                 current.current_job_id = job.id
                 current.attempt_count = 1
-                current.status = BatchItemStatus.QUEUED.value
+                if batch.cancel_requested_at is not None:
+                    queued_job = session.get(JobRecord, job.id)
+                    if queued_job is not None:
+                        queued_job.cancel_requested = True
+                        queued_job.status = JobStatus.CANCELED.value
+                        queued_job.progress = 100
+                        queued_job.updated_at = utcnow()
+                    current.status = BatchItemStatus.CANCELED.value
+                else:
+                    current.status = BatchItemStatus.QUEUED.value
                 current.error_code = None
                 current.error_message = None
                 current.updated_at = utcnow()
@@ -497,9 +653,7 @@ class BatchService:
                 {"limit_bytes": limit},
             )
 
-    def _item_payload(
-        self, item: BatchItemRecord, job: JobRecord | None
-    ) -> BatchAuditItem:
+    def _item_payload(self, item: BatchItemRecord, job: JobRecord | None) -> BatchAuditItem:
         error_code: str | None
         error_message: str | None
         if item.status == BatchItemStatus.PREPARING.value:
@@ -517,13 +671,17 @@ class BatchService:
         elif job is not None:
             job_payload = self.core.job_payload(job)
             status = BatchItemStatus(job.status)
-            progress = 100 if status == BatchItemStatus.FAILED else job.progress
+            progress = (
+                100
+                if status in {BatchItemStatus.FAILED, BatchItemStatus.CANCELED}
+                else job.progress
+            )
             error_code = job.error_code
             error_message = job.error_message
             result_summary = job_payload.result_summary
         else:
             status = BatchItemStatus(item.status)
-            progress = 100 if status == BatchItemStatus.FAILED else 0
+            progress = 100 if status in {BatchItemStatus.FAILED, BatchItemStatus.CANCELED} else 0
             error_code = item.error_code
             error_message = item.error_message
             result_summary = None
@@ -545,9 +703,7 @@ class BatchService:
                 result_summary.validation_passed if result_summary is not None else None
             ),
             content_integrity_passed=(
-                result_summary.content_integrity_passed
-                if result_summary is not None
-                else None
+                result_summary.content_integrity_passed if result_summary is not None else None
             ),
             changed_mutations=(
                 result_summary.changed_mutations if result_summary is not None else None
@@ -580,7 +736,10 @@ class BatchService:
     def _mark_failed(self, item_id: str, code: str, message: str) -> None:
         with self.database.session_factory.begin() as session:
             item = session.get(BatchItemRecord, item_id)
-            if item is not None:
+            if item is not None and item.status not in {
+                BatchItemStatus.CANCELING.value,
+                BatchItemStatus.CANCELED.value,
+            }:
                 item.status = BatchItemStatus.FAILED.value
                 item.error_code = code
                 item.error_message = message

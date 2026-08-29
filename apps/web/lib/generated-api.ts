@@ -460,6 +460,24 @@ export interface paths {
         get: operations["get_batch_api_v1_batches__batch_id__get"];
         put?: never;
         post?: never;
+        /** Delete Batch */
+        delete: operations["delete_batch_api_v1_batches__batch_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/batches/{batch_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel Batch */
+        post: operations["cancel_batch_api_v1_batches__batch_id__cancel_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -659,10 +677,10 @@ export interface components {
         BatchAudit: {
             /**
              * Schema Version
-             * @default batch-audit.v1
+             * @default batch-audit.v2
              * @constant
              */
-            schema_version: "batch-audit.v1";
+            schema_version: "batch-audit.v2";
             /** Batch Id */
             batch_id: string;
             /** Request Id */
@@ -744,6 +762,8 @@ export interface components {
             completed: number;
             /** Failed */
             failed: number;
+            /** Canceled */
+            canceled: number;
             /** Active */
             active: number;
         };
@@ -751,7 +771,7 @@ export interface components {
          * BatchItemStatus
          * @enum {string}
          */
-        BatchItemStatus: "preparing" | "queued" | "analyzing" | "planning" | "formatting" | "validating" | "repairing" | "completed" | "failed";
+        BatchItemStatus: "preparing" | "queued" | "analyzing" | "planning" | "formatting" | "validating" | "repairing" | "canceling" | "canceled" | "completed" | "failed";
         /** BatchRetryRequest */
         BatchRetryRequest: {
             /** Request Id */
@@ -761,7 +781,7 @@ export interface components {
          * BatchStatus
          * @enum {string}
          */
-        BatchStatus: "preparing" | "processing" | "completed" | "completed_with_errors" | "failed";
+        BatchStatus: "preparing" | "processing" | "canceling" | "canceled" | "completed" | "completed_with_errors" | "failed";
         /** Body_create_batch_api_v1_batches_post */
         Body_create_batch_api_v1_batches_post: {
             /** Request Id */
@@ -1135,7 +1155,7 @@ export interface components {
          * JobStatus
          * @enum {string}
          */
-        JobStatus: "queued" | "analyzing" | "planning" | "formatting" | "validating" | "repairing" | "completed" | "failed";
+        JobStatus: "queued" | "analyzing" | "planning" | "formatting" | "validating" | "repairing" | "canceling" | "canceled" | "completed" | "failed";
         /**
          * LineSpacingMode
          * @enum {string}
@@ -2634,6 +2654,66 @@ export interface operations {
         responses: {
             /** @description Successful Response */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BatchAudit"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_batch_api_v1_batches__batch_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                batch_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cancel_batch_api_v1_batches__batch_id__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                batch_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
                 headers: {
                     [name: string]: unknown;
                 };

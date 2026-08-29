@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import threading
 import time
 import zipfile
 from pathlib import Path
@@ -11,13 +12,20 @@ from docalign_core.domain.formatting_spec import default_cleanup_spec
 from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 
-from apps.api.db import BatchAttemptRecord, BatchRecord, JobRecord, utcnow
+from apps.api import service as service_module
+from apps.api.db import (
+    AnalysisRecord,
+    BatchAttemptRecord,
+    BatchItemRecord,
+    BatchRecord,
+    DocumentRecord,
+    JobRecord,
+    utcnow,
+)
 from apps.api.errors import ApiError
 from apps.api.main import create_app
 
-DOCX_MEDIA_TYPE = (
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-)
+DOCX_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 
 
 def test_batch_is_idempotent_isolates_bad_files_and_packages_outputs(
@@ -44,6 +52,7 @@ def test_batch_is_idempotent_isolates_bad_files_and_packages_outputs(
             "total": 2,
             "completed": 1,
             "failed": 1,
+            "canceled": 0,
             "active": 0,
         }
         assert batch["progress"] == 100
@@ -59,7 +68,7 @@ def test_batch_is_idempotent_isolates_bad_files_and_packages_outputs(
 
         audit = client.get(batch["audit_json_url"])
         assert audit.status_code == 200
-        assert audit.json()["schema_version"] == "batch-audit.v1"
+        assert audit.json()["schema_version"] == "batch-audit.v2"
         assert "attachment" in audit.headers["content-disposition"]
 
         packaged = client.get(batch["output_zip_url"])
@@ -98,9 +107,7 @@ def test_failed_batch_item_retries_with_attempt_history(
     academic_docx: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     data_dir = tmp_path / "batch-retry"
-    app = create_app(
-        Settings(data_dir=data_dir, database_url=f"sqlite:///{data_dir / 'state.db'}")
-    )
+    app = create_app(Settings(data_dir=data_dir, database_url=f"sqlite:///{data_dir / 'state.db'}"))
     with TestClient(app) as client:
         pack = _create_rule_pack(client, request_id="create-retry-pack")
         with academic_docx.open("rb") as source:
@@ -148,9 +155,7 @@ def test_failed_batch_item_retries_with_attempt_history(
             json={"request_id": "retry-preparation-failure"},
         )
         assert preparation_failure.status_code == 503
-        after_preparation_failure = client.get(
-            f"/api/v1/batches/{batch['batch_id']}"
-        ).json()
+        after_preparation_failure = client.get(f"/api/v1/batches/{batch['batch_id']}").json()
         assert after_preparation_failure["items"][0]["attempt_count"] == 2
         assert after_preparation_failure["items"][0]["status"] == "failed"
 
@@ -182,6 +187,163 @@ def test_failed_batch_item_retries_with_attempt_history(
         assert attempts[0].job_id == item["job_id"]
         assert attempts[1].job_id is None
         assert attempts[2].job_id == recovered["items"][0]["job_id"]
+
+
+def test_batch_cancel_is_cooperative_idempotent_and_delete_cleans_local_data(
+    academic_docx: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    data_dir = tmp_path / "batch-lifecycle"
+    app = create_app(
+        Settings(
+            data_dir=data_dir,
+            database_url=f"sqlite:///{data_dir / 'state.db'}",
+            job_concurrency=1,
+        )
+    )
+    started = threading.Event()
+    release = threading.Event()
+    process_calls = 0
+    original_process = service_module.process_document
+
+    def blocking_process(*args, **kwargs):
+        nonlocal process_calls
+        process_calls += 1
+        if process_calls == 2:
+            started.set()
+            if not release.wait(5):
+                raise AssertionError("test did not release the blocked processing stage")
+        return original_process(*args, **kwargs)
+
+    monkeypatch.setattr(service_module, "process_document", blocking_process)
+
+    with TestClient(app) as client:
+        pack = _create_rule_pack(client, request_id="create-lifecycle-pack")
+        created = client.post(
+            "/api/v1/batches",
+            data={
+                "request_id": "create-lifecycle-batch",
+                "name": "待取消批次",
+                "rule_pack_id": str(pack["pack_id"]),
+                "rule_pack_revision": "1",
+            },
+            files=[
+                ("files", ("运行中.docx", academic_docx.read_bytes(), DOCX_MEDIA_TYPE)),
+                ("files", ("排队中.docx", academic_docx.read_bytes(), DOCX_MEDIA_TYPE)),
+                ("files", ("仍在排队.docx", academic_docx.read_bytes(), DOCX_MEDIA_TYPE)),
+            ],
+        )
+        assert created.status_code == 202, created.text
+        batch_id = created.json()["batch_id"]
+        assert started.wait(5)
+
+        active_delete = client.delete(f"/api/v1/batches/{batch_id}")
+        assert active_delete.status_code == 409
+        assert active_delete.json()["error"]["code"] == "BATCH_NOT_TERMINAL"
+
+        try:
+            canceled = client.post(f"/api/v1/batches/{batch_id}/cancel")
+            assert canceled.status_code == 202, canceled.text
+            assert canceled.json()["status"] == "canceling"
+            statuses = {item["status"] for item in canceled.json()["items"]}
+            assert statuses == {"completed", "canceling", "canceled"}
+
+            repeated = client.post(f"/api/v1/batches/{batch_id}/cancel")
+            assert repeated.status_code == 202
+            assert repeated.json()["status"] == "canceling"
+        finally:
+            release.set()
+
+        terminal = _wait_for_batch(client, batch_id)
+        assert terminal["status"] == "canceled"
+        assert terminal["summary"] == {
+            "total": 3,
+            "completed": 1,
+            "failed": 0,
+            "canceled": 2,
+            "active": 0,
+        }
+        assert [item["status"] for item in terminal["items"]] == [
+            "completed",
+            "canceled",
+            "canceled",
+        ]
+        assert all(item["retryable"] is False for item in terminal["items"])
+        assert terminal["output_zip_url"]
+        packaged = client.get(terminal["output_zip_url"])
+        assert packaged.status_code == 200
+        with zipfile.ZipFile(io.BytesIO(packaged.content)) as archive:
+            output_names = [name for name in archive.namelist() if name.endswith("_formatted.docx")]
+            assert len(output_names) == 1
+        assert process_calls == 2
+
+        document_ids = [item["document_id"] for item in terminal["items"]]
+        job_ids = [item["job_id"] for item in terminal["items"]]
+        assert all(document_ids)
+        assert all(job_ids)
+        for item in terminal["items"]:
+            if item["status"] == "canceled":
+                assert not (data_dir / "outputs" / str(item["job_id"])).exists()
+                assert not (data_dir / "jobs" / str(item["job_id"])).exists()
+
+        final_cancel = client.post(f"/api/v1/batches/{batch_id}/cancel")
+        assert final_cancel.status_code == 202
+        assert final_cancel.json()["status"] == "canceled"
+
+        deleted = client.delete(f"/api/v1/batches/{batch_id}")
+        assert deleted.status_code == 204
+        assert client.get(f"/api/v1/batches/{batch_id}").status_code == 404
+        assert not (data_dir / "batches" / batch_id).exists()
+        assert all(
+            not (data_dir / "uploads" / str(document_id)).exists() for document_id in document_ids
+        )
+        assert all(not (data_dir / "outputs" / str(job_id)).exists() for job_id in job_ids)
+        assert all(not (data_dir / "jobs" / str(job_id)).exists() for job_id in job_ids)
+        assert client.get(f"/api/v1/rule-packs/{pack['pack_id']}").status_code == 200
+        with app.state.database.session_factory() as session:
+            assert session.scalar(select(func.count()).select_from(BatchRecord)) == 0
+            assert session.scalar(select(func.count()).select_from(DocumentRecord)) == 0
+            assert session.scalar(select(func.count()).select_from(AnalysisRecord)) == 0
+            assert session.scalar(select(func.count()).select_from(JobRecord)) == 0
+
+
+def test_batch_cancel_closes_a_retry_preparation_reservation(
+    academic_docx: Path, tmp_path: Path
+) -> None:
+    data_dir = tmp_path / "batch-cancel-reservation"
+    app = create_app(Settings(data_dir=data_dir, database_url=f"sqlite:///{data_dir / 'state.db'}"))
+    with TestClient(app) as client:
+        pack = _create_rule_pack(client, request_id="create-reservation-pack")
+        with academic_docx.open("rb") as source:
+            created = client.post(
+                "/api/v1/batches",
+                data={
+                    "request_id": "create-reservation-batch",
+                    "name": "取消重试准备",
+                    "rule_pack_id": str(pack["pack_id"]),
+                    "rule_pack_revision": "1",
+                },
+                files=[("files", ("待重试.docx", source, DOCX_MEDIA_TYPE))],
+            )
+        terminal = _wait_for_batch(client, created.json()["batch_id"])
+        item = terminal["items"][0]
+        with app.state.database.session_factory.begin() as session:
+            job = session.get(JobRecord, item["job_id"])
+            reservation = session.get(BatchItemRecord, item["item_id"])
+            assert job is not None and reservation is not None
+            job.status = "failed"
+            job.error_code = "JOB_INTERRUPTED"
+            reservation.status = "preparing"
+
+        canceled = client.post(f"/api/v1/batches/{terminal['batch_id']}/cancel")
+        assert canceled.status_code == 202
+        assert canceled.json()["status"] == "canceled"
+        assert canceled.json()["items"][0]["status"] == "canceled"
+        retry = client.post(
+            f"/api/v1/batches/{terminal['batch_id']}/items/{item['item_id']}/retry",
+            json={"request_id": "retry-after-batch-cancel"},
+        )
+        assert retry.status_code == 409
+        assert retry.json()["error"]["code"] == "BATCH_CANCELED"
 
 
 def _create_rule_pack(
@@ -232,7 +394,12 @@ def _wait_for_batch(
         response = client.get(f"/api/v1/batches/{batch_id}")
         assert response.status_code == 200, response.text
         payload = response.json()
-        if payload["status"] in {"completed", "completed_with_errors", "failed"}:
+        if payload["status"] in {
+            "completed",
+            "completed_with_errors",
+            "failed",
+            "canceled",
+        }:
             return payload
         time.sleep(0.02)
     raise AssertionError("batch did not finish before timeout")

@@ -11,6 +11,8 @@ const mocks = vi.hoisted(() => ({
   batch: vi.fn(),
   createBatch: vi.fn(),
   retryBatchItem: vi.fn(),
+  cancelBatch: vi.fn(),
+  deleteBatch: vi.fn(),
 }));
 
 vi.mock("@/lib/api", () => ({
@@ -24,7 +26,7 @@ vi.mock("@/lib/api", () => ({
 }));
 
 const completedBatch: BatchAudit = {
-  schema_version: "batch-audit.v1",
+  schema_version: "batch-audit.v2",
   batch_id: "batch_saved",
   request_id: "saved-request",
   name: "月度材料",
@@ -34,7 +36,7 @@ const completedBatch: BatchAudit = {
   rule_pack_revision: 2,
   rule_pack_name: "办公室月报",
   rule_pack_spec_sha256: "a".repeat(64),
-  summary: { total: 1, completed: 1, failed: 0, active: 0 },
+  summary: { total: 1, completed: 1, failed: 0, canceled: 0, active: 0 },
   items: [
     {
       item_id: "item_1",
@@ -66,7 +68,7 @@ const completedBatch: BatchAudit = {
 const failedBatch: BatchAudit = {
   ...completedBatch,
   status: "failed",
-  summary: { total: 1, completed: 0, failed: 1, active: 0 },
+  summary: { total: 1, completed: 0, failed: 1, canceled: 0, active: 0 },
   output_zip_url: null,
   items: [
     {
@@ -83,6 +85,35 @@ const failedBatch: BatchAudit = {
       audit_json_url: null,
     },
   ],
+};
+
+const activeBatch: BatchAudit = {
+  ...completedBatch,
+  status: "processing",
+  progress: 45,
+  summary: { total: 1, completed: 0, failed: 0, canceled: 0, active: 1 },
+  output_zip_url: null,
+  items: [
+    {
+      ...completedBatch.items[0],
+      status: "formatting",
+      progress: 45,
+      retryable: false,
+      validation_passed: null,
+      content_integrity_passed: null,
+      changed_mutations: null,
+      output_document_url: null,
+      audit_json_url: null,
+    },
+  ],
+};
+
+const canceledBatch: BatchAudit = {
+  ...activeBatch,
+  status: "canceled",
+  progress: 100,
+  summary: { total: 1, completed: 0, failed: 0, canceled: 1, active: 0 },
+  items: [{ ...activeBatch.items[0], status: "canceled", progress: 100 }],
 };
 
 describe("BatchWorkspace", () => {
@@ -130,7 +161,7 @@ describe("BatchWorkspace", () => {
       .mockResolvedValueOnce({
         ...failedBatch,
         status: "processing",
-        summary: { total: 1, completed: 0, failed: 0, active: 1 },
+        summary: { total: 1, completed: 0, failed: 0, canceled: 0, active: 1 },
         items: [{ ...failedBatch.items[0], status: "queued", retryable: false }],
       });
 
@@ -205,5 +236,28 @@ describe("BatchWorkspace", () => {
     fireEvent.click(screen.getByRole("button", { name: "开始处理 1 个文档" }));
     expect(await screen.findByText("月度材料")).toBeInTheDocument();
     expect(mocks.createBatch.mock.calls[1][0].requestId).toBe(firstRequestId);
+  });
+
+  it("confirms cancellation and terminal local-data deletion", async () => {
+    window.localStorage.setItem(
+      "docalign.batch.v1",
+      JSON.stringify({ batch_id: "batch_saved", pending_retries: {} }),
+    );
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    mocks.batch.mockResolvedValue(activeBatch);
+    mocks.cancelBatch.mockResolvedValue(canceledBatch);
+    mocks.deleteBatch.mockResolvedValue(undefined);
+
+    render(<BatchWorkspace />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "取消批次" }));
+    await waitFor(() => expect(mocks.cancelBatch).toHaveBeenCalledWith("batch_saved"));
+    expect(await screen.findByText("已取消，未生成输出")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "删除本地批次" }));
+    await waitFor(() => expect(mocks.deleteBatch).toHaveBeenCalledWith("batch_saved"));
+    expect(window.localStorage.getItem("docalign.batch.v1")).toBeNull();
+    expect(await screen.findByText(/本地批次及其文件已全部删除/)).toBeInTheDocument();
+    expect(window.confirm).toHaveBeenCalledTimes(2);
   });
 });

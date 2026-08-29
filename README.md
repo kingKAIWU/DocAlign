@@ -31,6 +31,8 @@ DocAlign 是一个本地优先、确定性执行的 DOCX 自动排版与格式�
 - 批次、文件状态和每次尝试持久化到 SQLite；刷新、短暂断连或 API 重启后可恢复查看。
 - 创建批次和重试失败项均使用幂等请求标识；响应丢失后直接重试不会重复建批或覆盖尝试历史。
 - 可分别下载完成的 DOCX 和审计，也可下载包含全部成功输出与 `batch-audit.json` 的 ZIP。
+- 可取消活动批次：排队项立即停止，运行项完成当前安全阶段后丢弃未完成输出；终态批次可一键清理
+  该批次的源文件、分析、作业、输出与审计，规则包不受影响。
 
 ### 自动结构排版
 
@@ -201,6 +203,8 @@ uv run docalign spec compile \
 | `POST /api/v1/jobs` | 创建格式化任务 |
 | `POST /api/v1/batches` | 幂等创建使用固定规则修订的批次 |
 | `GET /api/v1/batches/{id}` | 获取可恢复的批次与逐文件进度 |
+| `POST /api/v1/batches/{id}/cancel` | 幂等请求活动批次安全停止 |
+| `DELETE /api/v1/batches/{id}` | 删除终态批次及其本地数据 |
 | `POST /api/v1/batches/{id}/items/{item_id}/retry` | 追加一次失败文件重试 |
 | `GET /api/v1/batches/{id}/outputs.zip` | 打包下载成功输出与批次审计 |
 | `GET /api/v1/presets` | 获取带来源、版本、覆盖与限制的规则包目录 |

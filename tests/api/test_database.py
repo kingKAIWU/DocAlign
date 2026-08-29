@@ -51,6 +51,17 @@ def test_restart_marks_active_jobs_interrupted_and_document_delete_cascades(
                 progress=45,
             )
         )
+        session.add(
+            JobRecord(
+                id="job_canceling",
+                document_id="doc_1",
+                analysis_id="analysis_1",
+                spec_id="spec_1",
+                status="canceling",
+                progress=45,
+                cancel_requested=True,
+            )
+        )
 
     database.mark_interrupted_jobs()
     with database.session_factory() as session:
@@ -58,6 +69,11 @@ def test_restart_marks_active_jobs_interrupted_and_document_delete_cascades(
         assert job is not None
         assert job.status == "failed"
         assert job.error_code == "JOB_INTERRUPTED"
+        canceling = session.get(JobRecord, "job_canceling")
+        assert canceling is not None
+        assert canceling.status == "canceled"
+        assert canceling.progress == 100
+        assert canceling.error_code is None
         document = session.get(DocumentRecord, "doc_1")
         assert document is not None
         session.delete(document)

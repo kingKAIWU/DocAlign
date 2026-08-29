@@ -62,9 +62,15 @@ def test_rule_pack_migration_upgrades_an_existing_initial_database(tmp_path: Pat
     assert "request_id" in version_columns
     indexes = inspector.get_indexes("rule_pack_versions")
     assert any(item["name"] == "ix_rule_pack_versions_request_id" for item in indexes)
+    assert "cancel_requested" in {
+        item["name"] for item in inspector.get_columns("jobs")
+    }
+    assert "cancel_requested_at" in {
+        item["name"] for item in inspector.get_columns("batches")
+    }
     with database.engine.connect() as connection:
         assert connection.scalar(text("SELECT version_num FROM alembic_version")) == (
-            "0004_batch_processing"
+            "0005_batch_lifecycle"
         )
 
 

@@ -375,9 +375,7 @@ class ApiService:
             )
             items: list[RulePackCatalogItem] = []
             for pack in packs:
-                version = session.get(
-                    RulePackVersionRecord, (pack.id, pack.current_revision)
-                )
+                version = session.get(RulePackVersionRecord, (pack.id, pack.current_revision))
                 if version is None:
                     raise ApiError(
                         500,
@@ -392,9 +390,7 @@ class ApiService:
                         description=pack.description,
                         scope_label=pack.scope_label,
                         current_revision=pack.current_revision,
-                        current_approval_status=RulePackApprovalStatus(
-                            version.approval_status
-                        ),
+                        current_approval_status=RulePackApprovalStatus(version.approval_status),
                         current_spec_sha256=version.spec_sha256,
                         created_at=pack.created_at,
                         updated_at=pack.updated_at,
@@ -671,9 +667,7 @@ class ApiService:
     ) -> RulePackArtifact | None:
         with self.database.session_factory() as session:
             version = session.scalar(
-                select(RulePackVersionRecord).where(
-                    RulePackVersionRecord.request_id == request_id
-                )
+                select(RulePackVersionRecord).where(RulePackVersionRecord.request_id == request_id)
             )
             if version is None:
                 return None
@@ -906,7 +900,8 @@ class ApiService:
 
     def run_job(self, job_id: str) -> None:
         try:
-            self._set_job_state(job_id, JobStatus.ANALYZING, 15)
+            if self._set_job_state(job_id, JobStatus.ANALYZING, 15) != JobStatus.ANALYZING:
+                return
             job = self.get_job(job_id)
             document = self.get_document(job.document_id)
             analysis_record = self.get_analysis_record(job.analysis_id)
@@ -921,8 +916,10 @@ class ApiService:
                 )
             analysis = self.get_analysis(job.analysis_id)
             spec = self.get_spec(job.spec_id)
-            self._set_job_state(job_id, JobStatus.PLANNING, 30)
-            self._set_job_state(job_id, JobStatus.FORMATTING, 45)
+            if self._set_job_state(job_id, JobStatus.PLANNING, 30) != JobStatus.PLANNING:
+                return
+            if self._set_job_state(job_id, JobStatus.FORMATTING, 45) != JobStatus.FORMATTING:
+                return
             output = self.storage.output_path(job_id)
             artifacts = self.storage.job_dir(job_id)
             result = process_document(
@@ -959,6 +956,8 @@ class ApiService:
                 "FORMAT_APPLICATION_FAILED",
                 f"Unexpected processing failure: {type(exc).__name__}.",
             )
+        finally:
+            self._discard_canceled_job_artifacts(job_id)
 
     def _set_job_state(
         self,
@@ -966,21 +965,53 @@ class ApiService:
         status: JobStatus,
         progress: int,
         **paths: str,
-    ) -> None:
+    ) -> JobStatus:
         with self.database.session_factory.begin() as session:
             record = session.get(JobRecord, job_id)
             if record is None:
                 raise ApiError(404, "JOB_NOT_FOUND", "Processing job not found.")
+            current = JobStatus(record.status)
+            if record.cancel_requested or current in {
+                JobStatus.CANCELING,
+                JobStatus.CANCELED,
+            }:
+                record.cancel_requested = True
+                record.status = JobStatus.CANCELED.value
+                record.progress = 100
+                record.output_path = None
+                record.audit_json_path = None
+                record.audit_markdown_path = None
+                record.error_code = None
+                record.error_message = None
+                record.updated_at = utcnow()
+                return JobStatus.CANCELED
+            if current in {JobStatus.COMPLETED, JobStatus.FAILED}:
+                return current
             record.status = status.value
             record.progress = progress
             record.updated_at = utcnow()
             for name, value in paths.items():
                 setattr(record, name, value)
+            return status
 
     def _fail_job(self, job_id: str, code: str, message: str) -> None:
         with self.database.session_factory.begin() as session:
             record = session.get(JobRecord, job_id)
             if record is None:
+                return
+            if record.cancel_requested or record.status in {
+                JobStatus.CANCELING.value,
+                JobStatus.CANCELED.value,
+            }:
+                record.cancel_requested = True
+                record.status = JobStatus.CANCELED.value
+                record.progress = 100
+                record.output_path = None
+                record.audit_json_path = None
+                record.audit_markdown_path = None
+                record.error_code = None
+                record.error_message = None
+                record.updated_at = utcnow()
                 return
             audit_json = self.storage.job_dir(job_id) / "audit.json"
             audit_markdown = self.storage.job_dir(job_id) / "audit.md"
@@ -990,6 +1021,13 @@ class ApiService:
             record.audit_json_path = str(audit_json) if audit_json.exists() else None
             record.audit_markdown_path = str(audit_markdown) if audit_markdown.exists() else None
             record.updated_at = utcnow()
+
+    def _discard_canceled_job_artifacts(self, job_id: str) -> None:
+        with self.database.session_factory() as session:
+            record = session.get(JobRecord, job_id)
+            canceled = record is not None and record.status == JobStatus.CANCELED.value
+        if canceled:
+            self.storage.delete_job_artifacts(job_id)
 
 
 def _summary(result: AnalysisResult) -> AnalysisSummary:

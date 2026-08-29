@@ -4,6 +4,7 @@ from collections.abc import Iterator
 from datetime import UTC, datetime
 
 from sqlalchemy import (
+    Boolean,
     DateTime,
     ForeignKey,
     ForeignKeyConstraint,
@@ -126,6 +127,7 @@ class JobRecord(Base):
     spec_id: Mapped[str] = mapped_column(ForeignKey("specs.id", ondelete="CASCADE"), index=True)
     status: Mapped[str] = mapped_column(String(32), index=True)
     progress: Mapped[int] = mapped_column(Integer, default=0)
+    cancel_requested: Mapped[bool] = mapped_column(Boolean, default=False)
     output_path: Mapped[str | None] = mapped_column(Text, nullable=True)
     audit_json_path: Mapped[str | None] = mapped_column(Text, nullable=True)
     audit_markdown_path: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -156,6 +158,9 @@ class BatchRecord(Base):
     rule_pack_spec_sha256: Mapped[str] = mapped_column(String(64))
     item_count: Mapped[int] = mapped_column(Integer)
     file_manifest_json: Mapped[str] = mapped_column(Text)
+    cancel_requested_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, onupdate=utcnow
@@ -167,9 +172,7 @@ class BatchItemRecord(Base):
     __table_args__ = (UniqueConstraint("batch_id", "position"),)
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
-    batch_id: Mapped[str] = mapped_column(
-        ForeignKey("batches.id", ondelete="CASCADE"), index=True
-    )
+    batch_id: Mapped[str] = mapped_column(ForeignKey("batches.id", ondelete="CASCADE"), index=True)
     position: Mapped[int] = mapped_column(Integer)
     original_filename: Mapped[str] = mapped_column(String(512))
     status: Mapped[str] = mapped_column(String(32), default="preparing")
@@ -230,7 +233,24 @@ class Database:
         with self.session_factory.begin() as session:
             session.execute(
                 update(JobRecord)
-                .where(JobRecord.status.in_(active))
+                .where(
+                    JobRecord.status.in_(active | {"canceling"}),
+                    JobRecord.cancel_requested.is_(True),
+                )
+                .values(
+                    status="canceled",
+                    progress=100,
+                    error_code=None,
+                    error_message=None,
+                    updated_at=utcnow(),
+                )
+            )
+            session.execute(
+                update(JobRecord)
+                .where(
+                    JobRecord.status.in_(active),
+                    JobRecord.cancel_requested.is_(False),
+                )
                 .values(
                     status="failed",
                     progress=0,
