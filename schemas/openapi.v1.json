@@ -1054,6 +1054,217 @@
         }
       }
     },
+    "/api/v1/batches": {
+      "post": {
+        "summary": "Create Batch",
+        "operationId": "create_batch_api_v1_batches_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_create_batch_api_v1_batches_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchAudit"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/batches/{batch_id}": {
+      "get": {
+        "summary": "Get Batch",
+        "operationId": "get_batch_api_v1_batches__batch_id__get",
+        "parameters": [
+          {
+            "name": "batch_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Batch Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchAudit"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/batches/{batch_id}/items/{item_id}/retry": {
+      "post": {
+        "summary": "Retry Batch Item",
+        "operationId": "retry_batch_item_api_v1_batches__batch_id__items__item_id__retry_post",
+        "parameters": [
+          {
+            "name": "batch_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Batch Id"
+            }
+          },
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Item Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchRetryRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchAudit"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/batches/{batch_id}/audit.json": {
+      "get": {
+        "summary": "Get Batch Audit",
+        "operationId": "get_batch_audit_api_v1_batches__batch_id__audit_json_get",
+        "parameters": [
+          {
+            "name": "batch_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Batch Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchAudit"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/batches/{batch_id}/outputs.zip": {
+      "get": {
+        "summary": "Get Batch Outputs",
+        "operationId": "get_batch_outputs_api_v1_batches__batch_id__outputs_zip_get",
+        "parameters": [
+          {
+            "name": "batch_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Batch Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/documents/{document_id}/compliance": {
       "post": {
         "summary": "Audit Document Compliance",
@@ -1321,6 +1532,389 @@
         "type": "object",
         "title": "AutoLayoutSpec",
         "description": "Deterministic structural layout applied before role-based formatting.\n\nStructural edits are deliberately conservative: only plain body paragraphs may be split,\nand every split is followed by a fresh local role analysis and content-integrity check."
+      },
+      "BatchAudit": {
+        "properties": {
+          "schema_version": {
+            "type": "string",
+            "const": "batch-audit.v1",
+            "title": "Schema Version",
+            "default": "batch-audit.v1"
+          },
+          "batch_id": {
+            "type": "string",
+            "title": "Batch Id"
+          },
+          "request_id": {
+            "type": "string",
+            "title": "Request Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "status": {
+            "$ref": "#/components/schemas/BatchStatus"
+          },
+          "progress": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Progress"
+          },
+          "rule_pack_id": {
+            "type": "string",
+            "title": "Rule Pack Id"
+          },
+          "rule_pack_revision": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Rule Pack Revision"
+          },
+          "rule_pack_name": {
+            "type": "string",
+            "title": "Rule Pack Name"
+          },
+          "rule_pack_spec_sha256": {
+            "type": "string",
+            "title": "Rule Pack Spec Sha256"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/BatchAuditSummary"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/BatchAuditItem"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "output_zip_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output Zip Url"
+          },
+          "audit_json_url": {
+            "type": "string",
+            "title": "Audit Json Url"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "batch_id",
+          "request_id",
+          "name",
+          "status",
+          "progress",
+          "rule_pack_id",
+          "rule_pack_revision",
+          "rule_pack_name",
+          "rule_pack_spec_sha256",
+          "summary",
+          "items",
+          "audit_json_url",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "BatchAudit"
+      },
+      "BatchAuditItem": {
+        "properties": {
+          "item_id": {
+            "type": "string",
+            "title": "Item Id"
+          },
+          "position": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Position"
+          },
+          "filename": {
+            "type": "string",
+            "title": "Filename"
+          },
+          "status": {
+            "$ref": "#/components/schemas/BatchItemStatus"
+          },
+          "progress": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Progress"
+          },
+          "source_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Sha256"
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id"
+          },
+          "analysis_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Analysis Id"
+          },
+          "job_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Id"
+          },
+          "attempt_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Attempt Count"
+          },
+          "retryable": {
+            "type": "boolean",
+            "title": "Retryable"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          },
+          "validation_passed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Validation Passed"
+          },
+          "content_integrity_passed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Integrity Passed"
+          },
+          "changed_mutations": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Changed Mutations"
+          },
+          "output_document_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output Document Url"
+          },
+          "audit_json_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Audit Json Url"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "item_id",
+          "position",
+          "filename",
+          "status",
+          "progress",
+          "attempt_count",
+          "retryable"
+        ],
+        "title": "BatchAuditItem"
+      },
+      "BatchAuditSummary": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Total"
+          },
+          "completed": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Completed"
+          },
+          "failed": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Failed"
+          },
+          "active": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Active"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "total",
+          "completed",
+          "failed",
+          "active"
+        ],
+        "title": "BatchAuditSummary"
+      },
+      "BatchItemStatus": {
+        "type": "string",
+        "enum": [
+          "preparing",
+          "queued",
+          "analyzing",
+          "planning",
+          "formatting",
+          "validating",
+          "repairing",
+          "completed",
+          "failed"
+        ],
+        "title": "BatchItemStatus"
+      },
+      "BatchRetryRequest": {
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{8,64}$",
+            "title": "Request Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "request_id"
+        ],
+        "title": "BatchRetryRequest"
+      },
+      "BatchStatus": {
+        "type": "string",
+        "enum": [
+          "preparing",
+          "processing",
+          "completed",
+          "completed_with_errors",
+          "failed"
+        ],
+        "title": "BatchStatus"
+      },
+      "Body_create_batch_api_v1_batches_post": {
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "title": "Request Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "rule_pack_id": {
+            "type": "string",
+            "title": "Rule Pack Id"
+          },
+          "rule_pack_revision": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Rule Pack Revision"
+          },
+          "files": {
+            "items": {
+              "type": "string",
+              "contentMediaType": "application/octet-stream"
+            },
+            "type": "array",
+            "title": "Files"
+          }
+        },
+        "type": "object",
+        "required": [
+          "request_id",
+          "name",
+          "rule_pack_id",
+          "rule_pack_revision",
+          "files"
+        ],
+        "title": "Body_create_batch_api_v1_batches_post"
       },
       "Body_create_template_candidate_api_v1_templates_candidate_post": {
         "properties": {

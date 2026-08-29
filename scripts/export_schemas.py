@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 from docalign_core.domain.audit import AuditReport
+from docalign_core.domain.batch import BatchAudit
 from docalign_core.domain.compliance import ComplianceReport
 from docalign_core.domain.document_ir import DocumentIR
 from docalign_core.domain.formatting_spec import FormattingSpec
@@ -23,6 +24,7 @@ def main() -> None:
         "formatting-spec.v1.schema.json": FormattingSpec,
         "document-ir.v1.schema.json": DocumentIR,
         "audit-report.v1.schema.json": AuditReport,
+        "batch-audit.v1.schema.json": BatchAudit,
         "compliance-report.v1.schema.json": ComplianceReport,
         "format-manifest.v1.schema.json": FormatManifest,
         "template-rule-candidate.v1.schema.json": TemplateRuleCandidate,

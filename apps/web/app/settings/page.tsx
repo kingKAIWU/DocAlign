@@ -25,6 +25,8 @@ export default function SettingsPage() {
         <div className="setting-row"><span>本地处理</span><b>{capabilities?.local_only ? "已启用" : "检查中"}</b></div>
         <div className="setting-row"><span>兼容模型</span><b>{capabilities?.llm_configured ? "已配置" : "未配置"}</b></div>
         <div className="setting-row"><span>上传限制</span><b>{capabilities?.max_upload_mb ?? 20} MB</b></div>
+        <div className="setting-row"><span>单批文件数</span><b>{capabilities?.max_batch_files ?? 20} 个</b></div>
+        <div className="setting-row"><span>单批总大小</span><b>{capabilities?.max_batch_total_mb ?? 200} MB</b></div>
       </section>
 
       <section className="settings-card prose-card">
@@ -38,7 +40,7 @@ DOCALIGN_LLM_JSON_SCHEMA_MODE=auto`}</pre>
 
       <section className="settings-card prose-card">
         <h2>数据保留</h2>
-        <p>上传文件、分析结果、临时规则、独立规则包、任务和输出保存在本机 <code>DOCALIGN_DATA_DIR</code>。删除工作区文档时会删除该文档的关联数据；“我的规则包”用于跨文档复用，会独立保留。</p>
+        <p>上传文件、分析结果、临时规则、独立规则包、任务、批次、重试历史和输出保存在本机 <code>DOCALIGN_DATA_DIR</code>。删除工作区文档时会删除该文档的关联数据；“我的规则包”和批次用于跨文档复用与追踪，会独立保留。</p>
       </section>
     </main>
   );

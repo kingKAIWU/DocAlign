@@ -51,14 +51,20 @@ def test_rule_pack_migration_upgrades_an_existing_initial_database(tmp_path: Pat
         assert client.get("/api/v1/health").status_code == 200
 
     inspector = inspect(database.engine)
-    assert {"rule_packs", "rule_pack_versions"}.issubset(inspector.get_table_names())
+    assert {
+        "rule_packs",
+        "rule_pack_versions",
+        "batches",
+        "batch_items",
+        "batch_attempts",
+    }.issubset(inspector.get_table_names())
     version_columns = {item["name"] for item in inspector.get_columns("rule_pack_versions")}
     assert "request_id" in version_columns
     indexes = inspector.get_indexes("rule_pack_versions")
     assert any(item["name"] == "ix_rule_pack_versions_request_id" for item in indexes)
     with database.engine.connect() as connection:
         assert connection.scalar(text("SELECT version_num FROM alembic_version")) == (
-            "0003_rule_pack_idempotency"
+            "0004_batch_processing"
         )
 
 

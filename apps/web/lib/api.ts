@@ -1,5 +1,6 @@
 import type {
   Analysis,
+  BatchAudit,
   Capabilities,
   CleanupPreset,
   ComplianceReport,
@@ -171,11 +172,36 @@ export const api = {
     }),
   job: (jobId: string, signal?: AbortSignal) =>
     request<Job>(`/jobs/${jobId}`, { signal, cache: "no-store" }),
+  createBatch: (payload: {
+    requestId: string;
+    name: string;
+    rulePackId: string;
+    rulePackRevision: number;
+    files: File[];
+  }) => {
+    const body = new FormData();
+    body.append("request_id", payload.requestId);
+    body.append("name", payload.name);
+    body.append("rule_pack_id", payload.rulePackId);
+    body.append("rule_pack_revision", String(payload.rulePackRevision));
+    for (const file of payload.files) body.append("files", file);
+    return request<BatchAudit>("/batches", { method: "POST", body });
+  },
+  batch: (batchId: string, signal?: AbortSignal) =>
+    request<BatchAudit>(`/batches/${batchId}`, {
+      signal,
+      cache: "no-store",
+    }),
+  retryBatchItem: (batchId: string, itemId: string, requestId: string) =>
+    request<BatchAudit>(`/batches/${batchId}/items/${itemId}/retry`, {
+      method: "POST",
+      body: JSON.stringify({ request_id: requestId }),
+    }),
   deleteDocument: (documentId: string) =>
     request<void>(`/documents/${documentId}`, { method: "DELETE" }),
 };
 
-export function apiUrl(path: string | null): string | undefined {
+export function apiUrl(path: string | null | undefined): string | undefined {
   if (!path) return undefined;
   if (path.startsWith("http://") || path.startsWith("https://")) return path;
   const origin = API_BASE.replace(/\/api\/v1\/?$/, "");

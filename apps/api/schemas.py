@@ -173,6 +173,10 @@ class JobCreateRequest(ApiModel):
     spec_id: str
 
 
+class BatchRetryRequest(ApiModel):
+    request_id: str = Field(pattern=r"^[A-Za-z0-9_-]{8,64}$")
+
+
 class JobChangeDetail(ApiModel):
     locator: str | None
     node_id: str | None

@@ -3,9 +3,11 @@ from __future__ import annotations
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Annotated
 
 from docalign_core.config import Settings
 from docalign_core.docx.safety import DocxSafetyError
+from docalign_core.domain.batch import BatchAudit
 from docalign_core.domain.compliance import ComplianceReport
 from docalign_core.domain.formatting_spec import (
     FormattingSpec,
@@ -16,18 +18,20 @@ from docalign_core.domain.formatting_spec import (
 from docalign_core.domain.manifest import FormatManifest
 from docalign_core.domain.rule_pack import RulePackArtifact
 from docalign_core.domain.template_candidate import TemplateRuleCandidate
-from fastapi import FastAPI, Request, UploadFile
+from fastapi import FastAPI, File, Form, Request, UploadFile
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response
 
+from apps.api.batches import BatchService
 from apps.api.db import Database
 from apps.api.errors import ApiError
 from apps.api.migrations import upgrade_database
 from apps.api.runner import JobRunner
 from apps.api.schemas import (
     AnalyzeRequest,
+    BatchRetryRequest,
     CleanupPresetCatalogResponse,
     CompileSpecRequest,
     ComplianceRequest,
@@ -53,6 +57,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     database = Database(settings.database_url)
     storage = LocalStorage(settings.data_dir)
     service = ApiService(settings, database, storage)
+    batch_service = BatchService(service, settings, database, storage)
     runner = JobRunner(service, settings.job_concurrency)
 
     @asynccontextmanager
@@ -74,6 +79,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.state.database = database
     application.state.storage = storage
     application.state.service = service
+    application.state.batch_service = batch_service
     application.state.runner = runner
     application.add_middleware(
         CORSMiddleware,
@@ -120,6 +126,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "format_manifest": True,
             "template_rule_candidate": True,
             "rule_pack_library": True,
+            "batch_processing": True,
+            "max_batch_files": settings.max_batch_files,
+            "max_batch_total_mb": settings.max_batch_total_mb,
             "max_upload_mb": settings.max_upload_mb,
             "local_only": True,
         }
@@ -289,6 +298,55 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         record = service.create_job(request.document_id, request.analysis_id, request.spec_id)
         await runner.enqueue(record.id)
         return service.job_payload(record)
+
+    @application.post("/api/v1/batches", status_code=202)
+    async def create_batch(
+        request_id: Annotated[str, Form()],
+        name: Annotated[str, Form()],
+        rule_pack_id: Annotated[str, Form()],
+        rule_pack_revision: Annotated[int, Form(ge=1)],
+        files: Annotated[list[UploadFile], File()],
+    ) -> BatchAudit:
+        audit, job_ids = await batch_service.create_batch(
+            request_id=request_id,
+            name=name,
+            rule_pack_id=rule_pack_id,
+            rule_pack_revision=rule_pack_revision,
+            files=files,
+        )
+        for job_id in job_ids:
+            await runner.enqueue(job_id)
+        return audit
+
+    @application.get("/api/v1/batches/{batch_id}")
+    def get_batch(batch_id: str) -> BatchAudit:
+        return batch_service.get_batch(batch_id)
+
+    @application.post("/api/v1/batches/{batch_id}/items/{item_id}/retry", status_code=202)
+    async def retry_batch_item(
+        batch_id: str, item_id: str, request: BatchRetryRequest
+    ) -> BatchAudit:
+        audit, job_ids = await batch_service.retry_item(
+            batch_id, item_id, request.request_id
+        )
+        for job_id in job_ids:
+            await runner.enqueue(job_id)
+        return audit
+
+    @application.get("/api/v1/batches/{batch_id}/audit.json")
+    def get_batch_audit(batch_id: str, response: Response) -> BatchAudit:
+        response.headers["Content-Disposition"] = (
+            f'attachment; filename="{batch_id}-audit.json"'
+        )
+        return batch_service.get_batch(batch_id)
+
+    @application.get("/api/v1/batches/{batch_id}/outputs.zip")
+    def get_batch_outputs(batch_id: str) -> FileResponse:
+        return FileResponse(
+            batch_service.build_output_zip(batch_id),
+            media_type="application/zip",
+            filename=f"{batch_id}-outputs.zip",
+        )
 
     @application.post("/api/v1/documents/{document_id}/compliance")
     def audit_document_compliance(document_id: str, request: ComplianceRequest) -> ComplianceReport:

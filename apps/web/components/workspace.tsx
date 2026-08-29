@@ -635,6 +635,7 @@ export function Workspace() {
           <span className={`privacy-pill ${capabilities?.local_only ? "ready" : ""}`}>
             <i /> 本地处理
           </span>
+          <Link href="/batches">批量处理</Link>
           <Link href="/settings">设置</Link>
         </div>
       </header>

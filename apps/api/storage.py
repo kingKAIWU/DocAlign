@@ -8,7 +8,7 @@ class LocalStorage:
     def __init__(self, root: Path) -> None:
         self.root = root.resolve()
         self.root.mkdir(parents=True, exist_ok=True)
-        for name in ("uploads", "analyses", "jobs", "outputs"):
+        for name in ("uploads", "analyses", "jobs", "outputs", "batches"):
             (self.root / name).mkdir(exist_ok=True)
 
     def upload_path(self, document_id: str) -> Path:
@@ -30,6 +30,14 @@ class LocalStorage:
         path = self.root / "outputs" / job_id / "formatted.docx"
         path.parent.mkdir(parents=True, exist_ok=True)
         return path
+
+    def batch_dir(self, batch_id: str) -> Path:
+        path = self.root / "batches" / batch_id
+        path.mkdir(parents=True, exist_ok=True)
+        return path
+
+    def batch_output_zip_path(self, batch_id: str) -> Path:
+        return self.batch_dir(batch_id) / "outputs.zip"
 
     def delete_document_artifacts(
         self, document_id: str, analysis_ids: list[str], job_ids: list[str]

@@ -78,6 +78,9 @@ export type Capabilities = {
   format_manifest: boolean;
   template_rule_candidate: boolean;
   rule_pack_library: boolean;
+  batch_processing: boolean;
+  max_batch_files: number;
+  max_batch_total_mb: number;
   max_upload_mb: number;
   local_only: boolean;
 };
@@ -99,6 +102,14 @@ export type RulePackArtifact = components["schemas"]["RulePackArtifact"];
 export type RulePackCatalogItem = components["schemas"]["RulePackCatalogItem"];
 
 export type RulePackDetail = components["schemas"]["RulePackDetailResponse"];
+
+export type BatchStatus = components["schemas"]["BatchStatus"];
+
+export type BatchItemStatus = components["schemas"]["BatchItemStatus"];
+
+export type BatchItem = components["schemas"]["BatchAuditItem"];
+
+export type BatchAudit = components["schemas"]["BatchAudit"];
 
 export type ComplianceViolation = {
   code: string;

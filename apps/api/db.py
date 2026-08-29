@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 from sqlalchemy import (
     DateTime,
     ForeignKey,
+    ForeignKeyConstraint,
     Integer,
     String,
     Text,
@@ -134,6 +135,77 @@ class JobRecord(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, onupdate=utcnow
     )
+
+
+class BatchRecord(Base):
+    __tablename__ = "batches"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["rule_pack_id", "rule_pack_revision"],
+            ["rule_pack_versions.pack_id", "rule_pack_versions.revision"],
+            ondelete="RESTRICT",
+        ),
+    )
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    request_id: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    name: Mapped[str] = mapped_column(String(160))
+    rule_pack_id: Mapped[str] = mapped_column(String(64))
+    rule_pack_revision: Mapped[int] = mapped_column(Integer)
+    rule_pack_name: Mapped[str] = mapped_column(String(120))
+    rule_pack_spec_sha256: Mapped[str] = mapped_column(String(64))
+    item_count: Mapped[int] = mapped_column(Integer)
+    file_manifest_json: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow
+    )
+
+
+class BatchItemRecord(Base):
+    __tablename__ = "batch_items"
+    __table_args__ = (UniqueConstraint("batch_id", "position"),)
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    batch_id: Mapped[str] = mapped_column(
+        ForeignKey("batches.id", ondelete="CASCADE"), index=True
+    )
+    position: Mapped[int] = mapped_column(Integer)
+    original_filename: Mapped[str] = mapped_column(String(512))
+    status: Mapped[str] = mapped_column(String(32), default="preparing")
+    source_sha256: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    document_id: Mapped[str | None] = mapped_column(
+        ForeignKey("documents.id", ondelete="SET NULL"), nullable=True
+    )
+    analysis_id: Mapped[str | None] = mapped_column(
+        ForeignKey("analyses.id", ondelete="SET NULL"), nullable=True
+    )
+    current_job_id: Mapped[str | None] = mapped_column(
+        ForeignKey("jobs.id", ondelete="SET NULL"), nullable=True
+    )
+    attempt_count: Mapped[int] = mapped_column(Integer, default=0)
+    error_code: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow
+    )
+
+
+class BatchAttemptRecord(Base):
+    __tablename__ = "batch_attempts"
+    __table_args__ = (UniqueConstraint("batch_item_id", "attempt_number"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    batch_item_id: Mapped[str] = mapped_column(
+        ForeignKey("batch_items.id", ondelete="CASCADE"), index=True
+    )
+    attempt_number: Mapped[int] = mapped_column(Integer)
+    request_id: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    job_id: Mapped[str | None] = mapped_column(
+        ForeignKey("jobs.id", ondelete="SET NULL"), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 
 class Database:

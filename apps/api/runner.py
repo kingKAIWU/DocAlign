@@ -11,6 +11,8 @@ class JobRunner:
         self.concurrency = concurrency
         self.queue: asyncio.Queue[str | None] = asyncio.Queue()
         self.workers: list[asyncio.Task[None]] = []
+        self.scheduled: set[str] = set()
+        self.schedule_lock = asyncio.Lock()
 
     async def start(self) -> None:
         self.workers = [
@@ -18,8 +20,13 @@ class JobRunner:
             for index in range(self.concurrency)
         ]
 
-    async def enqueue(self, job_id: str) -> None:
-        await self.queue.put(job_id)
+    async def enqueue(self, job_id: str) -> bool:
+        async with self.schedule_lock:
+            if job_id in self.scheduled:
+                return False
+            self.scheduled.add(job_id)
+            await self.queue.put(job_id)
+            return True
 
     async def close(self) -> None:
         for _ in self.workers:
@@ -35,4 +42,7 @@ class JobRunner:
                     return
                 await asyncio.to_thread(self.service.run_job, job_id)
             finally:
+                if job_id is not None:
+                    async with self.schedule_lock:
+                        self.scheduled.discard(job_id)
                 self.queue.task_done()

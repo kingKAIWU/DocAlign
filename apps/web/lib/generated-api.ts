@@ -432,6 +432,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/batches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Batch */
+        post: operations["create_batch_api_v1_batches_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/batches/{batch_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Batch */
+        get: operations["get_batch_api_v1_batches__batch_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/batches/{batch_id}/items/{item_id}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Retry Batch Item */
+        post: operations["retry_batch_item_api_v1_batches__batch_id__items__item_id__retry_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/batches/{batch_id}/audit.json": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Batch Audit */
+        get: operations["get_batch_audit_api_v1_batches__batch_id__audit_json_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/batches/{batch_id}/outputs.zip": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Batch Outputs */
+        get: operations["get_batch_outputs_api_v1_batches__batch_id__outputs_zip_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/documents/{document_id}/compliance": {
         parameters: {
             query?: never;
@@ -569,6 +654,126 @@ export interface components {
              * @default 480
              */
             max_body_chars: number;
+        };
+        /** BatchAudit */
+        BatchAudit: {
+            /**
+             * Schema Version
+             * @default batch-audit.v1
+             * @constant
+             */
+            schema_version: "batch-audit.v1";
+            /** Batch Id */
+            batch_id: string;
+            /** Request Id */
+            request_id: string;
+            /** Name */
+            name: string;
+            status: components["schemas"]["BatchStatus"];
+            /** Progress */
+            progress: number;
+            /** Rule Pack Id */
+            rule_pack_id: string;
+            /** Rule Pack Revision */
+            rule_pack_revision: number;
+            /** Rule Pack Name */
+            rule_pack_name: string;
+            /** Rule Pack Spec Sha256 */
+            rule_pack_spec_sha256: string;
+            summary: components["schemas"]["BatchAuditSummary"];
+            /** Items */
+            items: components["schemas"]["BatchAuditItem"][];
+            /** Output Zip Url */
+            output_zip_url?: string | null;
+            /** Audit Json Url */
+            audit_json_url: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** BatchAuditItem */
+        BatchAuditItem: {
+            /** Item Id */
+            item_id: string;
+            /** Position */
+            position: number;
+            /** Filename */
+            filename: string;
+            status: components["schemas"]["BatchItemStatus"];
+            /** Progress */
+            progress: number;
+            /** Source Sha256 */
+            source_sha256?: string | null;
+            /** Document Id */
+            document_id?: string | null;
+            /** Analysis Id */
+            analysis_id?: string | null;
+            /** Job Id */
+            job_id?: string | null;
+            /** Attempt Count */
+            attempt_count: number;
+            /** Retryable */
+            retryable: boolean;
+            /** Error Code */
+            error_code?: string | null;
+            /** Error Message */
+            error_message?: string | null;
+            /** Validation Passed */
+            validation_passed?: boolean | null;
+            /** Content Integrity Passed */
+            content_integrity_passed?: boolean | null;
+            /** Changed Mutations */
+            changed_mutations?: number | null;
+            /** Output Document Url */
+            output_document_url?: string | null;
+            /** Audit Json Url */
+            audit_json_url?: string | null;
+        };
+        /** BatchAuditSummary */
+        BatchAuditSummary: {
+            /** Total */
+            total: number;
+            /** Completed */
+            completed: number;
+            /** Failed */
+            failed: number;
+            /** Active */
+            active: number;
+        };
+        /**
+         * BatchItemStatus
+         * @enum {string}
+         */
+        BatchItemStatus: "preparing" | "queued" | "analyzing" | "planning" | "formatting" | "validating" | "repairing" | "completed" | "failed";
+        /** BatchRetryRequest */
+        BatchRetryRequest: {
+            /** Request Id */
+            request_id: string;
+        };
+        /**
+         * BatchStatus
+         * @enum {string}
+         */
+        BatchStatus: "preparing" | "processing" | "completed" | "completed_with_errors" | "failed";
+        /** Body_create_batch_api_v1_batches_post */
+        Body_create_batch_api_v1_batches_post: {
+            /** Request Id */
+            request_id: string;
+            /** Name */
+            name: string;
+            /** Rule Pack Id */
+            rule_pack_id: string;
+            /** Rule Pack Revision */
+            rule_pack_revision: number;
+            /** Files */
+            files: string[];
         };
         /** Body_create_template_candidate_api_v1_templates_candidate_post */
         Body_create_template_candidate_api_v1_templates_candidate_post: {
@@ -2370,6 +2575,168 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["JobResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_batch_api_v1_batches_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_create_batch_api_v1_batches_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BatchAudit"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_batch_api_v1_batches__batch_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                batch_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BatchAudit"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    retry_batch_item_api_v1_batches__batch_id__items__item_id__retry_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                batch_id: string;
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BatchRetryRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BatchAudit"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_batch_audit_api_v1_batches__batch_id__audit_json_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                batch_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BatchAudit"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_batch_outputs_api_v1_batches__batch_id__outputs_zip_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                batch_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */
