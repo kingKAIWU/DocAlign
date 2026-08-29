@@ -124,7 +124,7 @@ a { color: inherit; }
 .rule-section { padding: 13px; border-bottom: 1px solid var(--line); }
 .rule-section.grow { min-height: 0; flex: 0 0 auto; }
 .rule-section label { display: block; margin-bottom: 7px; font-size: 10px; font-weight: 750; color: var(--ink); }
-.rule-mode-tabs { margin-bottom: 10px; display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line-strong); border-radius: 5px; overflow: hidden; }
+.rule-mode-tabs { margin-bottom: 10px; display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--line-strong); border-radius: 5px; overflow: hidden; }
 .rule-mode-tabs button { min-height: 34px; padding: 7px 8px; border: 0; color: var(--muted); background: #f5f3ed; cursor: pointer; font-size: 10px; font-weight: 750; }
 .rule-mode-tabs button + button { border-left: 1px solid var(--line-strong); }
 .rule-mode-tabs button.active { color: white; background: var(--green); }
@@ -166,6 +166,38 @@ a { color: inherit; }
 .template-candidate-heading small { color: var(--muted); font: 7px/1.4 ui-monospace, monospace; }
 .template-candidate-heading > span { flex: 0 0 auto; padding: 3px 5px; border-radius: 999px; color: var(--green-2); background: #dcece5; font-size: 7px; font-weight: 750; }
 .template-candidate > p { margin: 7px 0; color: var(--muted); font-size: 8px; }
+.rule-pack-library { display: grid; gap: 10px; }
+.rule-pack-intro { padding: 11px; border: 1px solid #c7d8cf; border-radius: 6px; background: #f2f7f4; }
+.rule-pack-intro strong { color: var(--green-2); font-size: 11px; }
+.rule-pack-intro p { margin: 6px 0; color: var(--muted); font-size: 9px; line-height: 1.55; }
+.rule-pack-intro small { display: block; color: #725119; font-size: 8px; line-height: 1.45; }
+.rule-pack-select-row { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 6px; }
+.rule-pack-select-row select, .rule-pack-history select, .rule-pack-fields input, .rule-pack-fields textarea { width: 100%; min-width: 0; padding: 7px 8px; border: 1px solid var(--line); border-radius: 4px; color: var(--ink); background: white; font-size: 9px; }
+.rule-pack-history { padding: 10px; display: grid; gap: 8px; border: 1px solid #d8e4dd; border-radius: 6px; background: #fbfcfb; }
+.rule-pack-history > div:first-child { display: grid; gap: 3px; }
+.rule-pack-history > div:first-child strong { font-size: 10px; }
+.rule-pack-history > div:first-child span, .rule-pack-history > div:first-child small { color: var(--muted); font-size: 8px; line-height: 1.45; }
+.rule-pack-version-note { padding: 8px; display: grid; gap: 3px; border-left: 3px solid var(--line-strong); background: #f3f4f2; }
+.rule-pack-version-note.locally_approved { border-left-color: var(--green); background: var(--green-pale); }
+.rule-pack-version-note strong { color: var(--green-2); font-size: 9px; }
+.rule-pack-version-note span { font-size: 8px; line-height: 1.45; }
+.rule-pack-version-note small { color: var(--muted); font: 7px/1.45 ui-monospace, monospace; overflow-wrap: anywhere; }
+.rule-pack-actions, .rule-pack-save-actions { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 6px; }
+.rule-pack-actions .button, .rule-pack-save-actions .button { min-width: 0; padding: 7px 6px; font-size: 8px; text-align: center; }
+.rule-pack-actions .button:first-child { grid-column: 1 / -1; }
+.rule-pack-save { padding-top: 9px; border-top: 1px solid var(--line); }
+.rule-pack-save > summary { cursor: pointer; color: var(--green-2); font-size: 9px; font-weight: 750; }
+.rule-pack-fields { margin-top: 9px; display: grid; gap: 6px; }
+.rule-pack-fields label { margin: 2px 0 0; font-size: 8px; }
+.rule-pack-fields textarea { min-height: 58px; resize: vertical; line-height: 1.5; }
+.rule-pack-approval { margin: 3px 0 !important; padding: 8px; display: grid !important; grid-template-columns: auto 1fr; gap: 7px; border: 1px solid #dec490; border-radius: 5px; background: #fff8ed; }
+.rule-pack-approval input { width: auto; margin-top: 2px; }
+.rule-pack-approval span { display: grid; gap: 2px; }
+.rule-pack-approval strong { color: #725119; font-size: 8px; }
+.rule-pack-approval small { color: var(--muted); font-size: 7px; line-height: 1.4; }
+.rule-pack-message { margin: 0 !important; padding: 8px; border-radius: 4px; font-size: 8px !important; line-height: 1.5 !important; }
+.rule-pack-message.success { color: var(--green-2); background: var(--green-pale); }
+.rule-pack-message.error { color: var(--red); background: #f8e9e7; }
 .template-role-mappings { margin: 7px 0; padding: 0; display: grid; gap: 4px; list-style: none; }
 .template-role-mappings li { padding: 6px 7px; display: grid; grid-template-columns: minmax(56px,.7fr) minmax(0,1fr) auto; align-items: center; gap: 5px; border: 1px solid #d8e4dd; border-radius: 4px; background: rgba(255,255,255,.7); font-size: 8px; }
 .template-role-mappings strong { color: var(--green-2); }

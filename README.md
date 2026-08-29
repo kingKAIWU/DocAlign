@@ -8,7 +8,7 @@ DocAlign 是一个本地优先、确定性执行的 DOCX 自动排版与格式�
 
 ## 核心能力
 
-### 三种并列的整理模式
+### 四种并列的整理模式
 
 - **默认整理模式**：无需模型，按文档类型选择常规文档、紧凑信息、合同条款或宽表优先方案。
 - 每个整理方案都携带版本、维护方、复核日期、能力覆盖和明确限制；当前内置方案均标记为
@@ -17,7 +17,12 @@ DocAlign 是一个本地优先、确定性执行的 DOCX 自动排版与格式�
   `FormattingSpec v1`，并展示已映射能力、假设、歧义和暂不支持项。
 - **参考样例提取模式**：独立上传一份确认合格的 DOCX，仅把一致页面参数和可稳定映射的已使用
   样式转换为候选规则；展示覆盖、歧义和未复制内容，经用户明确确认后才采用。
+- **我的规则包**：把当前规则命名保存到本地独立规则库，保留不可变修订、适用范围、变更说明、
+  本地核对记录和 SHA-256；可载入旧版、导出版本化 JSON，或把旧版恢复为新的待确认草稿。
 - 用户规则始终优先于预设规则；高级用户也可以直接编辑 JSON/YAML 规则。
+
+规则包保存、创建新修订和恢复都带幂等请求标识。若响应返回前连接中断，使用同一内容重试会返回
+原结果，不会产生重复修订。“本地已确认”只记录人工核对，不代表机构认证或法规合规。
 
 ### 自动结构排版
 
@@ -62,6 +67,8 @@ DocAlign 是一个本地优先、确定性执行的 DOCX 自动排版与格式�
 - 后台格式化任务具有稳定任务 ID；页面刷新或短暂断连后恢复同一个任务，不会重复提交。
 - 轮询请求带超时和取消机制，终态后立即停止，不创建重复连接。
 - API 进程重启时会将中断任务标记为 `JOB_INTERRUPTED`，用户可明确重新提交。
+- API 启动前自动把当前 `DOCALIGN_DATABASE_URL` 升级到最新迁移版本；升级失败时不会带着半旧表结构
+  继续提供服务。
 
 ### 面向用户的结果解释
 
@@ -129,7 +136,8 @@ macOS 的完整安装、启动和恢复说明见 [docs/MACOS.md](docs/MACOS.md)�
 1. 上传 `.docx`，或者粘贴纯文本创建 Word 草稿。
 2. 运行确定性结构分析；需要时再主动启用智能分析。
 3. 检查并修正段落角色。
-4. 选择默认整理方案、使用自然语言编译格式要求，或从确认合格的 Word 样例提取候选规则。
+4. 选择默认整理方案、使用自然语言编译格式要求、从确认合格的 Word 样例提取候选规则，或载入
+   本地版本化规则包。
 5. 先运行“只做格式体检”，查看带位置编号的问题；也可以直接开始自动排版。
 6. 阅读验证与改动摘要，处理剩余待确认段落，再下载 DOCX、JSON/Markdown 审计或格式画像。
 
@@ -172,6 +180,11 @@ uv run docalign spec compile \
 | `PUT /api/v1/analyses/{id}/role-overrides` | 人工修正语义角色 |
 | `POST /api/v1/specs/compile` | 编译自然语言格式规则 |
 | `POST /api/v1/templates/candidate` | 临时解析合格 DOCX 并生成待确认候选规则 |
+| `GET /api/v1/rule-packs` | 列出本地可复用规则包 |
+| `POST /api/v1/rule-packs` | 幂等创建规则包初始修订 |
+| `POST /api/v1/rule-packs/{id}/versions` | 幂等保存不可变新修订 |
+| `POST /api/v1/rule-packs/{id}/restore` | 将历史版本安全恢复为新草稿修订 |
+| `GET /api/v1/rule-packs/{id}/versions/{revision}/export` | 导出带完整性摘要的规则包 JSON |
 | `POST /api/v1/documents/{id}/compliance` | 只读格式体检 |
 | `GET /api/v1/documents/{id}/format-manifest` | 导出格式画像 JSON |
 | `POST /api/v1/jobs` | 创建格式化任务 |
@@ -189,6 +202,7 @@ uv run docalign spec compile \
 - `compliance-report.v1.schema.json`
 - `format-manifest.v1.schema.json`
 - `template-rule-candidate.v1.schema.json`
+- `rule-pack.v1.schema.json`
 
 ## 质量门与回归
 
@@ -220,7 +234,7 @@ uv run python tests/fixtures/domain-corpus/run_corpus.py \
 
 ## 隐私与安全边界
 
-- 上传文件、分析、规则、输出和审计默认存储在 `DOCALIGN_DATA_DIR`，不进入云存储。
+- 上传文件、分析、临时规则、独立规则包、输出和审计默认存储在 `DOCALIGN_DATA_DIR`，不进入云存储。
 - 不执行宏或嵌入对象，不直接覆盖源文件，不重建表格，不承诺浏览器预览与 Microsoft Word
   像素级一致。
 - 自然语言编译仅发送格式要求和紧凑文档摘要；智能分析只在用户主动确认后发送段落文字与

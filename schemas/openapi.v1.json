@@ -729,6 +729,293 @@
         }
       }
     },
+    "/api/v1/rule-packs": {
+      "get": {
+        "summary": "List Rule Packs",
+        "operationId": "list_rule_packs_api_v1_rule_packs_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RulePackCatalogResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create Rule Pack",
+        "operationId": "create_rule_pack_api_v1_rule_packs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RulePackCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RulePackArtifact"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rule-packs/{pack_id}": {
+      "get": {
+        "summary": "Get Rule Pack",
+        "operationId": "get_rule_pack_api_v1_rule_packs__pack_id__get",
+        "parameters": [
+          {
+            "name": "pack_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Pack Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RulePackDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rule-packs/{pack_id}/versions": {
+      "post": {
+        "summary": "Create Rule Pack Version",
+        "operationId": "create_rule_pack_version_api_v1_rule_packs__pack_id__versions_post",
+        "parameters": [
+          {
+            "name": "pack_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Pack Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RulePackVersionCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RulePackArtifact"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rule-packs/{pack_id}/versions/{revision}": {
+      "get": {
+        "summary": "Get Rule Pack Version",
+        "operationId": "get_rule_pack_version_api_v1_rule_packs__pack_id__versions__revision__get",
+        "parameters": [
+          {
+            "name": "pack_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Pack Id"
+            }
+          },
+          {
+            "name": "revision",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Revision"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RulePackArtifact"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rule-packs/{pack_id}/restore": {
+      "post": {
+        "summary": "Restore Rule Pack Version",
+        "operationId": "restore_rule_pack_version_api_v1_rule_packs__pack_id__restore_post",
+        "parameters": [
+          {
+            "name": "pack_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Pack Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RulePackRestoreRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RulePackArtifact"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rule-packs/{pack_id}/versions/{revision}/export": {
+      "get": {
+        "summary": "Export Rule Pack Version",
+        "operationId": "export_rule_pack_version_api_v1_rule_packs__pack_id__versions__revision__export_get",
+        "parameters": [
+          {
+            "name": "pack_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Pack Id"
+            }
+          },
+          {
+            "name": "revision",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Revision"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RulePackArtifact"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/jobs": {
       "post": {
         "summary": "Create Job",
@@ -2571,6 +2858,191 @@
         "type": "object",
         "title": "RoleOverrideRequest"
       },
+      "RulePackApprovalStatus": {
+        "type": "string",
+        "enum": [
+          "draft",
+          "locally_approved"
+        ],
+        "title": "RulePackApprovalStatus"
+      },
+      "RulePackArtifact": {
+        "properties": {
+          "schema_version": {
+            "type": "string",
+            "const": "rule-pack.v1",
+            "title": "Schema Version",
+            "default": "rule-pack.v1"
+          },
+          "pack_id": {
+            "type": "string",
+            "title": "Pack Id"
+          },
+          "request_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{8,64}$",
+            "title": "Request Id"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000,
+            "title": "Description",
+            "default": ""
+          },
+          "scope_label": {
+            "type": "string",
+            "maxLength": 240,
+            "minLength": 1,
+            "title": "Scope Label"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Revision"
+          },
+          "approval_status": {
+            "$ref": "#/components/schemas/RulePackApprovalStatus",
+            "default": "draft"
+          },
+          "approval_note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approval Note"
+          },
+          "change_note": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Change Note"
+          },
+          "restored_from_revision": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Restored From Revision"
+          },
+          "spec_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Spec Sha256"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "spec": {
+            "$ref": "#/components/schemas/FormattingSpec"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "pack_id",
+          "request_id",
+          "name",
+          "scope_label",
+          "revision",
+          "change_note",
+          "spec_sha256",
+          "created_at",
+          "spec"
+        ],
+        "title": "RulePackArtifact",
+        "description": "Portable, integrity-checked snapshot of one immutable rule-pack revision."
+      },
+      "RulePackCatalogItem": {
+        "properties": {
+          "pack_id": {
+            "type": "string",
+            "title": "Pack Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "scope_label": {
+            "type": "string",
+            "title": "Scope Label"
+          },
+          "current_revision": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Current Revision"
+          },
+          "current_approval_status": {
+            "$ref": "#/components/schemas/RulePackApprovalStatus"
+          },
+          "current_spec_sha256": {
+            "type": "string",
+            "title": "Current Spec Sha256"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "pack_id",
+          "name",
+          "description",
+          "scope_label",
+          "current_revision",
+          "current_approval_status",
+          "current_spec_sha256",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "RulePackCatalogItem"
+      },
+      "RulePackCatalogResponse": {
+        "properties": {
+          "rule_packs": {
+            "items": {
+              "$ref": "#/components/schemas/RulePackCatalogItem"
+            },
+            "type": "array",
+            "title": "Rule Packs"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "rule_packs"
+        ],
+        "title": "RulePackCatalogResponse"
+      },
       "RulePackClaimLevel": {
         "type": "string",
         "enum": [
@@ -2579,6 +3051,123 @@
           "verified"
         ],
         "title": "RulePackClaimLevel"
+      },
+      "RulePackCreateRequest": {
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{8,64}$",
+            "title": "Request Id"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000,
+            "title": "Description",
+            "default": ""
+          },
+          "scope_label": {
+            "type": "string",
+            "maxLength": 240,
+            "minLength": 1,
+            "title": "Scope Label"
+          },
+          "spec": {
+            "$ref": "#/components/schemas/FormattingSpec"
+          },
+          "change_note": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Change Note",
+            "default": "创建初始修订"
+          },
+          "approval_status": {
+            "$ref": "#/components/schemas/RulePackApprovalStatus",
+            "default": "draft"
+          },
+          "approval_note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approval Note"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "request_id",
+          "name",
+          "scope_label",
+          "spec"
+        ],
+        "title": "RulePackCreateRequest"
+      },
+      "RulePackDetailResponse": {
+        "properties": {
+          "pack_id": {
+            "type": "string",
+            "title": "Pack Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "scope_label": {
+            "type": "string",
+            "title": "Scope Label"
+          },
+          "current_revision": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Current Revision"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "versions": {
+            "items": {
+              "$ref": "#/components/schemas/RulePackVersionSummary"
+            },
+            "type": "array",
+            "title": "Versions"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "pack_id",
+          "name",
+          "description",
+          "scope_label",
+          "current_revision",
+          "created_at",
+          "updated_at",
+          "versions"
+        ],
+        "title": "RulePackDetailResponse"
       },
       "RulePackMetadata": {
         "properties": {
@@ -2667,6 +3256,140 @@
           "url"
         ],
         "title": "RulePackReference"
+      },
+      "RulePackRestoreRequest": {
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{8,64}$",
+            "title": "Request Id"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Revision"
+          },
+          "change_note": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Change Note",
+            "default": "恢复历史修订"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "request_id",
+          "revision"
+        ],
+        "title": "RulePackRestoreRequest"
+      },
+      "RulePackVersionCreateRequest": {
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{8,64}$",
+            "title": "Request Id"
+          },
+          "spec": {
+            "$ref": "#/components/schemas/FormattingSpec"
+          },
+          "change_note": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Change Note"
+          },
+          "approval_status": {
+            "$ref": "#/components/schemas/RulePackApprovalStatus",
+            "default": "draft"
+          },
+          "approval_note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approval Note"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "request_id",
+          "spec",
+          "change_note"
+        ],
+        "title": "RulePackVersionCreateRequest"
+      },
+      "RulePackVersionSummary": {
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Revision"
+          },
+          "approval_status": {
+            "$ref": "#/components/schemas/RulePackApprovalStatus"
+          },
+          "approval_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approval Note"
+          },
+          "change_note": {
+            "type": "string",
+            "title": "Change Note"
+          },
+          "restored_from_revision": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Restored From Revision"
+          },
+          "spec_sha256": {
+            "type": "string",
+            "title": "Spec Sha256"
+          },
+          "source_type": {
+            "type": "string",
+            "title": "Source Type"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "revision",
+          "approval_status",
+          "approval_note",
+          "change_note",
+          "spec_sha256",
+          "source_type",
+          "created_at"
+        ],
+        "title": "RulePackVersionSummary"
       },
       "SemanticRole": {
         "type": "string",

@@ -6,6 +6,10 @@ import type {
   DocumentRecord,
   FormattingSpec,
   Job,
+  RulePackApprovalStatus,
+  RulePackArtifact,
+  RulePackCatalogItem,
+  RulePackDetail,
   SemanticRole,
   TemplateRuleCandidate,
 } from "./types";
@@ -52,6 +56,50 @@ export const api = {
     }),
   presets: (signal?: AbortSignal) =>
     request<{ presets: CleanupPreset[] }>("/presets", { signal }),
+  rulePacks: (signal?: AbortSignal) =>
+    request<{ rule_packs: RulePackCatalogItem[] }>("/rule-packs", { signal }),
+  rulePack: (packId: string, signal?: AbortSignal) =>
+    request<RulePackDetail>(`/rule-packs/${packId}`, { signal }),
+  rulePackVersion: (packId: string, revision: number, signal?: AbortSignal) =>
+    request<RulePackArtifact>(`/rule-packs/${packId}/versions/${revision}`, { signal }),
+  createRulePack: (payload: {
+    request_id: string;
+    name: string;
+    description: string;
+    scope_label: string;
+    spec: FormattingSpec;
+    change_note: string;
+    approval_status: RulePackApprovalStatus;
+    approval_note: string | null;
+  }) =>
+    request<RulePackArtifact>("/rule-packs", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  createRulePackVersion: (
+    packId: string,
+    payload: {
+      request_id: string;
+      spec: FormattingSpec;
+      change_note: string;
+      approval_status: RulePackApprovalStatus;
+      approval_note: string | null;
+    },
+  ) =>
+    request<RulePackArtifact>(`/rule-packs/${packId}/versions`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  restoreRulePackVersion: (
+    packId: string,
+    revision: number,
+    changeNote: string,
+    requestId: string,
+  ) =>
+    request<RulePackArtifact>(`/rule-packs/${packId}/restore`, {
+      method: "POST",
+      body: JSON.stringify({ request_id: requestId, revision, change_note: changeNote }),
+    }),
   document: (documentId: string, signal?: AbortSignal) =>
     request<DocumentRecord>(`/documents/${documentId}`, { signal }),
   analysis: (analysisId: string, signal?: AbortSignal) =>

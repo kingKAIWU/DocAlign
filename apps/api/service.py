@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import logging
 import tempfile
+import unicodedata
 import uuid
+from datetime import datetime
 from pathlib import Path
 
 from docalign_core.analysis.classifier import (
@@ -41,6 +43,12 @@ from docalign_core.domain.formatting_spec import (
     merge_specs,
 )
 from docalign_core.domain.manifest import FormatManifest
+from docalign_core.domain.rule_pack import (
+    RulePackApprovalStatus,
+    RulePackArtifact,
+    canonical_formatting_spec_json,
+    formatting_spec_sha256,
+)
 from docalign_core.domain.template_candidate import TemplateRuleCandidate
 from docalign_core.llm.base import (
     DocumentSummary,
@@ -55,6 +63,7 @@ from docalign_core.validation.validator import DocumentValidator
 from fastapi import UploadFile
 from pydantic import ValidationError
 from sqlalchemy import delete, select
+from sqlalchemy.exc import IntegrityError
 
 from apps.api.change_summary import build_job_result_summary
 from apps.api.db import (
@@ -63,11 +72,20 @@ from apps.api.db import (
     DocumentRecord,
     JobRecord,
     RoleOverrideRecord,
+    RulePackRecord,
+    RulePackVersionRecord,
     SpecRecord,
     utcnow,
 )
 from apps.api.errors import ApiError
-from apps.api.schemas import JobResponse, JobResultSummary
+from apps.api.schemas import (
+    JobResponse,
+    JobResultSummary,
+    RulePackCatalogItem,
+    RulePackCatalogResponse,
+    RulePackDetailResponse,
+    RulePackVersionSummary,
+)
 from apps.api.storage import LocalStorage
 
 logger = logging.getLogger(__name__)
@@ -345,6 +363,357 @@ class ApiService:
             record.source_type = spec.source.type.value
             record.updated_at = utcnow()
         return spec
+
+    def list_rule_packs(self) -> RulePackCatalogResponse:
+        with self.database.session_factory() as session:
+            packs = list(
+                session.scalars(
+                    select(RulePackRecord).order_by(
+                        RulePackRecord.updated_at.desc(), RulePackRecord.name.asc()
+                    )
+                )
+            )
+            items: list[RulePackCatalogItem] = []
+            for pack in packs:
+                version = session.get(
+                    RulePackVersionRecord, (pack.id, pack.current_revision)
+                )
+                if version is None:
+                    raise ApiError(
+                        500,
+                        "RULE_PACK_INTEGRITY_FAILED",
+                        "The current rule-pack revision is missing.",
+                        {"pack_id": pack.id, "revision": pack.current_revision},
+                    )
+                items.append(
+                    RulePackCatalogItem(
+                        pack_id=pack.id,
+                        name=pack.name,
+                        description=pack.description,
+                        scope_label=pack.scope_label,
+                        current_revision=pack.current_revision,
+                        current_approval_status=RulePackApprovalStatus(
+                            version.approval_status
+                        ),
+                        current_spec_sha256=version.spec_sha256,
+                        created_at=pack.created_at,
+                        updated_at=pack.updated_at,
+                    )
+                )
+        return RulePackCatalogResponse(rule_packs=items)
+
+    def create_rule_pack(
+        self,
+        *,
+        request_id: str,
+        name: str,
+        description: str,
+        scope_label: str,
+        spec: FormattingSpec,
+        change_note: str,
+        approval_status: RulePackApprovalStatus,
+        approval_note: str | None,
+    ) -> RulePackArtifact:
+        normalized_name = " ".join(name.split())
+        existing = self._existing_rule_pack_write(
+            request_id=request_id,
+            pack_id=None,
+            spec=spec,
+            change_note=change_note,
+            approval_status=approval_status,
+            approval_note=approval_note,
+            restored_from_revision=None,
+            name=normalized_name,
+            description=description,
+            scope_label=scope_label,
+        )
+        if existing is not None:
+            return existing
+        pack_id = f"pack_{uuid.uuid4().hex}"
+        created_at = utcnow()
+        pack = RulePackRecord(
+            id=pack_id,
+            name=normalized_name,
+            name_key=_rule_pack_name_key(normalized_name),
+            description=description,
+            scope_label=scope_label,
+            current_revision=1,
+            created_at=created_at,
+            updated_at=created_at,
+        )
+        version = self._new_rule_pack_version_record(
+            pack_id=pack_id,
+            revision=1,
+            request_id=request_id,
+            spec=spec,
+            change_note=change_note,
+            approval_status=approval_status,
+            approval_note=approval_note,
+            restored_from_revision=None,
+            created_at=created_at,
+        )
+        try:
+            with self.database.session_factory.begin() as session:
+                session.add(pack)
+                session.add(version)
+        except IntegrityError as exc:
+            retried = self._existing_rule_pack_write(
+                request_id=request_id,
+                pack_id=None,
+                spec=spec,
+                change_note=change_note,
+                approval_status=approval_status,
+                approval_note=approval_note,
+                restored_from_revision=None,
+                name=normalized_name,
+                description=description,
+                scope_label=scope_label,
+            )
+            if retried is not None:
+                return retried
+            raise ApiError(
+                409,
+                "RULE_PACK_NAME_CONFLICT",
+                "A rule pack with the same name already exists.",
+                {"name": normalized_name},
+            ) from exc
+        return self.get_rule_pack_artifact(pack_id, 1)
+
+    def get_rule_pack_detail(self, pack_id: str) -> RulePackDetailResponse:
+        with self.database.session_factory() as session:
+            pack = session.get(RulePackRecord, pack_id)
+            if pack is None:
+                raise ApiError(404, "RULE_PACK_NOT_FOUND", "Rule pack not found.")
+            versions = list(
+                session.scalars(
+                    select(RulePackVersionRecord)
+                    .where(RulePackVersionRecord.pack_id == pack_id)
+                    .order_by(RulePackVersionRecord.revision.desc())
+                )
+            )
+            return RulePackDetailResponse(
+                pack_id=pack.id,
+                name=pack.name,
+                description=pack.description,
+                scope_label=pack.scope_label,
+                current_revision=pack.current_revision,
+                created_at=pack.created_at,
+                updated_at=pack.updated_at,
+                versions=[self._rule_pack_version_summary(item) for item in versions],
+            )
+
+    def get_rule_pack_artifact(self, pack_id: str, revision: int) -> RulePackArtifact:
+        with self.database.session_factory() as session:
+            pack = session.get(RulePackRecord, pack_id)
+            if pack is None:
+                raise ApiError(404, "RULE_PACK_NOT_FOUND", "Rule pack not found.")
+            version = session.get(RulePackVersionRecord, (pack_id, revision))
+            if version is None:
+                raise ApiError(
+                    404,
+                    "RULE_PACK_VERSION_NOT_FOUND",
+                    "Rule-pack revision not found.",
+                    {"pack_id": pack_id, "revision": revision},
+                )
+            try:
+                spec = FormattingSpec.model_validate_json(version.json_payload)
+            except ValidationError as exc:
+                raise ApiError(
+                    500,
+                    "RULE_PACK_INTEGRITY_FAILED",
+                    "The stored rule-pack revision is invalid.",
+                    {"pack_id": pack_id, "revision": revision},
+                ) from exc
+            digest = formatting_spec_sha256(spec)
+            if digest != version.spec_sha256:
+                raise ApiError(
+                    500,
+                    "RULE_PACK_INTEGRITY_FAILED",
+                    "The stored rule-pack revision failed its integrity check.",
+                    {"pack_id": pack_id, "revision": revision},
+                )
+            return RulePackArtifact(
+                pack_id=pack.id,
+                request_id=version.request_id,
+                name=pack.name,
+                description=pack.description,
+                scope_label=pack.scope_label,
+                revision=version.revision,
+                approval_status=RulePackApprovalStatus(version.approval_status),
+                approval_note=version.approval_note,
+                change_note=version.change_note,
+                restored_from_revision=version.restored_from_revision,
+                spec_sha256=version.spec_sha256,
+                created_at=version.created_at,
+                spec=spec,
+            )
+
+    def create_rule_pack_version(
+        self,
+        pack_id: str,
+        *,
+        request_id: str,
+        spec: FormattingSpec,
+        change_note: str,
+        approval_status: RulePackApprovalStatus,
+        approval_note: str | None,
+        restored_from_revision: int | None = None,
+    ) -> RulePackArtifact:
+        existing = self._existing_rule_pack_write(
+            request_id=request_id,
+            pack_id=pack_id,
+            spec=spec,
+            change_note=change_note,
+            approval_status=approval_status,
+            approval_note=approval_note,
+            restored_from_revision=restored_from_revision,
+        )
+        if existing is not None:
+            return existing
+        created_at = utcnow()
+        revision = 0
+        try:
+            with self.database.session_factory.begin() as session:
+                pack = session.get(RulePackRecord, pack_id)
+                if pack is None:
+                    raise ApiError(404, "RULE_PACK_NOT_FOUND", "Rule pack not found.")
+                revision = pack.current_revision + 1
+                session.add(
+                    self._new_rule_pack_version_record(
+                        pack_id=pack_id,
+                        revision=revision,
+                        request_id=request_id,
+                        spec=spec,
+                        change_note=change_note,
+                        approval_status=approval_status,
+                        approval_note=approval_note,
+                        restored_from_revision=restored_from_revision,
+                        created_at=created_at,
+                    )
+                )
+                pack.current_revision = revision
+                pack.updated_at = created_at
+        except IntegrityError as exc:
+            retried = self._existing_rule_pack_write(
+                request_id=request_id,
+                pack_id=pack_id,
+                spec=spec,
+                change_note=change_note,
+                approval_status=approval_status,
+                approval_note=approval_note,
+                restored_from_revision=restored_from_revision,
+            )
+            if retried is not None:
+                return retried
+            raise ApiError(
+                409,
+                "RULE_PACK_VERSION_CONFLICT",
+                "The rule pack changed while this revision was being saved. Reload and retry.",
+                {"pack_id": pack_id},
+            ) from exc
+        return self.get_rule_pack_artifact(pack_id, revision)
+
+    def restore_rule_pack_revision(
+        self, pack_id: str, revision: int, change_note: str, request_id: str
+    ) -> RulePackArtifact:
+        restored = self.get_rule_pack_artifact(pack_id, revision)
+        return self.create_rule_pack_version(
+            pack_id,
+            request_id=request_id,
+            spec=restored.spec,
+            change_note=change_note,
+            approval_status=RulePackApprovalStatus.DRAFT,
+            approval_note=None,
+            restored_from_revision=revision,
+        )
+
+    @staticmethod
+    def _new_rule_pack_version_record(
+        *,
+        pack_id: str,
+        revision: int,
+        request_id: str,
+        spec: FormattingSpec,
+        change_note: str,
+        approval_status: RulePackApprovalStatus,
+        approval_note: str | None,
+        restored_from_revision: int | None,
+        created_at: datetime,
+    ) -> RulePackVersionRecord:
+        return RulePackVersionRecord(
+            pack_id=pack_id,
+            revision=revision,
+            request_id=request_id,
+            schema_version=spec.schema_version,
+            json_payload=canonical_formatting_spec_json(spec),
+            spec_sha256=formatting_spec_sha256(spec),
+            source_type=spec.source.type.value,
+            approval_status=approval_status.value,
+            approval_note=approval_note,
+            change_note=change_note,
+            restored_from_revision=restored_from_revision,
+            created_at=created_at,
+        )
+
+    def _existing_rule_pack_write(
+        self,
+        *,
+        request_id: str,
+        pack_id: str | None,
+        spec: FormattingSpec,
+        change_note: str,
+        approval_status: RulePackApprovalStatus,
+        approval_note: str | None,
+        restored_from_revision: int | None,
+        name: str | None = None,
+        description: str | None = None,
+        scope_label: str | None = None,
+    ) -> RulePackArtifact | None:
+        with self.database.session_factory() as session:
+            version = session.scalar(
+                select(RulePackVersionRecord).where(
+                    RulePackVersionRecord.request_id == request_id
+                )
+            )
+            if version is None:
+                return None
+            existing_pack_id = version.pack_id
+            existing_revision = version.revision
+        artifact = self.get_rule_pack_artifact(existing_pack_id, existing_revision)
+        same_request = (
+            (pack_id is None or artifact.pack_id == pack_id)
+            and artifact.spec_sha256 == formatting_spec_sha256(spec)
+            and artifact.change_note == change_note
+            and artifact.approval_status == approval_status
+            and artifact.approval_note == approval_note
+            and artifact.restored_from_revision == restored_from_revision
+            and (name is None or artifact.name == name)
+            and (description is None or artifact.description == description)
+            and (scope_label is None or artifact.scope_label == scope_label)
+        )
+        if not same_request:
+            raise ApiError(
+                409,
+                "IDEMPOTENCY_KEY_REUSED",
+                "The request identifier was already used for different rule-pack content.",
+                {"request_id": request_id},
+            )
+        return artifact
+
+    @staticmethod
+    def _rule_pack_version_summary(
+        version: RulePackVersionRecord,
+    ) -> RulePackVersionSummary:
+        return RulePackVersionSummary(
+            revision=version.revision,
+            approval_status=RulePackApprovalStatus(version.approval_status),
+            approval_note=version.approval_note,
+            change_note=version.change_note,
+            restored_from_revision=version.restored_from_revision,
+            spec_sha256=version.spec_sha256,
+            source_type=version.source_type,
+            created_at=version.created_at,
+        )
 
     async def compile_spec(
         self,
@@ -639,3 +1008,8 @@ def _summary(result: AnalysisResult) -> AnalysisSummary:
 def _display_filename(filename: str) -> str:
     cleaned = filename.replace("\\", "/").split("/")[-1].strip()
     return cleaned[:512] or "document.docx"
+
+
+def _rule_pack_name_key(name: str) -> str:
+    normalized = unicodedata.normalize("NFKC", name)
+    return " ".join(normalized.casefold().split())

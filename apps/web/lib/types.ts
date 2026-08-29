@@ -77,6 +77,7 @@ export type Capabilities = {
   audit_only: boolean;
   format_manifest: boolean;
   template_rule_candidate: boolean;
+  rule_pack_library: boolean;
   max_upload_mb: number;
   local_only: boolean;
 };
@@ -90,6 +91,14 @@ export type CleanupPreset = components["schemas"]["CleanupPresetCatalogItem"];
 export type FormattingSpec = components["schemas"]["FormattingSpec"];
 
 export type TemplateRuleCandidate = components["schemas"]["TemplateRuleCandidate"];
+
+export type RulePackApprovalStatus = components["schemas"]["RulePackApprovalStatus"];
+
+export type RulePackArtifact = components["schemas"]["RulePackArtifact"];
+
+export type RulePackCatalogItem = components["schemas"]["RulePackCatalogItem"];
+
+export type RulePackDetail = components["schemas"]["RulePackDetailResponse"];
 
 export type ComplianceViolation = {
   code: string;

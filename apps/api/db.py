@@ -77,6 +77,41 @@ class SpecRecord(Base):
     )
 
 
+class RulePackRecord(Base):
+    __tablename__ = "rule_packs"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    name: Mapped[str] = mapped_column(String(120))
+    name_key: Mapped[str] = mapped_column(String(240), unique=True, index=True)
+    description: Mapped[str] = mapped_column(Text, default="")
+    scope_label: Mapped[str] = mapped_column(String(240))
+    current_revision: Mapped[int] = mapped_column(Integer, default=1)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow
+    )
+
+
+class RulePackVersionRecord(Base):
+    __tablename__ = "rule_pack_versions"
+    __table_args__ = (UniqueConstraint("pack_id", "revision"),)
+
+    pack_id: Mapped[str] = mapped_column(
+        ForeignKey("rule_packs.id", ondelete="CASCADE"), primary_key=True
+    )
+    revision: Mapped[int] = mapped_column(Integer, primary_key=True)
+    request_id: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    schema_version: Mapped[str] = mapped_column(String(64))
+    json_payload: Mapped[str] = mapped_column(Text)
+    spec_sha256: Mapped[str] = mapped_column(String(64))
+    source_type: Mapped[str] = mapped_column(String(64))
+    approval_status: Mapped[str] = mapped_column(String(32), default="draft")
+    approval_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    change_note: Mapped[str] = mapped_column(Text)
+    restored_from_revision: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
 class JobRecord(Base):
     __tablename__ = "jobs"
 

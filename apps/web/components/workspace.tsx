@@ -4,6 +4,7 @@ import { ChangeEvent, DragEvent, useEffect, useMemo, useRef, useState } from "re
 import Link from "next/link";
 
 import { JobOutcomeSummary } from "@/components/job-outcome-summary";
+import { RulePackLibrary } from "@/components/rule-pack-library";
 import { api, ApiError, API_BASE, apiUrl } from "@/lib/api";
 import { errorLabels, jobStatusLabels, roleLabels, roles } from "@/lib/messages";
 import type {
@@ -15,6 +16,7 @@ import type {
   FormattingSpec,
   Job,
   ParagraphBlock,
+  RulePackArtifact,
   SemanticRole,
   TemplateRuleCandidate,
 } from "@/lib/types";
@@ -74,7 +76,9 @@ export function Workspace() {
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
   const [overrides, setOverrides] = useState<Record<string, SemanticRole>>({});
   const [instruction, setInstruction] = useState("");
-  const [ruleMode, setRuleMode] = useState<"default" | "natural-language" | "template">("default");
+  const [ruleMode, setRuleMode] = useState<
+    "default" | "natural-language" | "template" | "library"
+  >("default");
   const [applyPreset, setApplyPreset] = useState(true);
   const [autoLayout, setAutoLayout] = useState(true);
   const [specText, setSpecText] = useState("");
@@ -452,6 +456,17 @@ export function Workspace() {
       `已采用“${templateCandidate.source_filename}”生成的候选规则。` +
       "你仍可在高级规则中检查或修改，然后再体检或排版。",
     );
+  }
+
+  function applyRulePack(artifact: RulePackArtifact) {
+    setSpecText(JSON.stringify(artifact.spec, null, 2));
+    setAutoLayout(artifact.spec.auto_layout?.enabled ?? false);
+    setRuleMode("library");
+    setCompilationReport(null);
+    setMessage(
+      `已载入“${artifact.name}”修订 ${artifact.revision}；当前只更新规则，尚未修改源文档。`,
+    );
+    setError("");
   }
 
   function locateChange(locator: string) {
@@ -914,6 +929,15 @@ export function Workspace() {
               >
                 参考样例提取
               </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={ruleMode === "library"}
+                className={ruleMode === "library" ? "active" : ""}
+                onClick={() => setRuleMode("library")}
+              >
+                我的规则包
+              </button>
             </div>
             {ruleMode === "default" ? (
               <div className="default-mode-card" role="tabpanel">
@@ -1024,7 +1048,7 @@ export function Workspace() {
                 </button>
                 {!capabilities?.llm_configured && <p className="helper">兼容模型未配置；默认整理模式仍可直接使用。</p>}
               </div>
-            ) : (
+            ) : ruleMode === "template" ? (
               <div className="template-mode-card" role="tabpanel">
                 <strong>从已确认合格的 Word 样例提取</strong>
                 <p>
@@ -1097,6 +1121,12 @@ export function Workspace() {
                   </div>
                 )}
               </div>
+            ) : (
+              <RulePackLibrary
+                specText={specText}
+                disabled={Boolean(busy)}
+                onApply={applyRulePack}
+              />
             )}
             <label className="format-mode-option">
               <input
@@ -1144,7 +1174,13 @@ export function Workspace() {
           <div className="rule-section grow">
             <details className="advanced-rules">
               <summary>
-                高级规则 JSON · {ruleMode === "default" ? "整理方案" : ruleMode === "natural-language" ? "自然语言" : "参考样例"}
+                高级规则 JSON · {ruleMode === "default"
+                  ? "整理方案"
+                  : ruleMode === "natural-language"
+                    ? "自然语言"
+                    : ruleMode === "template"
+                      ? "参考样例"
+                      : "规则包"}
               </summary>
               <p className="helper">仅在需要精细控制时编辑；格式错误会在提交前给出明确提示。</p>
               <textarea

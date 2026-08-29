@@ -9,6 +9,7 @@ from docalign_core.domain.compliance import ComplianceReport
 from docalign_core.domain.document_ir import DocumentIR
 from docalign_core.domain.formatting_spec import FormattingSpec
 from docalign_core.domain.manifest import FormatManifest
+from docalign_core.domain.rule_pack import RulePackArtifact
 from docalign_core.domain.template_candidate import TemplateRuleCandidate
 
 
@@ -25,6 +26,7 @@ def main() -> None:
         "compliance-report.v1.schema.json": ComplianceReport,
         "format-manifest.v1.schema.json": FormatManifest,
         "template-rule-candidate.v1.schema.json": TemplateRuleCandidate,
+        "rule-pack.v1.schema.json": RulePackArtifact,
     }
     for filename, model in models.items():
         target = output / filename

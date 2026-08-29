@@ -38,9 +38,8 @@ DOCALIGN_LLM_JSON_SCHEMA_MODE=auto`}</pre>
 
       <section className="settings-card prose-card">
         <h2>数据保留</h2>
-        <p>上传文件、分析结果、规则、任务和输出保存在本机 <code>DOCALIGN_DATA_DIR</code>。删除工作区文档时，关联数据会一并删除。</p>
+        <p>上传文件、分析结果、临时规则、独立规则包、任务和输出保存在本机 <code>DOCALIGN_DATA_DIR</code>。删除工作区文档时会删除该文档的关联数据；“我的规则包”用于跨文档复用，会独立保留。</p>
       </section>
     </main>
   );
 }
-

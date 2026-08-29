@@ -55,6 +55,42 @@ test("extracts candidate rules from a reference Word without replacing the works
   await expect(editor).toHaveValue(/"type": "template"/);
 });
 
+test("saves reusable rule revisions and restores history without duplicate writes", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("radio", { name: /常规文档/ })).toBeVisible({ timeout: 10_000 });
+  await page.getByRole("tab", { name: "我的规则包" }).click();
+
+  const saveDetails = page.locator(".rule-pack-save");
+  if (!(await saveDetails.getAttribute("open"))) await saveDetails.locator("summary").click();
+  const uniqueName = `端到端月报规则-${Date.now()}`;
+  await page.getByLabel("规则包名称").fill(uniqueName);
+  await page.getByLabel("具体适用范围").fill("端到端测试内部月报");
+  await page.getByLabel("本次变更说明").fill("创建端到端初始修订");
+  await page.getByRole("button", { name: "另存为新规则包" }).click();
+  await expect(page.getByText(`已保存“${uniqueName}”修订 1。`)).toBeVisible();
+  await expect(page.locator(".rule-pack-history").getByText(uniqueName)).toBeVisible();
+
+  if (!(await saveDetails.getAttribute("open"))) await saveDetails.locator("summary").click();
+  await page.getByLabel("本次变更说明").fill("验证第二个不可变修订");
+  await page.getByRole("button", { name: "保存到所选包的新修订" }).click();
+  await expect(page.getByText(`已创建“${uniqueName}”修订 2。`)).toBeVisible();
+
+  await page.getByLabel("修订版本").selectOption("1");
+  await page.getByRole("button", { name: "载入所选修订" }).click();
+  await expect(page.getByText(`已载入“${uniqueName}”修订 1；尚未修改源文档。`)).toBeVisible();
+  const exportUrl = await page.getByRole("link", { name: "导出 JSON" }).getAttribute("href");
+  expect(exportUrl).toBeTruthy();
+  const exported = await page.request.get(exportUrl!);
+  expect(exported.ok()).toBeTruthy();
+  expect((await exported.json()).schema_version).toBe("rule-pack.v1");
+
+  page.once("dialog", (dialog) => dialog.accept());
+  await page.getByRole("button", { name: "恢复为新修订" }).click();
+  await expect(page.getByText(/已从修订 1 恢复为修订 3/)).toBeVisible();
+  await expect(page.locator(".rule-pack-version-note").getByText("草稿", { exact: true }))
+    .toBeVisible();
+});
+
 test("completes the local structured formatting workflow and restores it", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "先理解文档，再智能排版" })).toBeVisible();

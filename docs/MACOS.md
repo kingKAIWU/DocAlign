@@ -13,8 +13,10 @@ cd /path/to/DocAlign
 cp .env.example .env
 uv sync --frozen
 pnpm install --frozen-lockfile
-uv run alembic upgrade head
 ```
+
+API 启动时会对当前 `DOCALIGN_DATABASE_URL` 自动执行向后兼容的数据库迁移。管理员仍可在备份后使用
+`uv run alembic upgrade head` 提前执行升级，但普通本地启动不再依赖手工迁移步骤。
 
 如需自然语言规则编译，在 `.env` 设置兼容端点、密钥和模型。不要把真实密钥提交到仓库。
 
@@ -37,6 +39,8 @@ pnpm dev
 ## 恢复
 
 - 服务启动时会把上次未完成任务标记为 `failed / JOB_INTERRUPTED`，可从工作台重新提交。
+- 服务会先完成数据库迁移再接受请求，避免版本更新后把缺失字段误报为网络断连。
 - 如果端口占用，先停止旧的本地进程，不要改成公共网络地址。
 - 如果 schema 漂移，运行 `make schemas` 后重新执行质量门。
-- 本地数据默认保留；在工作台使用“删除本地文档”可级联清理关联产物。
+- 本地数据默认保留；在工作台使用“删除本地文档”可级联清理关联产物。“我的规则包”独立保留，
+  可以逐修订导出备份。

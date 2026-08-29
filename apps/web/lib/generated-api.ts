@@ -312,6 +312,109 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/rule-packs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Rule Packs */
+        get: operations["list_rule_packs_api_v1_rule_packs_get"];
+        put?: never;
+        /** Create Rule Pack */
+        post: operations["create_rule_pack_api_v1_rule_packs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/rule-packs/{pack_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Rule Pack */
+        get: operations["get_rule_pack_api_v1_rule_packs__pack_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/rule-packs/{pack_id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Rule Pack Version */
+        post: operations["create_rule_pack_version_api_v1_rule_packs__pack_id__versions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/rule-packs/{pack_id}/versions/{revision}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Rule Pack Version */
+        get: operations["get_rule_pack_version_api_v1_rule_packs__pack_id__versions__revision__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/rule-packs/{pack_id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Restore Rule Pack Version */
+        post: operations["restore_rule_pack_version_api_v1_rule_packs__pack_id__restore_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/rule-packs/{pack_id}/versions/{revision}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export Rule Pack Version */
+        get: operations["export_rule_pack_version_api_v1_rule_packs__pack_id__versions__revision__export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/jobs": {
         parameters: {
             query?: never;
@@ -974,10 +1077,138 @@ export interface components {
             overrides?: components["schemas"]["RoleOverride"][];
         };
         /**
+         * RulePackApprovalStatus
+         * @enum {string}
+         */
+        RulePackApprovalStatus: "draft" | "locally_approved";
+        /**
+         * RulePackArtifact
+         * @description Portable, integrity-checked snapshot of one immutable rule-pack revision.
+         */
+        RulePackArtifact: {
+            /**
+             * Schema Version
+             * @default rule-pack.v1
+             * @constant
+             */
+            schema_version: "rule-pack.v1";
+            /** Pack Id */
+            pack_id: string;
+            /** Request Id */
+            request_id: string;
+            /** Name */
+            name: string;
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /** Scope Label */
+            scope_label: string;
+            /** Revision */
+            revision: number;
+            /** @default draft */
+            approval_status: components["schemas"]["RulePackApprovalStatus"];
+            /** Approval Note */
+            approval_note?: string | null;
+            /** Change Note */
+            change_note: string;
+            /** Restored From Revision */
+            restored_from_revision?: number | null;
+            /** Spec Sha256 */
+            spec_sha256: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            spec: components["schemas"]["FormattingSpec"];
+        };
+        /** RulePackCatalogItem */
+        RulePackCatalogItem: {
+            /** Pack Id */
+            pack_id: string;
+            /** Name */
+            name: string;
+            /** Description */
+            description: string;
+            /** Scope Label */
+            scope_label: string;
+            /** Current Revision */
+            current_revision: number;
+            current_approval_status: components["schemas"]["RulePackApprovalStatus"];
+            /** Current Spec Sha256 */
+            current_spec_sha256: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** RulePackCatalogResponse */
+        RulePackCatalogResponse: {
+            /** Rule Packs */
+            rule_packs: components["schemas"]["RulePackCatalogItem"][];
+        };
+        /**
          * RulePackClaimLevel
          * @enum {string}
          */
         RulePackClaimLevel: "generic" | "reference" | "verified";
+        /** RulePackCreateRequest */
+        RulePackCreateRequest: {
+            /** Request Id */
+            request_id: string;
+            /** Name */
+            name: string;
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /** Scope Label */
+            scope_label: string;
+            spec: components["schemas"]["FormattingSpec"];
+            /**
+             * Change Note
+             * @default 创建初始修订
+             */
+            change_note: string;
+            /** @default draft */
+            approval_status: components["schemas"]["RulePackApprovalStatus"];
+            /** Approval Note */
+            approval_note?: string | null;
+        };
+        /** RulePackDetailResponse */
+        RulePackDetailResponse: {
+            /** Pack Id */
+            pack_id: string;
+            /** Name */
+            name: string;
+            /** Description */
+            description: string;
+            /** Scope Label */
+            scope_label: string;
+            /** Current Revision */
+            current_revision: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Versions */
+            versions: components["schemas"]["RulePackVersionSummary"][];
+        };
         /** RulePackMetadata */
         RulePackMetadata: {
             /** Pack Version */
@@ -1007,6 +1238,51 @@ export interface components {
             url: string;
             /** Version */
             version?: string | null;
+        };
+        /** RulePackRestoreRequest */
+        RulePackRestoreRequest: {
+            /** Request Id */
+            request_id: string;
+            /** Revision */
+            revision: number;
+            /**
+             * Change Note
+             * @default 恢复历史修订
+             */
+            change_note: string;
+        };
+        /** RulePackVersionCreateRequest */
+        RulePackVersionCreateRequest: {
+            /** Request Id */
+            request_id: string;
+            spec: components["schemas"]["FormattingSpec"];
+            /** Change Note */
+            change_note: string;
+            /** @default draft */
+            approval_status: components["schemas"]["RulePackApprovalStatus"];
+            /** Approval Note */
+            approval_note?: string | null;
+        };
+        /** RulePackVersionSummary */
+        RulePackVersionSummary: {
+            /** Revision */
+            revision: number;
+            approval_status: components["schemas"]["RulePackApprovalStatus"];
+            /** Approval Note */
+            approval_note: string | null;
+            /** Change Note */
+            change_note: string;
+            /** Restored From Revision */
+            restored_from_revision?: number | null;
+            /** Spec Sha256 */
+            spec_sha256: string;
+            /** Source Type */
+            source_type: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
         };
         /**
          * SemanticRole
@@ -1843,6 +2119,224 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_rule_packs_api_v1_rule_packs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RulePackCatalogResponse"];
+                };
+            };
+        };
+    };
+    create_rule_pack_api_v1_rule_packs_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RulePackCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RulePackArtifact"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_rule_pack_api_v1_rule_packs__pack_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pack_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RulePackDetailResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_rule_pack_version_api_v1_rule_packs__pack_id__versions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pack_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RulePackVersionCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RulePackArtifact"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_rule_pack_version_api_v1_rule_packs__pack_id__versions__revision__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pack_id: string;
+                revision: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RulePackArtifact"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    restore_rule_pack_version_api_v1_rule_packs__pack_id__restore_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pack_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RulePackRestoreRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RulePackArtifact"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_rule_pack_version_api_v1_rule_packs__pack_id__versions__revision__export_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pack_id: string;
+                revision: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RulePackArtifact"];
                 };
             };
             /** @description Validation Error */

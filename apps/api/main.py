@@ -14,6 +14,7 @@ from docalign_core.domain.formatting_spec import (
     default_cleanup_spec,
 )
 from docalign_core.domain.manifest import FormatManifest
+from docalign_core.domain.rule_pack import RulePackArtifact
 from docalign_core.domain.template_candidate import TemplateRuleCandidate
 from fastapi import FastAPI, Request, UploadFile
 from fastapi.encoders import jsonable_encoder
@@ -23,6 +24,7 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 
 from apps.api.db import Database
 from apps.api.errors import ApiError
+from apps.api.migrations import upgrade_database
 from apps.api.runner import JobRunner
 from apps.api.schemas import (
     AnalyzeRequest,
@@ -32,6 +34,11 @@ from apps.api.schemas import (
     JobCreateRequest,
     JobResponse,
     RoleOverrideRequest,
+    RulePackCatalogResponse,
+    RulePackCreateRequest,
+    RulePackDetailResponse,
+    RulePackRestoreRequest,
+    RulePackVersionCreateRequest,
     StructuredSpecRequest,
     TextDocumentRequest,
     ValidateSpecRequest,
@@ -50,6 +57,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+        upgrade_database(database)
         database.create_all()
         database.mark_interrupted_jobs()
         await runner.start()
@@ -111,6 +119,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "audit_only": True,
             "format_manifest": True,
             "template_rule_candidate": True,
+            "rule_pack_library": True,
             "max_upload_mb": settings.max_upload_mb,
             "local_only": True,
         }
@@ -219,6 +228,61 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def update_spec(spec_id: str, request: StructuredSpecRequest) -> dict[str, object]:
         spec = service.update_spec(spec_id, request.spec)
         return {"spec_id": spec_id, "spec": spec.model_dump(mode="json")}
+
+    @application.get("/api/v1/rule-packs")
+    def list_rule_packs() -> RulePackCatalogResponse:
+        return service.list_rule_packs()
+
+    @application.post("/api/v1/rule-packs", status_code=201)
+    def create_rule_pack(request: RulePackCreateRequest) -> RulePackArtifact:
+        return service.create_rule_pack(
+            request_id=request.request_id,
+            name=request.name,
+            description=request.description,
+            scope_label=request.scope_label,
+            spec=request.spec,
+            change_note=request.change_note,
+            approval_status=request.approval_status,
+            approval_note=request.approval_note,
+        )
+
+    @application.get("/api/v1/rule-packs/{pack_id}")
+    def get_rule_pack(pack_id: str) -> RulePackDetailResponse:
+        return service.get_rule_pack_detail(pack_id)
+
+    @application.post("/api/v1/rule-packs/{pack_id}/versions", status_code=201)
+    def create_rule_pack_version(
+        pack_id: str, request: RulePackVersionCreateRequest
+    ) -> RulePackArtifact:
+        return service.create_rule_pack_version(
+            pack_id,
+            request_id=request.request_id,
+            spec=request.spec,
+            change_note=request.change_note,
+            approval_status=request.approval_status,
+            approval_note=request.approval_note,
+        )
+
+    @application.get("/api/v1/rule-packs/{pack_id}/versions/{revision}")
+    def get_rule_pack_version(pack_id: str, revision: int) -> RulePackArtifact:
+        return service.get_rule_pack_artifact(pack_id, revision)
+
+    @application.post("/api/v1/rule-packs/{pack_id}/restore", status_code=201)
+    def restore_rule_pack_version(
+        pack_id: str, request: RulePackRestoreRequest
+    ) -> RulePackArtifact:
+        return service.restore_rule_pack_revision(
+            pack_id, request.revision, request.change_note, request.request_id
+        )
+
+    @application.get("/api/v1/rule-packs/{pack_id}/versions/{revision}/export")
+    def export_rule_pack_version(
+        pack_id: str, revision: int, response: Response
+    ) -> RulePackArtifact:
+        response.headers["Content-Disposition"] = (
+            f'attachment; filename="{pack_id}-r{revision}.rule-pack.json"'
+        )
+        return service.get_rule_pack_artifact(pack_id, revision)
 
     @application.post("/api/v1/jobs", status_code=202)
     async def create_job(request: JobCreateRequest) -> JobResponse:
