@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 import tempfile
 import unicodedata
@@ -46,8 +47,10 @@ from docalign_core.domain.manifest import FormatManifest
 from docalign_core.domain.rule_pack import (
     RulePackApprovalStatus,
     RulePackArtifact,
+    RulePackImportSource,
     canonical_formatting_spec_json,
     formatting_spec_sha256,
+    rule_pack_artifact_sha256,
 )
 from docalign_core.domain.template_candidate import TemplateRuleCandidate
 from docalign_core.llm.base import (
@@ -64,6 +67,7 @@ from fastapi import UploadFile
 from pydantic import ValidationError
 from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
 from apps.api.change_summary import build_job_result_summary
 from apps.api.db import (
@@ -84,6 +88,8 @@ from apps.api.schemas import (
     RulePackCatalogItem,
     RulePackCatalogResponse,
     RulePackDetailResponse,
+    RulePackImportPreview,
+    RulePackImportResult,
     RulePackVersionSummary,
 )
 from apps.api.storage import LocalStorage
@@ -419,6 +425,269 @@ class ApiService:
                 )
         return RulePackCatalogResponse(rule_packs=items)
 
+    async def preview_rule_pack_import(self, upload: UploadFile) -> RulePackImportPreview:
+        artifact = await self._read_rule_pack_import(upload)
+        artifact_sha256 = rule_pack_artifact_sha256(artifact)
+        source = self._rule_pack_import_source(artifact, artifact_sha256)
+        existing = self._find_existing_portable_artifact(artifact, artifact_sha256)
+        suggested_name, name_conflict = self._suggest_rule_pack_import_name(artifact.name)
+        if existing is not None:
+            suggested_name = existing.name
+        return RulePackImportPreview(
+            source=source,
+            suggested_name=suggested_name,
+            source_name_conflict=name_conflict,
+            already_present=existing is not None,
+            existing_pack_id=existing.pack_id if existing else None,
+            existing_revision=existing.revision if existing else None,
+            warnings=[
+                "rule-pack.v1 does not contain a verifiable publisher signature",
+                "source approval is recorded as provenance but imported approval is reset to draft",
+                "the artifact contains one immutable revision, not the source "
+                "package's full history",
+            ],
+        )
+
+    async def import_rule_pack(
+        self,
+        upload: UploadFile,
+        *,
+        request_id: str,
+        name: str,
+    ) -> RulePackImportResult:
+        artifact = await self._read_rule_pack_import(upload)
+        artifact_sha256 = rule_pack_artifact_sha256(artifact)
+        source = self._rule_pack_import_source(artifact, artifact_sha256)
+        normalized_name = " ".join(name.split())
+        if not normalized_name:
+            raise ApiError(
+                422,
+                "RULE_PACK_IMPORT_NAME_REQUIRED",
+                "The imported rule pack requires a visible local name.",
+            )
+        if len(normalized_name) > 120:
+            raise ApiError(
+                422,
+                "RULE_PACK_IMPORT_NAME_INVALID",
+                "The imported rule-pack name cannot exceed 120 characters.",
+            )
+
+        retried = self._existing_rule_pack_import_request(
+            request_id=request_id,
+            artifact_sha256=artifact_sha256,
+            name=normalized_name,
+        )
+        if retried is not None:
+            return RulePackImportResult(artifact=retried, already_present=False)
+
+        existing = self._find_existing_portable_artifact(artifact, artifact_sha256)
+        if existing is not None:
+            return RulePackImportResult(artifact=existing, already_present=True)
+
+        pack_id = f"pack_{uuid.uuid4().hex}"
+        created_at = utcnow()
+        pack = RulePackRecord(
+            id=pack_id,
+            name=normalized_name,
+            name_key=_rule_pack_name_key(normalized_name),
+            description=artifact.description.strip(),
+            scope_label=" ".join(artifact.scope_label.split()),
+            current_revision=1,
+            created_at=created_at,
+            updated_at=created_at,
+        )
+        source_state = (
+            "本地已确认" if artifact.approval_status == RulePackApprovalStatus.LOCALLY_APPROVED
+            else "草稿"
+        )
+        version = self._new_rule_pack_version_record(
+            pack_id=pack_id,
+            revision=1,
+            request_id=request_id,
+            spec=artifact.spec,
+            change_note=(
+                f"从跨机规则包 {artifact.pack_id} 修订 {artifact.revision} 导入；"
+                f"来源状态为{source_state}，需在本机重新核对"
+            ),
+            approval_status=RulePackApprovalStatus.DRAFT,
+            approval_note=None,
+            restored_from_revision=None,
+            created_at=created_at,
+            import_source=source,
+        )
+        try:
+            with self.database.session_factory.begin() as session:
+                session.add(pack)
+                session.add(version)
+        except IntegrityError as exc:
+            retried = self._existing_rule_pack_import_request(
+                request_id=request_id,
+                artifact_sha256=artifact_sha256,
+                name=normalized_name,
+            )
+            if retried is not None:
+                return RulePackImportResult(artifact=retried, already_present=False)
+            existing = self._find_existing_portable_artifact(artifact, artifact_sha256)
+            if existing is not None:
+                return RulePackImportResult(artifact=existing, already_present=True)
+            raise ApiError(
+                409,
+                "RULE_PACK_NAME_CONFLICT",
+                "A rule pack with the same name already exists.",
+                {"name": normalized_name},
+            ) from exc
+        return RulePackImportResult(
+            artifact=self.get_rule_pack_artifact(pack_id, 1),
+            already_present=False,
+        )
+
+    async def _read_rule_pack_import(self, upload: UploadFile) -> RulePackArtifact:
+        filename = _display_filename(upload.filename or "rule-pack.json")
+        if Path(filename).suffix.casefold() != ".json":
+            raise ApiError(
+                415,
+                "RULE_PACK_IMPORT_UNSUPPORTED_FILE",
+                "Only portable .json rule-pack artifacts can be imported.",
+            )
+        max_bytes = self.settings.max_rule_pack_import_kb * 1024
+        payload = await upload.read(max_bytes + 1)
+        if len(payload) > max_bytes:
+            raise ApiError(
+                413,
+                "RULE_PACK_IMPORT_TOO_LARGE",
+                "The portable rule-pack artifact exceeds the configured limit.",
+                {"max_kb": self.settings.max_rule_pack_import_kb},
+            )
+        if not payload:
+            raise ApiError(
+                422,
+                "RULE_PACK_IMPORT_INVALID",
+                "The portable rule-pack artifact is empty.",
+            )
+        try:
+            return RulePackArtifact.model_validate_json(payload)
+        except ValidationError as exc:
+            safe_errors = [
+                {
+                    "location": ".".join(str(item) for item in error["loc"]),
+                    "message": error["msg"],
+                    "type": error["type"],
+                }
+                for error in exc.errors(include_input=False, include_url=False)[:20]
+            ]
+            integrity_failed = any(
+                "sha256 does not match" in error["message"] for error in safe_errors
+            )
+            raise ApiError(
+                422,
+                (
+                    "RULE_PACK_IMPORT_INTEGRITY_FAILED"
+                    if integrity_failed
+                    else "RULE_PACK_IMPORT_INVALID"
+                ),
+                (
+                    "The portable rule-pack artifact failed its integrity check."
+                    if integrity_failed
+                    else "The portable rule-pack artifact does not match rule-pack.v1."
+                ),
+                {"errors": safe_errors},
+            ) from exc
+
+    @staticmethod
+    def _rule_pack_import_source(
+        artifact: RulePackArtifact, artifact_sha256: str
+    ) -> RulePackImportSource:
+        return RulePackImportSource(
+            artifact_sha256=artifact_sha256,
+            pack_id=artifact.pack_id,
+            request_id=artifact.request_id,
+            name=artifact.name,
+            scope_label=artifact.scope_label,
+            revision=artifact.revision,
+            approval_status=artifact.approval_status,
+            approval_note=artifact.approval_note,
+            change_note=artifact.change_note,
+            spec_sha256=artifact.spec_sha256,
+            created_at=artifact.created_at,
+        )
+
+    def _find_existing_portable_artifact(
+        self, artifact: RulePackArtifact, artifact_sha256: str
+    ) -> RulePackArtifact | None:
+        imported_pair: tuple[str, int] | None = None
+        direct_pair: tuple[str, int] | None = None
+        with self.database.session_factory() as session:
+            imported = session.scalar(
+                select(RulePackVersionRecord).where(
+                    RulePackVersionRecord.import_source_artifact_sha256 == artifact_sha256
+                )
+            )
+            if imported is not None:
+                imported_pair = (imported.pack_id, imported.revision)
+            direct = session.get(
+                RulePackVersionRecord,
+                (artifact.pack_id, artifact.revision),
+            )
+            if direct is not None:
+                direct_pair = (direct.pack_id, direct.revision)
+        if imported_pair is not None:
+            return self.get_rule_pack_artifact(*imported_pair)
+        if direct_pair is not None:
+            local = self.get_rule_pack_artifact(*direct_pair)
+            if rule_pack_artifact_sha256(local) == artifact_sha256:
+                return local
+        return None
+
+    def _existing_rule_pack_import_request(
+        self, *, request_id: str, artifact_sha256: str, name: str
+    ) -> RulePackArtifact | None:
+        with self.database.session_factory() as session:
+            version = session.scalar(
+                select(RulePackVersionRecord).where(RulePackVersionRecord.request_id == request_id)
+            )
+            if version is None:
+                return None
+            pack_id, revision = version.pack_id, version.revision
+        existing = self.get_rule_pack_artifact(pack_id, revision)
+        if (
+            existing.name != name
+            or existing.import_source is None
+            or existing.import_source.artifact_sha256 != artifact_sha256
+        ):
+            raise ApiError(
+                409,
+                "IDEMPOTENCY_KEY_REUSED",
+                "The request identifier was already used for different rule-pack content.",
+                {"request_id": request_id},
+            )
+        return existing
+
+    def _suggest_rule_pack_import_name(self, source_name: str) -> tuple[str, bool]:
+        normalized = " ".join(source_name.split())
+        with self.database.session_factory() as session:
+            if not self._rule_pack_name_exists(session, normalized):
+                return normalized, False
+            for index in range(1, 10_000):
+                suffix = "（导入）" if index == 1 else f"（导入 {index}）"
+                candidate = f"{normalized[: 120 - len(suffix)]}{suffix}"
+                if not self._rule_pack_name_exists(session, candidate):
+                    return candidate, True
+        raise ApiError(
+            409,
+            "RULE_PACK_NAME_CONFLICT",
+            "No available local name could be suggested for the imported rule pack.",
+        )
+
+    @staticmethod
+    def _rule_pack_name_exists(session: Session, name: str) -> bool:
+        return bool(
+            session.scalar(
+                select(RulePackRecord.id).where(
+                    RulePackRecord.name_key == _rule_pack_name_key(name)
+                )
+            )
+        )
+
     def create_rule_pack(
         self,
         *,
@@ -549,6 +818,7 @@ class ApiService:
                     "The stored rule-pack revision failed its integrity check.",
                     {"pack_id": pack_id, "revision": revision},
                 )
+            import_source = self._stored_rule_pack_import_source(version)
             return RulePackArtifact(
                 pack_id=pack.id,
                 request_id=version.request_id,
@@ -563,6 +833,7 @@ class ApiService:
                 spec_sha256=version.spec_sha256,
                 created_at=version.created_at,
                 spec=spec,
+                import_source=import_source,
             )
 
     def create_rule_pack_version(
@@ -656,6 +927,7 @@ class ApiService:
         approval_note: str | None,
         restored_from_revision: int | None,
         created_at: datetime,
+        import_source: RulePackImportSource | None = None,
     ) -> RulePackVersionRecord:
         return RulePackVersionRecord(
             pack_id=pack_id,
@@ -669,6 +941,19 @@ class ApiService:
             approval_note=approval_note,
             change_note=change_note,
             restored_from_revision=restored_from_revision,
+            import_source_json=(
+                json.dumps(
+                    import_source.model_dump(mode="json"),
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                )
+                if import_source
+                else None
+            ),
+            import_source_artifact_sha256=(
+                import_source.artifact_sha256 if import_source else None
+            ),
             created_at=created_at,
         )
 
@@ -685,6 +970,7 @@ class ApiService:
         name: str | None = None,
         description: str | None = None,
         scope_label: str | None = None,
+        import_source: RulePackImportSource | None = None,
     ) -> RulePackArtifact | None:
         with self.database.session_factory() as session:
             version = session.scalar(
@@ -702,6 +988,7 @@ class ApiService:
             and artifact.approval_status == approval_status
             and artifact.approval_note == approval_note
             and artifact.restored_from_revision == restored_from_revision
+            and artifact.import_source == import_source
             and (name is None or artifact.name == name)
             and (description is None or artifact.description == description)
             and (scope_label is None or artifact.scope_label == scope_label)
@@ -728,7 +1015,45 @@ class ApiService:
             spec_sha256=version.spec_sha256,
             source_type=version.source_type,
             created_at=version.created_at,
+            import_source=ApiService._stored_rule_pack_import_source(version),
         )
+
+    @staticmethod
+    def _stored_rule_pack_import_source(
+        version: RulePackVersionRecord,
+    ) -> RulePackImportSource | None:
+        if (
+            version.import_source_json is None
+            and version.import_source_artifact_sha256 is None
+        ):
+            return None
+        if (
+            version.import_source_json is None
+            or version.import_source_artifact_sha256 is None
+        ):
+            raise ApiError(
+                500,
+                "RULE_PACK_INTEGRITY_FAILED",
+                "The stored rule-pack import provenance is incomplete.",
+                {"pack_id": version.pack_id, "revision": version.revision},
+            )
+        try:
+            source = RulePackImportSource.model_validate_json(version.import_source_json)
+        except ValidationError as exc:
+            raise ApiError(
+                500,
+                "RULE_PACK_INTEGRITY_FAILED",
+                "The stored rule-pack import provenance is invalid.",
+                {"pack_id": version.pack_id, "revision": version.revision},
+            ) from exc
+        if version.import_source_artifact_sha256 != source.artifact_sha256:
+            raise ApiError(
+                500,
+                "RULE_PACK_INTEGRITY_FAILED",
+                "The stored rule-pack import provenance failed its integrity check.",
+                {"pack_id": version.pack_id, "revision": version.revision},
+            )
+        return source
 
     async def compile_spec(
         self,

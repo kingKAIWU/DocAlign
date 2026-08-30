@@ -398,6 +398,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/rule-packs/imports/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Preview Rule Pack Import */
+        post: operations["preview_rule_pack_import_api_v1_rule_packs_imports_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/rule-packs/imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Import Rule Pack */
+        post: operations["import_rule_pack_api_v1_rule_packs_imports_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/rule-packs/{pack_id}": {
         parameters: {
             query?: never;
@@ -865,6 +899,20 @@ export interface components {
         };
         /** Body_create_template_candidate_api_v1_templates_candidate_post */
         Body_create_template_candidate_api_v1_templates_candidate_post: {
+            /** File */
+            file: string;
+        };
+        /** Body_import_rule_pack_api_v1_rule_packs_imports_post */
+        Body_import_rule_pack_api_v1_rule_packs_imports_post: {
+            /** Request Id */
+            request_id: string;
+            /** Name */
+            name: string;
+            /** File */
+            file: string;
+        };
+        /** Body_preview_rule_pack_import_api_v1_rule_packs_imports_preview_post */
+        Body_preview_rule_pack_import_api_v1_rule_packs_imports_preview_post: {
             /** File */
             file: string;
         };
@@ -1503,6 +1551,7 @@ export interface components {
              */
             created_at: string;
             spec: components["schemas"]["FormattingSpec"];
+            import_source?: components["schemas"]["RulePackImportSource"] | null;
         };
         /** RulePackCatalogItem */
         RulePackCatalogItem: {
@@ -1589,6 +1638,76 @@ export interface components {
             /** Versions */
             versions: components["schemas"]["RulePackVersionSummary"][];
         };
+        /** RulePackImportPreview */
+        RulePackImportPreview: {
+            /**
+             * Integrity Verified
+             * @default true
+             * @constant
+             */
+            integrity_verified: true;
+            /**
+             * Signature Status
+             * @default unsigned
+             * @constant
+             */
+            signature_status: "unsigned";
+            source: components["schemas"]["RulePackImportSource"];
+            /** Suggested Name */
+            suggested_name: string;
+            /** Source Name Conflict */
+            source_name_conflict: boolean;
+            /** Already Present */
+            already_present: boolean;
+            /** Existing Pack Id */
+            existing_pack_id?: string | null;
+            /** Existing Revision */
+            existing_revision?: number | null;
+            /**
+             * Target Approval Status
+             * @default draft
+             * @constant
+             */
+            target_approval_status: "draft";
+            /** Warnings */
+            warnings: string[];
+        };
+        /** RulePackImportResult */
+        RulePackImportResult: {
+            artifact: components["schemas"]["RulePackArtifact"];
+            /** Already Present */
+            already_present: boolean;
+        };
+        /**
+         * RulePackImportSource
+         * @description Normalized provenance retained when a portable artifact is imported.
+         */
+        RulePackImportSource: {
+            /** Artifact Sha256 */
+            artifact_sha256: string;
+            /** Pack Id */
+            pack_id: string;
+            /** Request Id */
+            request_id: string;
+            /** Name */
+            name: string;
+            /** Scope Label */
+            scope_label: string;
+            /** Revision */
+            revision: number;
+            approval_status: components["schemas"]["RulePackApprovalStatus"];
+            /** Approval Note */
+            approval_note?: string | null;
+            /** Change Note */
+            change_note: string;
+            /** Spec Sha256 */
+            spec_sha256: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
         /** RulePackMetadata */
         RulePackMetadata: {
             /** Pack Version */
@@ -1663,6 +1782,7 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+            import_source?: components["schemas"]["RulePackImportSource"] | null;
         };
         /**
          * SemanticRole
@@ -2781,6 +2901,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RulePackArtifact"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_rule_pack_import_api_v1_rule_packs_imports_preview_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_preview_rule_pack_import_api_v1_rule_packs_imports_preview_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RulePackImportPreview"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_rule_pack_api_v1_rule_packs_imports_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_import_rule_pack_api_v1_rule_packs_imports_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RulePackImportResult"];
                 };
             };
             /** @description Validation Error */

@@ -60,8 +60,15 @@ def test_rule_pack_migration_upgrades_an_existing_initial_database(tmp_path: Pat
     }.issubset(inspector.get_table_names())
     version_columns = {item["name"] for item in inspector.get_columns("rule_pack_versions")}
     assert "request_id" in version_columns
+    assert "import_source_json" in version_columns
+    assert "import_source_artifact_sha256" in version_columns
     indexes = inspector.get_indexes("rule_pack_versions")
     assert any(item["name"] == "ix_rule_pack_versions_request_id" for item in indexes)
+    assert any(
+        item["name"] == "ix_rule_pack_versions_import_source_artifact_sha256"
+        and item["unique"]
+        for item in indexes
+    )
     assert "cancel_requested" in {
         item["name"] for item in inspector.get_columns("jobs")
     }
@@ -70,7 +77,7 @@ def test_rule_pack_migration_upgrades_an_existing_initial_database(tmp_path: Pat
     }
     with database.engine.connect() as connection:
         assert connection.scalar(text("SELECT version_num FROM alembic_version")) == (
-            "0005_batch_lifecycle"
+            "0006_rule_pack_import_provenance"
         )
 
 

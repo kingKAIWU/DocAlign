@@ -78,10 +78,12 @@ export type Capabilities = {
   format_manifest: boolean;
   template_rule_candidate: boolean;
   rule_pack_library: boolean;
+  rule_pack_import: boolean;
   batch_processing: boolean;
   max_batch_files: number;
   max_batch_total_mb: number;
   max_upload_mb: number;
+  max_rule_pack_import_kb: number;
   local_only: boolean;
   desktop_app: boolean;
 };
@@ -103,6 +105,10 @@ export type RulePackArtifact = components["schemas"]["RulePackArtifact"];
 export type RulePackCatalogItem = components["schemas"]["RulePackCatalogItem"];
 
 export type RulePackDetail = components["schemas"]["RulePackDetailResponse"];
+
+export type RulePackImportPreview = components["schemas"]["RulePackImportPreview"];
+
+export type RulePackImportResult = components["schemas"]["RulePackImportResult"];
 
 export type BatchStatus = components["schemas"]["BatchStatus"];
 

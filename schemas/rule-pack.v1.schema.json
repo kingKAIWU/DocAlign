@@ -860,6 +860,91 @@
       "title": "RulePackApprovalStatus",
       "type": "string"
     },
+    "RulePackImportSource": {
+      "additionalProperties": false,
+      "description": "Normalized provenance retained when a portable artifact is imported.",
+      "properties": {
+        "artifact_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Artifact Sha256",
+          "type": "string"
+        },
+        "pack_id": {
+          "pattern": "^[A-Za-z0-9_-]{1,64}$",
+          "title": "Pack Id",
+          "type": "string"
+        },
+        "request_id": {
+          "pattern": "^[A-Za-z0-9_-]{8,64}$",
+          "title": "Request Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "scope_label": {
+          "maxLength": 240,
+          "minLength": 1,
+          "title": "Scope Label",
+          "type": "string"
+        },
+        "revision": {
+          "maximum": 2147483647,
+          "minimum": 1,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "approval_status": {
+          "$ref": "#/$defs/RulePackApprovalStatus"
+        },
+        "approval_note": {
+          "anyOf": [
+            {
+              "maxLength": 1000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Approval Note"
+        },
+        "change_note": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Change Note",
+          "type": "string"
+        },
+        "spec_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Spec Sha256",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "artifact_sha256",
+        "pack_id",
+        "request_id",
+        "name",
+        "scope_label",
+        "revision",
+        "approval_status",
+        "change_note",
+        "spec_sha256",
+        "created_at"
+      ],
+      "title": "RulePackImportSource",
+      "type": "object"
+    },
     "SemanticRole": {
       "enum": [
         "cover",
@@ -1180,6 +1265,7 @@
       "type": "string"
     },
     "pack_id": {
+      "pattern": "^[A-Za-z0-9_-]{1,64}$",
       "title": "Pack Id",
       "type": "string"
     },
@@ -1207,6 +1293,7 @@
       "type": "string"
     },
     "revision": {
+      "maximum": 2147483647,
       "minimum": 1,
       "title": "Revision",
       "type": "integer"
@@ -1259,6 +1346,17 @@
     },
     "spec": {
       "$ref": "#/$defs/FormattingSpec"
+    },
+    "import_source": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RulePackImportSource"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     }
   },
   "required": [

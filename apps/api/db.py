@@ -111,6 +111,10 @@ class RulePackVersionRecord(Base):
     approval_note: Mapped[str | None] = mapped_column(Text, nullable=True)
     change_note: Mapped[str] = mapped_column(Text)
     restored_from_revision: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    import_source_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    import_source_artifact_sha256: Mapped[str | None] = mapped_column(
+        String(64), nullable=True, unique=True, index=True
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 

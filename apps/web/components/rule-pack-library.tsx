@@ -9,6 +9,7 @@ import type {
   RulePackArtifact,
   RulePackCatalogItem,
   RulePackDetail,
+  RulePackImportPreview,
 } from "@/lib/types";
 
 type RulePackLibraryProps = {
@@ -25,6 +26,12 @@ const rulePackErrors: Record<string, string> = {
   RULE_PACK_VERSION_NOT_FOUND: "所选修订已不存在，请重新加载版本历史。",
   RULE_PACK_INTEGRITY_FAILED: "规则包完整性校验失败，已阻止载入；请保留数据并导出诊断信息。",
   RULE_PACK_VERSION_CONFLICT: "规则包刚刚发生变化，请重新加载后再保存。",
+  RULE_PACK_IMPORT_UNSUPPORTED_FILE: "请选择 DocAlign 导出的 .json 规则包文件。",
+  RULE_PACK_IMPORT_TOO_LARGE: "规则包文件超过本机配置的导入大小限制。",
+  RULE_PACK_IMPORT_INVALID: "文件不是有效的 rule-pack.v1 规则包，未写入本机。",
+  RULE_PACK_IMPORT_INTEGRITY_FAILED: "规则内容与内嵌摘要不一致，可能已损坏或被修改，已阻止导入。",
+  RULE_PACK_IMPORT_NAME_REQUIRED: "请填写导入后在本机显示的规则包名称。",
+  RULE_PACK_IMPORT_NAME_INVALID: "导入后的本机名称不能超过 120 个字符。",
   IDEMPOTENCY_KEY_REUSED: "同一保存请求对应了不同内容，已阻止写入；请重新操作。",
 };
 
@@ -51,6 +58,10 @@ export function RulePackLibrary({ specText, disabled, onApply }: RulePackLibrary
   const [changeNote, setChangeNote] = useState("创建初始修订");
   const [locallyApproved, setLocallyApproved] = useState(false);
   const [approvalNote, setApprovalNote] = useState("");
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [importPreview, setImportPreview] = useState<RulePackImportPreview | null>(null);
+  const [importName, setImportName] = useState("");
+  const [importInputKey, setImportInputKey] = useState(0);
   const [busy, setBusy] = useState<string | null>("catalog");
   const [notice, setNotice] = useState("");
   const [error, setError] = useState("");
@@ -280,11 +291,69 @@ export function RulePackLibrary({ specText, disabled, onApply }: RulePackLibrary
     }
   }
 
+  async function previewPortableRulePack() {
+    if (!importFile) {
+      setError("请先选择从 DocAlign 导出的规则包 JSON 文件。");
+      return;
+    }
+    setBusy("import-preview");
+    setNotice("");
+    setError("");
+    try {
+      const preview = await api.previewRulePackImport(importFile);
+      setImportPreview(preview);
+      setImportName(preview.suggested_name);
+      pendingWriteRef.current = null;
+      if (preview.already_present && preview.existing_pack_id) {
+        setReloadCount((value) => value + 1);
+        setSelectedPackId(preview.existing_pack_id);
+        setSelectedRevision(preview.existing_revision ?? null);
+        setNotice("该工件已存在于本机，未创建重复规则包；已定位到现有修订。");
+      }
+    } catch (caught) {
+      setImportPreview(null);
+      setError(readableRulePackError(caught));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function importPortableRulePack() {
+    if (!importFile || !importPreview || importPreview.already_present) return;
+    if (!importName.trim()) {
+      setError("请填写导入后在本机显示的规则包名称。");
+      return;
+    }
+    const key = ["import", importPreview.source.artifact_sha256, importName].join("\u0000");
+    setBusy("import");
+    setNotice("");
+    setError("");
+    try {
+      const result = await api.importRulePack(
+        importFile,
+        importName,
+        requestIdFor(key),
+      );
+      const message = result.already_present
+        ? `该工件此前已导入为“${result.artifact.name}”，未创建重复副本。`
+        : `已导入“${result.artifact.name}”修订 1；状态已重置为草稿，载入前请重新核对。`;
+      finishWrite(result.artifact, message);
+      setImportPreview(null);
+      setImportFile(null);
+      setImportName("");
+      setImportInputKey((value) => value + 1);
+    } catch (caught) {
+      handleWriteError(caught);
+    } finally {
+      setBusy(null);
+    }
+  }
+
   return (
     <div className="rule-pack-library" role="tabpanel">
       <div className="rule-pack-intro">
         <strong>可复用的本地规则包</strong>
-        <p>保存当前结构化规则，跨文档复用并保留不可变修订历史。规则包只保存在本机。</p>
+        <p>保存当前结构化规则，跨文档复用并保留不可变修订历史。默认只在本机保存，可明确导出或导入 JSON，不会自动同步。</p>
         <small>“本地已确认”仅表示你记录了人工核对，不代表机构认证或法规合规。</small>
       </div>
 
@@ -354,6 +423,12 @@ export function RulePackLibrary({ specText, disabled, onApply }: RulePackLibrary
               {selectedVersion.restored_from_revision && (
                 <small>由修订 {selectedVersion.restored_from_revision} 安全恢复</small>
               )}
+              {selectedVersion.import_source && (
+                <small>
+                  跨机导入自 {selectedVersion.import_source.name} · 修订 {selectedVersion.import_source.revision}
+                  ；来源发布者未经数字签名验证
+                </small>
+              )}
               {selectedVersion.approval_note && <small>核对记录：{selectedVersion.approval_note}</small>}
             </div>
           )}
@@ -384,6 +459,70 @@ export function RulePackLibrary({ specText, disabled, onApply }: RulePackLibrary
           </div>
         </div>
       )}
+
+      {catalogLoaded && <details className="rule-pack-import">
+        <summary>从另一台电脑导入规则包</summary>
+        <div className="rule-pack-import-fields">
+          <p>先检查 DocAlign 导出的 JSON，再确认写入。本机不会继承来源电脑上的“本地已确认”状态。</p>
+          <label htmlFor="rule-pack-import-file">规则包 JSON 文件</label>
+          <input
+            id="rule-pack-import-file"
+            key={importInputKey}
+            type="file"
+            accept=".json,application/json"
+            disabled={controlsDisabled}
+            onChange={(event) => {
+              setImportFile(event.target.files?.[0] ?? null);
+              setImportPreview(null);
+              setImportName("");
+              setNotice("");
+              setError("");
+              pendingWriteRef.current = null;
+            }}
+          />
+          <button
+            type="button"
+            className="button secondary"
+            disabled={controlsDisabled || !importFile}
+            onClick={previewPortableRulePack}
+          >
+            {busy === "import-preview" ? "检查中…" : "检查文件"}
+          </button>
+          {importPreview && <div className="rule-pack-import-preview" aria-label="规则包导入检查结果">
+            <div><span>来源规则</span><strong>{importPreview.source.name} · 修订 {importPreview.source.revision}</strong></div>
+            <div><span>适用范围</span><strong>{importPreview.source.scope_label}</strong></div>
+            <div><span>规则摘要</span><strong>{importPreview.source.spec_sha256.slice(0, 12)}…</strong></div>
+            <div><span>完整性</span><strong className="verified">结构与摘要通过</strong></div>
+            <div><span>发布者身份</span><strong className="unsigned">未验证数字签名</strong></div>
+            <div><span>导入后状态</span><strong>草稿 · 需要本机重新核对</strong></div>
+            {importPreview.source.approval_status === "locally_approved" && (
+              <p>来源电脑记录为“本地已确认”，但这不能证明机构发布身份，因此不会随导入继承。</p>
+            )}
+            {importPreview.already_present ? (
+              <p className="already-present">该完整工件已在本机，系统不会重复导入。</p>
+            ) : <>
+              <label htmlFor="rule-pack-import-name">导入后的本机名称</label>
+              <input
+                id="rule-pack-import-name"
+                value={importName}
+                maxLength={120}
+                onChange={(event) => setImportName(event.target.value)}
+              />
+              {importPreview.source_name_conflict && (
+                <small>本机已有同名规则，已建议一个不会覆盖现有数据的名称。</small>
+              )}
+              <button
+                type="button"
+                className="button primary"
+                disabled={controlsDisabled || !importName.trim()}
+                onClick={importPortableRulePack}
+              >
+                {busy === "import" ? "导入中…" : "确认导入为草稿"}
+              </button>
+            </>}
+          </div>}
+        </div>
+      </details>}
 
       {catalogLoaded && <details className="rule-pack-save" open={catalog.length === 0}>
         <summary>{detail ? "保存当前规则" : "创建第一个规则包"}</summary>

@@ -36,6 +36,8 @@ test("keeps advanced rules reachable in short desktop and mobile layouts", async
   await expect(page.getByText("高级规则 JSON · 整理方案")).toBeVisible();
   expect(await page.locator(".rules-panel").evaluate((element) => getComputedStyle(element).overflowY))
     .toBe("visible");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth))
+    .toBe(await page.evaluate(() => document.documentElement.clientWidth));
 });
 
 test("extracts candidate rules from a reference Word without replacing the workspace document", async ({ page }) => {
@@ -93,6 +95,33 @@ test("saves reusable rule revisions and restores history without duplicate write
   await expect(page.getByText(/已从修订 1 恢复为修订 3/)).toBeVisible();
   await expect(page.locator(".rule-pack-version-note").getByText("草稿", { exact: true }))
     .toBeVisible();
+
+  const portableArtifact = await exported.json();
+  const externalName = `跨机导入规则-${Date.now()}`;
+  portableArtifact.pack_id = `pack_external_${Date.now()}`;
+  portableArtifact.request_id = `external_${Date.now()}`;
+  portableArtifact.name = externalName;
+  portableArtifact.scope_label = "另一台电脑导出的端到端规则";
+  portableArtifact.approval_status = "locally_approved";
+  portableArtifact.approval_note = "来源电脑记录为已核对";
+
+  await page.getByText("从另一台电脑导入规则包").click();
+  await page.getByLabel("规则包 JSON 文件").setInputFiles({
+    name: "external.rule-pack.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(portableArtifact)),
+  });
+  await page.getByRole("button", { name: "检查文件" }).click();
+  const importPreview = page.getByLabel("规则包导入检查结果");
+  await expect(importPreview.getByText("结构与摘要通过")).toBeVisible();
+  await expect(importPreview.getByText("未验证数字签名")).toBeVisible();
+  await expect(importPreview.getByText(/不会随导入继承/)).toBeVisible();
+  await page.getByRole("button", { name: "确认导入为草稿" }).click();
+  await expect(page.getByText(`已导入“${externalName}”修订 1；状态已重置为草稿，载入前请重新核对。`))
+    .toBeVisible();
+  await expect(page.locator(".rule-pack-version-note").getByText(/跨机导入自/)).toBeVisible();
+  await page.getByRole("button", { name: "载入所选修订" }).click();
+  await expect(page.getByText(`已载入“${externalName}”修订 1；尚未修改源文档。`)).toBeVisible();
 });
 
 test("completes the local structured formatting workflow and restores it", async ({ page }) => {

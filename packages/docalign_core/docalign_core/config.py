@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     data_dir: Path = Path("data")
     database_url: str = "sqlite:///./data/docalign.db"
     max_upload_mb: int = Field(default=20, ge=1)
+    max_rule_pack_import_kb: int = Field(default=2_048, ge=64, le=10_240)
     max_batch_files: int = Field(default=20, ge=2, le=100)
     max_batch_total_mb: int = Field(default=200, ge=20, le=2_000)
     max_uncompressed_mb: int = Field(default=200, ge=1)

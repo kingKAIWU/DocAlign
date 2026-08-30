@@ -11,6 +11,8 @@ import type {
   RulePackArtifact,
   RulePackCatalogItem,
   RulePackDetail,
+  RulePackImportPreview,
+  RulePackImportResult,
   SemanticRole,
   SupportDiagnosticReport,
   TemplateRuleCandidate,
@@ -104,6 +106,24 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ request_id: requestId, revision, change_note: changeNote }),
     }),
+  previewRulePackImport: (file: File) => {
+    const body = new FormData();
+    body.append("file", file);
+    return request<RulePackImportPreview>("/rule-packs/imports/preview", {
+      method: "POST",
+      body,
+    });
+  },
+  importRulePack: (file: File, name: string, requestId: string) => {
+    const body = new FormData();
+    body.append("file", file);
+    body.append("name", name);
+    body.append("request_id", requestId);
+    return request<RulePackImportResult>("/rule-packs/imports", {
+      method: "POST",
+      body,
+    });
+  },
   document: (documentId: string, signal?: AbortSignal) =>
     request<DocumentRecord>(`/documents/${documentId}`, { signal }),
   analysis: (analysisId: string, signal?: AbortSignal) =>

@@ -10,6 +10,8 @@ const mocks = vi.hoisted(() => ({
   createRulePack: vi.fn(),
   createRulePackVersion: vi.fn(),
   restoreRulePackVersion: vi.fn(),
+  previewRulePackImport: vi.fn(),
+  importRulePack: vi.fn(),
 }));
 
 vi.mock("@/lib/api", () => ({
@@ -197,5 +199,71 @@ describe("RulePackLibrary", () => {
     expect(mocks.restoreRulePackVersion.mock.calls[0][1]).toBe(1);
     expect(onApply).toHaveBeenLastCalledWith(restoredArtifact);
     expect(await screen.findByText(/已从修订 1 恢复为修订 3/)).toBeInTheDocument();
+  });
+
+  it("previews an unsigned portable artifact and imports it as a local draft", async () => {
+    const source = {
+      artifact_sha256: "c".repeat(64),
+      pack_id: "pack_external",
+      request_id: "external-request",
+      name: "院系论文格式",
+      scope_label: "2026 年院系论文",
+      revision: 4,
+      approval_status: "locally_approved" as const,
+      approval_note: "来源电脑已核对",
+      change_note: "调整目录格式",
+      spec_sha256: "a".repeat(64),
+      created_at: "2026-08-30T00:00:00Z",
+    };
+    mocks.previewRulePackImport.mockResolvedValue({
+      integrity_verified: true,
+      signature_status: "unsigned",
+      source,
+      suggested_name: "院系论文格式（导入）",
+      source_name_conflict: true,
+      already_present: false,
+      existing_pack_id: null,
+      existing_revision: null,
+      target_approval_status: "draft",
+      warnings: [],
+    });
+    const importedArtifact = {
+      ...firstArtifact,
+      pack_id: "pack_imported",
+      request_id: "import-request",
+      name: "院系论文格式（导入）",
+      change_note: "跨机导入；需在本机重新核对",
+      import_source: source,
+    };
+    mocks.importRulePack.mockResolvedValue({
+      artifact: importedArtifact,
+      already_present: false,
+    });
+    const onApply = vi.fn();
+
+    render(<RulePackLibrary specText={JSON.stringify(spec)} disabled={false} onApply={onApply} />);
+    expect(await screen.findByText("尚未保存规则包")).toBeInTheDocument();
+    fireEvent.click(screen.getByText("从另一台电脑导入规则包"));
+    const file = new File([JSON.stringify(firstArtifact)], "external.rule-pack.json", {
+      type: "application/json",
+    });
+    fireEvent.change(screen.getByLabelText("规则包 JSON 文件"), {
+      target: { files: [file] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "检查文件" }));
+
+    expect(await screen.findByLabelText("规则包导入检查结果")).toBeInTheDocument();
+    expect(screen.getByText("结构与摘要通过")).toBeInTheDocument();
+    expect(screen.getByText("未验证数字签名")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("院系论文格式（导入）")).toBeInTheDocument();
+    expect(screen.getByText(/不会随导入继承/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "确认导入为草稿" }));
+    await waitFor(() => expect(mocks.importRulePack).toHaveBeenCalledTimes(1));
+    expect(mocks.importRulePack.mock.calls[0][0]).toBe(file);
+    expect(mocks.importRulePack.mock.calls[0][1]).toBe("院系论文格式（导入）");
+    expect(mocks.importRulePack.mock.calls[0][2]).toBeTruthy();
+    expect(await screen.findByText(/状态已重置为草稿/)).toBeInTheDocument();
+    expect(onApply).not.toHaveBeenCalled();
   });
 });

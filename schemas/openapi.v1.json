@@ -883,6 +883,82 @@
         }
       }
     },
+    "/api/v1/rule-packs/imports/preview": {
+      "post": {
+        "summary": "Preview Rule Pack Import",
+        "operationId": "preview_rule_pack_import_api_v1_rule_packs_imports_preview_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_preview_rule_pack_import_api_v1_rule_packs_imports_preview_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RulePackImportPreview"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rule-packs/imports": {
+      "post": {
+        "summary": "Import Rule Pack",
+        "operationId": "import_rule_pack_api_v1_rule_packs_imports_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_import_rule_pack_api_v1_rule_packs_imports_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RulePackImportResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/rule-packs/{pack_id}": {
       "get": {
         "summary": "Get Rule Pack",
@@ -2108,6 +2184,47 @@
           "file"
         ],
         "title": "Body_create_template_candidate_api_v1_templates_candidate_post"
+      },
+      "Body_import_rule_pack_api_v1_rule_packs_imports_post": {
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{8,64}$",
+            "title": "Request Id"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "request_id",
+          "name",
+          "file"
+        ],
+        "title": "Body_import_rule_pack_api_v1_rule_packs_imports_post"
+      },
+      "Body_preview_rule_pack_import_api_v1_rule_packs_imports_preview_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_preview_rule_pack_import_api_v1_rule_packs_imports_preview_post"
       },
       "Body_upload_document_api_v1_documents_post": {
         "properties": {
@@ -3886,6 +4003,7 @@
           },
           "pack_id": {
             "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{1,64}$",
             "title": "Pack Id"
           },
           "request_id": {
@@ -3913,6 +4031,7 @@
           },
           "revision": {
             "type": "integer",
+            "maximum": 2147483647.0,
             "minimum": 1.0,
             "title": "Revision"
           },
@@ -3962,6 +4081,16 @@
           },
           "spec": {
             "$ref": "#/components/schemas/FormattingSpec"
+          },
+          "import_source": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RulePackImportSource"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "additionalProperties": false,
@@ -4179,6 +4308,187 @@
         ],
         "title": "RulePackDetailResponse"
       },
+      "RulePackImportPreview": {
+        "properties": {
+          "integrity_verified": {
+            "type": "boolean",
+            "const": true,
+            "title": "Integrity Verified",
+            "default": true
+          },
+          "signature_status": {
+            "type": "string",
+            "const": "unsigned",
+            "title": "Signature Status",
+            "default": "unsigned"
+          },
+          "source": {
+            "$ref": "#/components/schemas/RulePackImportSource"
+          },
+          "suggested_name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Suggested Name"
+          },
+          "source_name_conflict": {
+            "type": "boolean",
+            "title": "Source Name Conflict"
+          },
+          "already_present": {
+            "type": "boolean",
+            "title": "Already Present"
+          },
+          "existing_pack_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Existing Pack Id"
+          },
+          "existing_revision": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Existing Revision"
+          },
+          "target_approval_status": {
+            "type": "string",
+            "const": "draft",
+            "title": "Target Approval Status",
+            "default": "draft"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "source",
+          "suggested_name",
+          "source_name_conflict",
+          "already_present",
+          "warnings"
+        ],
+        "title": "RulePackImportPreview"
+      },
+      "RulePackImportResult": {
+        "properties": {
+          "artifact": {
+            "$ref": "#/components/schemas/RulePackArtifact"
+          },
+          "already_present": {
+            "type": "boolean",
+            "title": "Already Present"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "artifact",
+          "already_present"
+        ],
+        "title": "RulePackImportResult"
+      },
+      "RulePackImportSource": {
+        "properties": {
+          "artifact_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Artifact Sha256"
+          },
+          "pack_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{1,64}$",
+            "title": "Pack Id"
+          },
+          "request_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{8,64}$",
+            "title": "Request Id"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "scope_label": {
+            "type": "string",
+            "maxLength": 240,
+            "minLength": 1,
+            "title": "Scope Label"
+          },
+          "revision": {
+            "type": "integer",
+            "maximum": 2147483647.0,
+            "minimum": 1.0,
+            "title": "Revision"
+          },
+          "approval_status": {
+            "$ref": "#/components/schemas/RulePackApprovalStatus"
+          },
+          "approval_note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approval Note"
+          },
+          "change_note": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Change Note"
+          },
+          "spec_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Spec Sha256"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "artifact_sha256",
+          "pack_id",
+          "request_id",
+          "name",
+          "scope_label",
+          "revision",
+          "approval_status",
+          "change_note",
+          "spec_sha256",
+          "created_at"
+        ],
+        "title": "RulePackImportSource",
+        "description": "Normalized provenance retained when a portable artifact is imported."
+      },
       "RulePackMetadata": {
         "properties": {
           "pack_version": {
@@ -4386,6 +4696,16 @@
             "type": "string",
             "format": "date-time",
             "title": "Created At"
+          },
+          "import_source": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RulePackImportSource"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "additionalProperties": false,

@@ -45,6 +45,8 @@ from apps.api.schemas import (
     RulePackCatalogResponse,
     RulePackCreateRequest,
     RulePackDetailResponse,
+    RulePackImportPreview,
+    RulePackImportResult,
     RulePackRestoreRequest,
     RulePackVersionCreateRequest,
     StructuredSpecRequest,
@@ -139,10 +141,12 @@ def create_app(
             "format_manifest": True,
             "template_rule_candidate": True,
             "rule_pack_library": True,
+            "rule_pack_import": True,
             "batch_processing": True,
             "max_batch_files": settings.max_batch_files,
             "max_batch_total_mb": settings.max_batch_total_mb,
             "max_upload_mb": settings.max_upload_mb,
+            "max_rule_pack_import_kb": settings.max_rule_pack_import_kb,
             "local_only": True,
             "desktop_app": desktop_shutdown is not None,
         }
@@ -316,6 +320,27 @@ def create_app(
             change_note=request.change_note,
             approval_status=request.approval_status,
             approval_note=request.approval_note,
+        )
+
+    @application.post("/api/v1/rule-packs/imports/preview")
+    async def preview_rule_pack_import(
+        file: Annotated[UploadFile, File()],
+    ) -> RulePackImportPreview:
+        return await service.preview_rule_pack_import(file)
+
+    @application.post("/api/v1/rule-packs/imports", status_code=201)
+    async def import_rule_pack(
+        request_id: Annotated[
+            str,
+            Form(pattern=r"^[A-Za-z0-9_-]{8,64}$"),
+        ],
+        name: Annotated[str, Form(min_length=1, max_length=120)],
+        file: Annotated[UploadFile, File()],
+    ) -> RulePackImportResult:
+        return await service.import_rule_pack(
+            file,
+            request_id=request_id,
+            name=name,
         )
 
     @application.get("/api/v1/rule-packs/{pack_id}")

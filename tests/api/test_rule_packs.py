@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from docalign_core.config import Settings
@@ -8,6 +9,261 @@ from fastapi.testclient import TestClient
 
 from apps.api.db import RulePackVersionRecord
 from apps.api.main import create_app
+
+
+def test_rule_pack_cross_machine_import_is_verified_deduplicated_and_downgraded(
+    tmp_path: Path,
+) -> None:
+    source_dir = tmp_path / "source-machine"
+    source_settings = Settings(
+        data_dir=source_dir,
+        database_url=f"sqlite:///{source_dir / 'state.db'}",
+    )
+    with TestClient(create_app(source_settings)) as source_client:
+        created = source_client.post(
+            "/api/v1/rule-packs",
+            json={
+                "request_id": "portable-source-pack",
+                "name": "综合办公室正式月报",
+                "description": "由办公室模板管理员逐项核对。",
+                "scope_label": "2026 年综合办公室月报",
+                "spec": default_cleanup_spec().model_dump(mode="json"),
+                "change_note": "依据 2026-08-30 内部模板建立",
+                "approval_status": "locally_approved",
+                "approval_note": "王老师按内部模板逐项核对",
+            },
+        )
+        assert created.status_code == 201, created.text
+        source_artifact = created.json()
+        exported = source_client.get(
+            f"/api/v1/rule-packs/{source_artifact['pack_id']}/versions/1/export"
+        )
+        assert exported.status_code == 200
+        portable_bytes = exported.content
+
+        local_preview = source_client.post(
+            "/api/v1/rule-packs/imports/preview",
+            files={
+                "file": (
+                    "office.rule-pack.json",
+                    portable_bytes,
+                    "application/json",
+                )
+            },
+        )
+        assert local_preview.status_code == 200, local_preview.text
+        assert local_preview.json()["already_present"] is True
+        assert local_preview.json()["existing_pack_id"] == source_artifact["pack_id"]
+
+    target_dir = tmp_path / "target-machine"
+    target_settings = Settings(
+        data_dir=target_dir,
+        database_url=f"sqlite:///{target_dir / 'state.db'}",
+    )
+    target_app = create_app(target_settings)
+    with TestClient(target_app) as target_client:
+        preview = target_client.post(
+            "/api/v1/rule-packs/imports/preview",
+            files={
+                "file": (
+                    "office.rule-pack.json",
+                    portable_bytes,
+                    "application/json",
+                )
+            },
+        )
+        assert preview.status_code == 200, preview.text
+        preview_payload = preview.json()
+        assert preview_payload["integrity_verified"] is True
+        assert preview_payload["signature_status"] == "unsigned"
+        assert preview_payload["already_present"] is False
+        assert preview_payload["source_name_conflict"] is False
+        assert preview_payload["suggested_name"] == "综合办公室正式月报"
+        assert preview_payload["source"]["approval_status"] == "locally_approved"
+        assert preview_payload["source"]["spec_sha256"] == source_artifact["spec_sha256"]
+        assert preview_payload["target_approval_status"] == "draft"
+        assert target_client.get("/api/v1/rule-packs").json() == {"rule_packs": []}
+
+        imported = target_client.post(
+            "/api/v1/rule-packs/imports",
+            data={
+                "request_id": "import-office-pack",
+                "name": preview_payload["suggested_name"],
+            },
+            files={
+                "file": (
+                    "office.rule-pack.json",
+                    portable_bytes,
+                    "application/json",
+                )
+            },
+        )
+        assert imported.status_code == 201, imported.text
+        import_result = imported.json()
+        artifact = import_result["artifact"]
+        assert import_result["already_present"] is False
+        assert artifact["pack_id"] != source_artifact["pack_id"]
+        assert artifact["revision"] == 1
+        assert artifact["approval_status"] == "draft"
+        assert artifact["approval_note"] is None
+        assert artifact["spec_sha256"] == source_artifact["spec_sha256"]
+        assert artifact["import_source"] == preview_payload["source"]
+        assert "需在本机重新核对" in artifact["change_note"]
+
+        retried = target_client.post(
+            "/api/v1/rule-packs/imports",
+            data={
+                "request_id": "import-office-pack",
+                "name": preview_payload["suggested_name"],
+            },
+            files={
+                "file": (
+                    "office.rule-pack.json",
+                    portable_bytes,
+                    "application/json",
+                )
+            },
+        )
+        assert retried.status_code == 201
+        assert retried.json()["already_present"] is False
+        assert retried.json()["artifact"]["pack_id"] == artifact["pack_id"]
+
+        deduplicated = target_client.post(
+            "/api/v1/rule-packs/imports",
+            data={
+                "request_id": "import-office-again",
+                "name": "另一个本地名称",
+            },
+            files={
+                "file": (
+                    "office.rule-pack.json",
+                    portable_bytes,
+                    "application/json",
+                )
+            },
+        )
+        assert deduplicated.status_code == 201
+        assert deduplicated.json()["already_present"] is True
+        assert deduplicated.json()["artifact"]["pack_id"] == artifact["pack_id"]
+        assert len(target_client.get("/api/v1/rule-packs").json()["rule_packs"]) == 1
+
+        detail = target_client.get(f"/api/v1/rule-packs/{artifact['pack_id']}").json()
+        assert detail["versions"][0]["import_source"] == preview_payload["source"]
+        reexported = target_client.get(
+            f"/api/v1/rule-packs/{artifact['pack_id']}/versions/1/export"
+        )
+        assert reexported.json()["import_source"] == preview_payload["source"]
+
+        with target_app.state.database.session_factory.begin() as session:
+            version = session.get(RulePackVersionRecord, (artifact["pack_id"], 1))
+            assert version is not None
+            version.import_source_artifact_sha256 = "0" * 64
+        corrupted = target_client.get(
+            f"/api/v1/rule-packs/{artifact['pack_id']}/versions/1"
+        )
+        assert corrupted.status_code == 500
+        assert corrupted.json()["error"]["code"] == "RULE_PACK_INTEGRITY_FAILED"
+
+
+def test_rule_pack_import_rejects_tampering_unsafe_files_and_name_conflicts(
+    tmp_path: Path,
+) -> None:
+    source_dir = tmp_path / "import-validation-source"
+    source_settings = Settings(
+        data_dir=source_dir,
+        database_url=f"sqlite:///{source_dir / 'state.db'}",
+    )
+    with TestClient(create_app(source_settings)) as source_client:
+        source_artifact = source_client.post(
+            "/api/v1/rule-packs",
+            json={
+                "request_id": "validation-source",
+                "name": "冲突名称",
+                "scope_label": "跨机导入校验",
+                "spec": default_cleanup_spec().model_dump(mode="json"),
+            },
+        ).json()
+
+    target_dir = tmp_path / "import-validation-target"
+    target_settings = Settings(
+        data_dir=target_dir,
+        database_url=f"sqlite:///{target_dir / 'state.db'}",
+        max_rule_pack_import_kb=64,
+    )
+    with TestClient(create_app(target_settings)) as target_client:
+        target_client.post(
+            "/api/v1/rule-packs",
+            json={
+                "request_id": "local-conflict-pack",
+                "name": "冲突名称",
+                "scope_label": "本机已有规则",
+                "spec": default_cleanup_spec().model_dump(mode="json"),
+            },
+        )
+
+        portable_bytes = json.dumps(source_artifact, ensure_ascii=False).encode()
+        preview = target_client.post(
+            "/api/v1/rule-packs/imports/preview",
+            files={"file": ("conflict.json", portable_bytes, "application/json")},
+        )
+        assert preview.status_code == 200, preview.text
+        assert preview.json()["source_name_conflict"] is True
+        assert preview.json()["suggested_name"] == "冲突名称（导入）"
+
+        conflicting = target_client.post(
+            "/api/v1/rule-packs/imports",
+            data={"request_id": "import-name-conflict", "name": "冲突名称"},
+            files={"file": ("conflict.json", portable_bytes, "application/json")},
+        )
+        assert conflicting.status_code == 409
+        assert conflicting.json()["error"]["code"] == "RULE_PACK_NAME_CONFLICT"
+
+        tampered = json.loads(portable_bytes)
+        tampered["spec"]["baseline"]["font"]["size_pt"] = 17
+        tampered_response = target_client.post(
+            "/api/v1/rule-packs/imports/preview",
+            files={
+                "file": (
+                    "tampered.json",
+                    json.dumps(tampered).encode(),
+                    "application/json",
+                )
+            },
+        )
+        assert tampered_response.status_code == 422
+        assert tampered_response.json()["error"]["code"] == (
+            "RULE_PACK_IMPORT_INTEGRITY_FAILED"
+        )
+
+        malformed = target_client.post(
+            "/api/v1/rule-packs/imports/preview",
+            files={"file": ("malformed.json", b"{}", "application/json")},
+        )
+        assert malformed.status_code == 422
+        assert malformed.json()["error"]["code"] == "RULE_PACK_IMPORT_INVALID"
+
+        wrong_extension = target_client.post(
+            "/api/v1/rule-packs/imports/preview",
+            files={"file": ("rules.txt", portable_bytes, "text/plain")},
+        )
+        assert wrong_extension.status_code == 415
+        assert wrong_extension.json()["error"]["code"] == (
+            "RULE_PACK_IMPORT_UNSUPPORTED_FILE"
+        )
+
+        oversized = target_client.post(
+            "/api/v1/rule-packs/imports/preview",
+            files={
+                "file": (
+                    "oversized.json",
+                    b"{" + b"x" * (64 * 1024),
+                    "application/json",
+                )
+            },
+        )
+        assert oversized.status_code == 413
+        assert oversized.json()["error"]["code"] == "RULE_PACK_IMPORT_TOO_LARGE"
+        assert len(target_client.get("/api/v1/rule-packs").json()["rule_packs"]) == 1
 
 
 def test_rule_pack_versions_export_and_safe_restore(tmp_path: Path) -> None:

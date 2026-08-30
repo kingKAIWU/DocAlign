@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from docalign_core.domain.document_ir import RoleOverride
 from docalign_core.domain.enums import AnalysisMode, JobStatus
 from docalign_core.domain.formatting_spec import CleanupPresetCatalogItem, FormattingSpec
-from docalign_core.domain.rule_pack import RulePackApprovalStatus
+from docalign_core.domain.rule_pack import (
+    RulePackApprovalStatus,
+    RulePackArtifact,
+    RulePackImportSource,
+)
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
@@ -154,6 +158,7 @@ class RulePackVersionSummary(ApiModel):
     spec_sha256: str
     source_type: str
     created_at: datetime
+    import_source: RulePackImportSource | None = None
 
 
 class RulePackDetailResponse(ApiModel):
@@ -165,6 +170,24 @@ class RulePackDetailResponse(ApiModel):
     created_at: datetime
     updated_at: datetime
     versions: list[RulePackVersionSummary]
+
+
+class RulePackImportPreview(ApiModel):
+    integrity_verified: Literal[True] = True
+    signature_status: Literal["unsigned"] = "unsigned"
+    source: RulePackImportSource
+    suggested_name: str = Field(min_length=1, max_length=120)
+    source_name_conflict: bool
+    already_present: bool
+    existing_pack_id: str | None = None
+    existing_revision: int | None = Field(default=None, ge=1)
+    target_approval_status: Literal[RulePackApprovalStatus.DRAFT] = RulePackApprovalStatus.DRAFT
+    warnings: list[str]
+
+
+class RulePackImportResult(ApiModel):
+    artifact: RulePackArtifact
+    already_present: bool
 
 
 class JobCreateRequest(ApiModel):
