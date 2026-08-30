@@ -280,10 +280,30 @@ class RulePackClaimLevel(StrEnum):
     VERIFIED = "verified"
 
 
+class RulePackCoverageStatus(StrEnum):
+    AUTOMATED = "automated"
+    MANUAL_REVIEW = "manual_review"
+    UNSUPPORTED = "unsupported"
+
+
 class RulePackReference(StrictModel):
     title: str
     url: str
     version: str | None = None
+
+
+class RulePackCoverageItem(StrictModel):
+    requirement_id: str
+    requirement: str
+    status: RulePackCoverageStatus
+    implementation_note: str
+
+
+class RulePackAcceptanceEvidence(StrictModel):
+    fixture_id: str
+    last_passed_on: date
+    automated_checks: list[str] = Field(min_length=1)
+    manual_checks: list[str] = Field(default_factory=list)
 
 
 class RulePackMetadata(StrictModel):
@@ -295,6 +315,20 @@ class RulePackMetadata(StrictModel):
     source_references: list[RulePackReference]
     covered_capabilities: list[str]
     limitations: list[str]
+    coverage_items: list[RulePackCoverageItem] = Field(default_factory=list)
+    acceptance_evidence: RulePackAcceptanceEvidence | None = None
+
+    @model_validator(mode="after")
+    def validate_evidence_for_non_generic_pack(self) -> RulePackMetadata:
+        if self.claim_level == RulePackClaimLevel.GENERIC:
+            return self
+        if not self.source_references:
+            raise ValueError("reference and verified rule packs require source references")
+        if not self.coverage_items:
+            raise ValueError("reference and verified rule packs require clause coverage")
+        if self.acceptance_evidence is None:
+            raise ValueError("reference and verified rule packs require acceptance evidence")
+        return self
 
 
 class FormattingSpec(StrictModel):
@@ -725,6 +759,430 @@ def wide_table_cleanup_spec() -> FormattingSpec:
     return spec
 
 
+def _institution_font(
+    east_asia: str,
+    size_pt: float,
+    *,
+    ascii_font: str = "Times New Roman",
+    bold: bool | None = None,
+) -> FontSpec:
+    return FontSpec(
+        east_asia=east_asia,
+        ascii=ascii_font,
+        high_ansi=ascii_font,
+        complex_script=ascii_font,
+        size_pt=size_pt,
+        bold=bold,
+        color_hex="000000",
+    )
+
+
+def _institution_force(*, bold: bool | None = None) -> ForcePolicy:
+    properties = {
+        FormattingProperty.FONT_EAST_ASIA,
+        FormattingProperty.FONT_ASCII,
+        FormattingProperty.FONT_HIGH_ANSI,
+        FormattingProperty.FONT_COMPLEX_SCRIPT,
+        FormattingProperty.FONT_SIZE,
+        FormattingProperty.FONT_COLOR,
+    }
+    if bold is not None:
+        properties.add(FormattingProperty.FONT_BOLD)
+    return ForcePolicy(properties=properties)
+
+
+def _institution_role(
+    east_asia: str,
+    size_pt: float,
+    *,
+    ascii_font: str = "Times New Roman",
+    bold: bool | None = None,
+    alignment: Alignment | None = None,
+    line_spacing: LineSpacingSpec | None = None,
+    space_before_pt: float | None = None,
+    space_after_pt: float | None = None,
+    first_line_indent_pt: float | None = None,
+    keep_with_next: bool | None = None,
+    page_break_before: bool | None = None,
+) -> RoleFormattingSpec:
+    return RoleFormattingSpec(
+        font=_institution_font(
+            east_asia,
+            size_pt,
+            ascii_font=ascii_font,
+            bold=bold,
+        ),
+        paragraph=ParagraphSpec(
+            alignment=alignment,
+            line_spacing=line_spacing,
+            space_before_pt=space_before_pt,
+            space_after_pt=space_after_pt,
+            first_line_indent_pt=first_line_indent_pt,
+            keep_with_next=keep_with_next,
+            page_break_before=page_break_before,
+        ),
+        force=_institution_force(bold=bold),
+    )
+
+
+def gbt_9704_body_reference_spec() -> FormattingSpec:
+    """Executable subset of GB/T 9704—2012 for the document body.
+
+    The standard contains fixed-position header, imprint, seal, odd/even page-number,
+    print, and binding requirements that cannot be represented by FormattingSpec v1.
+    """
+
+    body_spacing = LineSpacingSpec(mode=LineSpacingMode.EXACT, value=28.95)
+    body = _institution_role(
+        "仿宋_GB2312",
+        16,
+        alignment=Alignment.JUSTIFY,
+        line_spacing=body_spacing,
+        space_before_pt=0,
+        space_after_pt=0,
+        first_line_indent_pt=32,
+    )
+    return FormattingSpec(
+        document=DocumentFormattingSpec(
+            page=PageFormattingSpec(
+                size=PageSize.A4,
+                orientation=Orientation.PORTRAIT,
+                margin_top_mm=37,
+                margin_bottom_mm=35,
+                margin_left_mm=28,
+                margin_right_mm=26,
+                preserve_existing_landscape_sections=True,
+                force_orientation_all_sections=False,
+            )
+        ),
+        roles={
+            SemanticRole.TITLE: _institution_role(
+                "方正小标宋简体",
+                22,
+                alignment=Alignment.CENTER,
+                line_spacing=body_spacing,
+                space_before_pt=0,
+                space_after_pt=0,
+                keep_with_next=True,
+            ),
+            SemanticRole.BODY: body,
+            SemanticRole.HEADING_1: _institution_role(
+                "黑体",
+                16,
+                alignment=Alignment.LEFT,
+                line_spacing=body_spacing,
+                space_before_pt=0,
+                space_after_pt=0,
+                keep_with_next=True,
+            ),
+            SemanticRole.HEADING_2: _institution_role(
+                "楷体_GB2312",
+                16,
+                alignment=Alignment.LEFT,
+                line_spacing=body_spacing,
+                space_before_pt=0,
+                space_after_pt=0,
+                keep_with_next=True,
+            ),
+            SemanticRole.HEADING_3: _institution_role(
+                "仿宋_GB2312",
+                16,
+                alignment=Alignment.LEFT,
+                line_spacing=body_spacing,
+                space_before_pt=0,
+                space_after_pt=0,
+                keep_with_next=True,
+            ),
+            SemanticRole.HEADING_4: _institution_role(
+                "仿宋_GB2312",
+                16,
+                alignment=Alignment.LEFT,
+                line_spacing=body_spacing,
+                space_before_pt=0,
+                space_after_pt=0,
+                keep_with_next=True,
+            ),
+            SemanticRole.LIST_ITEM: body.model_copy(deep=True),
+        },
+        auto_layout=AutoLayoutSpec(enabled=False),
+        behavior=FormattingBehavior(
+            preserve_inline_emphasis=True,
+            preserve_right_aligned_signatures=True,
+            apply_to_unknown_roles=False,
+        ),
+        source=SpecSource(
+            type=SpecSourceType.PRESET,
+            preset_id="gbt-9704-2012-body-reference-cn",
+            assumptions=[
+                "Only the A4 body page geometry, title, body, and four structural levels "
+                "are automated.",
+                "The 225 mm text height is represented by 28.95 pt exact line spacing; "
+                "22-line fit still requires visual review.",
+                "Small-title-Song and GB2312 font families must be installed or explicitly "
+                "substituted before delivery.",
+            ],
+        ),
+    )
+
+
+def nankai_thesis_2026_reference_spec() -> FormattingSpec:
+    """Executable subset of Nankai University's 2026 graduate thesis guide."""
+
+    body_spacing = LineSpacingSpec(mode=LineSpacingMode.EXACT, value=20)
+    compact_spacing = LineSpacingSpec(mode=LineSpacingMode.EXACT, value=16)
+    single_spacing = LineSpacingSpec(mode=LineSpacingMode.SINGLE, value=1)
+    body = _institution_role(
+        "宋体",
+        12,
+        alignment=Alignment.JUSTIFY,
+        line_spacing=body_spacing,
+        space_before_pt=0,
+        space_after_pt=0,
+        first_line_indent_pt=24,
+    )
+    chapter = _institution_role(
+        "黑体",
+        16,
+        bold=True,
+        alignment=Alignment.LEFT,
+        line_spacing=single_spacing,
+        space_before_pt=24,
+        space_after_pt=18,
+        keep_with_next=True,
+    )
+    return FormattingSpec(
+        document=DocumentFormattingSpec(
+            page=PageFormattingSpec(
+                size=PageSize.A4,
+                orientation=Orientation.PORTRAIT,
+                margin_top_mm=38,
+                margin_bottom_mm=38,
+                margin_left_mm=32,
+                margin_right_mm=32,
+                header_distance_mm=30,
+                footer_distance_mm=30,
+                preserve_existing_landscape_sections=True,
+                force_orientation_all_sections=False,
+            )
+        ),
+        roles={
+            SemanticRole.BODY: body,
+            SemanticRole.ABSTRACT_BODY: body.model_copy(deep=True),
+            SemanticRole.KEYWORDS: body.model_copy(deep=True),
+            SemanticRole.HEADING_1: chapter,
+            SemanticRole.HEADING_2: _institution_role(
+                "黑体",
+                14,
+                bold=True,
+                alignment=Alignment.LEFT,
+                line_spacing=single_spacing,
+                space_before_pt=24,
+                space_after_pt=6,
+                keep_with_next=True,
+            ),
+            SemanticRole.HEADING_3: _institution_role(
+                "黑体",
+                13,
+                alignment=Alignment.LEFT,
+                line_spacing=single_spacing,
+                space_before_pt=12,
+                space_after_pt=6,
+                keep_with_next=True,
+            ),
+            SemanticRole.HEADING_4: _institution_role(
+                "黑体",
+                12,
+                alignment=Alignment.LEFT,
+                line_spacing=single_spacing,
+                space_before_pt=12,
+                space_after_pt=6,
+                keep_with_next=True,
+            ),
+            SemanticRole.FIGURE_CAPTION: _institution_role(
+                "宋体",
+                10.5,
+                alignment=Alignment.CENTER,
+                line_spacing=single_spacing,
+                space_before_pt=6,
+                space_after_pt=12,
+                keep_with_next=True,
+            ),
+            SemanticRole.TABLE_CAPTION: _institution_role(
+                "宋体",
+                10.5,
+                alignment=Alignment.CENTER,
+                line_spacing=single_spacing,
+                space_before_pt=6,
+                space_after_pt=6,
+                keep_with_next=True,
+            ),
+            SemanticRole.BIBLIOGRAPHY_HEADING: chapter.model_copy(deep=True),
+            SemanticRole.BIBLIOGRAPHY_ENTRY: _institution_role(
+                "宋体",
+                10.5,
+                alignment=Alignment.JUSTIFY,
+                line_spacing=compact_spacing,
+                space_before_pt=0,
+                space_after_pt=0,
+            ),
+            SemanticRole.APPENDIX_HEADING: chapter.model_copy(deep=True),
+            SemanticRole.APPENDIX_BODY: body.model_copy(deep=True),
+        },
+        tables=TableFormattingSpec(
+            width_policy=TableWidthPolicy.PRESERVE,
+            font=_institution_font("宋体", 10.5),
+            paragraph=ParagraphSpec(
+                line_spacing=single_spacing,
+                space_before_pt=0,
+                space_after_pt=0,
+            ),
+            prevent_row_split=True,
+        ),
+        figures=FigureFormattingSpec(center_image_only_paragraphs=True),
+        auto_layout=AutoLayoutSpec(enabled=False),
+        behavior=FormattingBehavior(apply_to_unknown_roles=False),
+        source=SpecSource(
+            type=SpecSourceType.PRESET,
+            preset_id="nankai-thesis-2026-reference-cn",
+            assumptions=[
+                "The pack follows numeric heading mode with left-aligned chapter titles.",
+                "Official cover, title page, declaration, table of contents, and "
+                "section-specific page numbering remain template/manual work.",
+                "English abstract heading requires Arial and is not changed because the "
+                "current semantic role cannot distinguish it from the Chinese heading.",
+            ],
+        ),
+    )
+
+
+def bigc_master_thesis_2025_reference_spec() -> FormattingSpec:
+    """Executable subset of BIGC's September 2025 master's thesis guide."""
+
+    body_spacing = LineSpacingSpec(mode=LineSpacingMode.EXACT, value=20)
+    compact_spacing = LineSpacingSpec(mode=LineSpacingMode.EXACT, value=16)
+    single_spacing = LineSpacingSpec(mode=LineSpacingMode.SINGLE, value=1)
+    body = _institution_role(
+        "宋体",
+        12,
+        alignment=Alignment.JUSTIFY,
+        line_spacing=body_spacing,
+        space_before_pt=0,
+        space_after_pt=0,
+        first_line_indent_pt=24,
+    )
+    chapter = _institution_role(
+        "黑体",
+        16,
+        alignment=Alignment.CENTER,
+        line_spacing=single_spacing,
+        space_before_pt=24,
+        space_after_pt=18,
+        keep_with_next=True,
+    )
+    return FormattingSpec(
+        document=DocumentFormattingSpec(
+            page=PageFormattingSpec(
+                size=PageSize.A4,
+                orientation=Orientation.PORTRAIT,
+                margin_top_mm=30,
+                margin_bottom_mm=25,
+                margin_left_mm=25,
+                margin_right_mm=25,
+                header_distance_mm=16,
+                footer_distance_mm=15,
+                preserve_existing_landscape_sections=True,
+                force_orientation_all_sections=False,
+            )
+        ),
+        roles={
+            SemanticRole.BODY: body,
+            SemanticRole.ABSTRACT_BODY: body.model_copy(deep=True),
+            SemanticRole.KEYWORDS: body.model_copy(deep=True),
+            SemanticRole.HEADING_1: chapter,
+            SemanticRole.HEADING_2: _institution_role(
+                "黑体",
+                15,
+                alignment=Alignment.LEFT,
+                line_spacing=single_spacing,
+                space_before_pt=24,
+                space_after_pt=18,
+                keep_with_next=True,
+            ),
+            SemanticRole.HEADING_3: _institution_role(
+                "黑体",
+                14,
+                alignment=Alignment.LEFT,
+                line_spacing=single_spacing,
+                space_before_pt=24,
+                space_after_pt=18,
+                keep_with_next=True,
+            ),
+            SemanticRole.FIGURE_CAPTION: _institution_role(
+                "宋体",
+                10.5,
+                alignment=Alignment.CENTER,
+                line_spacing=single_spacing,
+                space_before_pt=6,
+                space_after_pt=6,
+                keep_with_next=True,
+            ),
+            SemanticRole.TABLE_CAPTION: _institution_role(
+                "宋体",
+                10.5,
+                alignment=Alignment.CENTER,
+                line_spacing=single_spacing,
+                space_before_pt=6,
+                space_after_pt=6,
+                keep_with_next=True,
+            ),
+            SemanticRole.BIBLIOGRAPHY_HEADING: chapter.model_copy(deep=True),
+            SemanticRole.BIBLIOGRAPHY_ENTRY: _institution_role(
+                "宋体",
+                10.5,
+                alignment=Alignment.JUSTIFY,
+                line_spacing=compact_spacing,
+                space_before_pt=0,
+                space_after_pt=0,
+            ),
+            SemanticRole.APPENDIX_HEADING: chapter.model_copy(deep=True),
+            SemanticRole.APPENDIX_BODY: _institution_role(
+                "宋体",
+                10.5,
+                alignment=Alignment.JUSTIFY,
+                line_spacing=compact_spacing,
+                space_before_pt=0,
+                space_after_pt=0,
+            ),
+        },
+        tables=TableFormattingSpec(
+            width_policy=TableWidthPolicy.PRESERVE,
+            font=_institution_font("宋体", 10.5),
+            paragraph=ParagraphSpec(
+                line_spacing=single_spacing,
+                space_before_pt=0,
+                space_after_pt=0,
+            ),
+            repeat_header_row=True,
+            prevent_row_split=True,
+        ),
+        figures=FigureFormattingSpec(center_image_only_paragraphs=True),
+        auto_layout=AutoLayoutSpec(enabled=False),
+        behavior=FormattingBehavior(apply_to_unknown_roles=False),
+        source=SpecSource(
+            type=SpecSourceType.PRESET,
+            preset_id="bigc-master-thesis-2025-reference-cn",
+            assumptions=[
+                "The 10 mm binding line is not represented because FormattingSpec v1 "
+                "has no independent gutter field.",
+                "Official cover, title page, declarations, table of contents, page-number "
+                "sections, and dynamic running headers remain template/manual work.",
+                "English abstract heading is not changed because the current semantic role "
+                "cannot distinguish it from the Chinese heading.",
+            ],
+        ),
+    )
+
+
 class CleanupPresetCatalogItem(StrictModel):
     preset_id: str
     name: str
@@ -759,6 +1217,49 @@ def _generic_pack_metadata(*specific_limitations: str) -> RulePackMetadata:
             "目录、脚注、尾注、批注和文本框目前只做内容保护，不执行专属格式规则。",
             *specific_limitations,
         ],
+    )
+
+
+def _coverage(
+    requirement_id: str,
+    requirement: str,
+    status: RulePackCoverageStatus,
+    implementation_note: str,
+) -> RulePackCoverageItem:
+    return RulePackCoverageItem(
+        requirement_id=requirement_id,
+        requirement=requirement,
+        status=status,
+        implementation_note=implementation_note,
+    )
+
+
+def _reference_pack_metadata(
+    *,
+    scope_label: str,
+    source_references: list[RulePackReference],
+    covered_capabilities: list[str],
+    limitations: list[str],
+    coverage_items: list[RulePackCoverageItem],
+    automated_checks: list[str],
+    manual_checks: list[str],
+) -> RulePackMetadata:
+    return RulePackMetadata(
+        pack_version="1.0.0",
+        claim_level=RulePackClaimLevel.REFERENCE,
+        scope_label=scope_label,
+        maintained_by="DocAlign（依据公开规范整理，未经发布机构背书）",
+        last_reviewed_on=date(2026, 8, 30),
+        source_references=source_references,
+        covered_capabilities=covered_capabilities,
+        limitations=limitations,
+        coverage_items=coverage_items,
+        acceptance_evidence=RulePackAcceptanceEvidence(
+            fixture_id="institutional-reference-smoke-v1",
+            last_passed_on=date(2026, 8, 30),
+            automated_checks=automated_checks,
+            manual_checks=manual_checks,
+        ),
     )
 
 
@@ -803,6 +1304,261 @@ def cleanup_preset_catalog() -> list[CleanupPresetCatalogItem]:
                 "只优化宽表版式，不验证会计准则、金额、公式或财务披露要求。"
             ),
             spec=wide_table_cleanup_spec(),
+        ),
+        CleanupPresetCatalogItem(
+            preset_id="gbt-9704-2012-body-reference-cn",
+            name="GB/T 9704—2012 主体参考",
+            description=(
+                "执行 A4 版心、正文与四级结构字体；版头、版记、印章和奇偶页码仍需人工完成。"
+            ),
+            recommended_kinds=[],
+            metadata=_reference_pack_metadata(
+                scope_label="GB/T 9704—2012《党政机关公文格式》主体可执行子集",
+                source_references=[
+                    RulePackReference(
+                        title="国家标准全文公开系统：GB/T 9704—2012",
+                        url="https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=F3CC9BEF482524C895FDA7A08BB4A70E",
+                        version="现行；2012-07-01 实施",
+                    ),
+                    RulePackReference(
+                        title="南阳市人民政府公开标准正文",
+                        url="https://www.nanyang.gov.cn/2021/05-08/53205.html",
+                        version="GB/T 9704—2012",
+                    ),
+                ],
+                covered_capabilities=[
+                    "page_layout",
+                    "role_typography",
+                    "document_text_color",
+                ],
+                limitations=[
+                    "这是标准主体排版参考，不是完整公文生成器或合规认证；选用前必须逐项查看覆盖矩阵。",
+                    "版头、红色分隔线、发文字号、签发人、主送机关、附件说明、署名日期、印章和版记不自动编排。",
+                    "奇偶页页码、一字线、空白页规则、22 行×28 字、双面印刷和装订只能人工复核。",
+                    "方正小标宋简体、仿宋_GB2312、楷体_GB2312 必须在交付电脑安装，"
+                    "否则 Word/WPS 会替代字体。",
+                ],
+                coverage_items=[
+                    _coverage(
+                        "5.1", "A4 成品幅面", RulePackCoverageStatus.AUTOMATED, "设置 A4 竖版。"
+                    ),
+                    _coverage(
+                        "5.2.1",
+                        "37 mm 天头、28 mm 订口和 156×225 mm 版心",
+                        RulePackCoverageStatus.AUTOMATED,
+                        "换算为上 37、下 35、左 28、右 26 mm。",
+                    ),
+                    _coverage(
+                        "5.2.3",
+                        "每面 22 行、每行 28 字",
+                        RulePackCoverageStatus.MANUAL_REVIEW,
+                        "以 28.95 磅固定行距近似版心高度；字数受实际字体与 Word 排版影响。",
+                    ),
+                    _coverage(
+                        "7.3.1",
+                        "主体标题二号小标宋居中",
+                        RulePackCoverageStatus.AUTOMATED,
+                        "对识别为主标题的段落设置 22 磅小标宋居中。",
+                    ),
+                    _coverage(
+                        "7.3.3",
+                        "正文三号仿宋、首行空二字及四级结构字体",
+                        RulePackCoverageStatus.AUTOMATED,
+                        "正文 16 磅仿宋、32 磅首行缩进；四级结构分别黑体、楷体、仿宋、仿宋。",
+                    ),
+                    _coverage(
+                        "7.2/7.4",
+                        "版头与版记固定要素",
+                        RulePackCoverageStatus.UNSUPPORTED,
+                        "当前语义模型与规则模型没有版头、版记和印章专属组件。",
+                    ),
+                    _coverage(
+                        "7.5",
+                        "奇偶页页码及一字线",
+                        RulePackCoverageStatus.UNSUPPORTED,
+                        "当前页码规则不能按奇偶页改变位置或绘制一字线。",
+                    ),
+                ],
+                automated_checks=[
+                    "输出通过 OOXML 内容与结构保护验证",
+                    "A4 与四边版心换算值一致",
+                    "正文仿宋三号、首行缩进与固定行距一致",
+                    "四级结构字体层级一致",
+                ],
+                manual_checks=[
+                    "安装目标字体后在 Word/WPS 检查每页 22 行×28 字",
+                    "逐项核对版头、版记、印章、附件与奇偶页码",
+                ],
+            ),
+            spec=gbt_9704_body_reference_spec(),
+        ),
+        CleanupPresetCatalogItem(
+            preset_id="nankai-thesis-2026-reference-cn",
+            name="南开大学论文 2026 参考",
+            description="执行正文页边距、四级标题、正文、图表题和参考文献；封面、目录与分节页码保留人工流程。",
+            recommended_kinds=[],
+            metadata=_reference_pack_metadata(
+                scope_label="南开大学研究生学位论文写作规范（2026版）可执行子集",
+                source_references=[
+                    RulePackReference(
+                        title="南开大学研究生院：研究生学位论文写作规范",
+                        url="https://graduate.nankai.edu.cn/2017/0222/c23238a56863/page.htm",
+                        version="2026版",
+                    ),
+                ],
+                covered_capabilities=[
+                    "page_layout",
+                    "role_typography",
+                    "table_formatting",
+                    "figure_formatting",
+                ],
+                limitations=[
+                    "这是学校公开指导规范的部分自动化实现，未经南开大学审核、授权或背书。",
+                    "封面、题名页、声明授权书、目录域、公式、引文标注和参考文献著录内容不自动生成或校对。",
+                    "中文摘要与英文 Abstract 标题需要不同字体，当前统一语义角色无法"
+                    "安全区分，因此标题保持原样。",
+                    "前置大写罗马页码、正文阿拉伯页码、动态篇眉和双面印刷起始页需人工设置。",
+                ],
+                coverage_items=[
+                    _coverage(
+                        "4.1",
+                        "A4 与上/下 38 mm、左/右 32 mm 页面设置",
+                        RulePackCoverageStatus.AUTOMATED,
+                        "同时设置页眉页脚距离 30 mm。",
+                    ),
+                    _coverage(
+                        "4.5",
+                        "中英文摘要正文与关键词 12 磅、20 磅行距",
+                        RulePackCoverageStatus.AUTOMATED,
+                        "按中西文字体分别设置宋体与 Times New Roman。",
+                    ),
+                    _coverage(
+                        "4.5",
+                        "中文摘要/Abstract 标题分别使用黑体/Arial 18 磅",
+                        RulePackCoverageStatus.MANUAL_REVIEW,
+                        "当前角色不能安全区分语言标题，保留原样并要求人工核对。",
+                    ),
+                    _coverage(
+                        "4.7",
+                        "章至三级标题层级与正文段落",
+                        RulePackCoverageStatus.AUTOMATED,
+                        "按数字编号模式执行 16/14/13/12 磅标题和 12 磅正文。",
+                    ),
+                    _coverage(
+                        "4.7",
+                        "图题与表题",
+                        RulePackCoverageStatus.AUTOMATED,
+                        "设置宋体五号居中及规范段前段后。",
+                    ),
+                    _coverage(
+                        "4.8",
+                        "参考文献与附录文字",
+                        RulePackCoverageStatus.AUTOMATED,
+                        "参考文献 10.5 磅/16 磅行距，附录正文 12 磅/20 磅行距。",
+                    ),
+                    _coverage(
+                        "3.4",
+                        "篇眉与前后置页码分节",
+                        RulePackCoverageStatus.UNSUPPORTED,
+                        "当前规则不能依据论文组成部分自动切换页码格式和篇眉文字。",
+                    ),
+                ],
+                automated_checks=[
+                    "输出通过 OOXML 内容与结构保护验证",
+                    "页面与页眉页脚距离一致",
+                    "四级标题字号、字体、对齐和间距一致",
+                    "正文、题注、参考文献和附录段落属性一致",
+                ],
+                manual_checks=[
+                    "使用学校官方封面、题名页与声明模板",
+                    "核对摘要标题语言字体、目录、分节页码、篇眉、公式与引文",
+                ],
+            ),
+            spec=nankai_thesis_2026_reference_spec(),
+        ),
+        CleanupPresetCatalogItem(
+            preset_id="bigc-master-thesis-2025-reference-cn",
+            name="北京印刷学院硕士论文 2025 参考",
+            description="执行正文页面、三级标题、正文、图表题和参考文献；模板、装订线和分节页码仍需人工完成。",
+            recommended_kinds=[],
+            metadata=_reference_pack_metadata(
+                scope_label="北京印刷学院硕士学位论文撰写规范（2025年9月）可执行子集",
+                source_references=[
+                    RulePackReference(
+                        title="北京印刷学院研究生院：硕士学位论文撰写规范",
+                        url="https://gs.bigc.edu.cn/docs/2025-09/1f20fd1dc1614ca7ba452d3f7df044d6.pdf",
+                        version="2025年9月",
+                    ),
+                ],
+                covered_capabilities=[
+                    "page_layout",
+                    "role_typography",
+                    "table_formatting",
+                    "figure_formatting",
+                ],
+                limitations=[
+                    "这是学校公开规范的部分自动化实现，未经北京印刷学院审核、授权或背书。",
+                    "10 mm 装订线没有独立写入；封面、书脊、题名页、声明和授权页必须使用学校模板。",
+                    "中文摘要与英文 ABSTRACT 标题需要不同字体，当前统一语义角色无法"
+                    "安全区分，因此标题保持原样。",
+                    "前置罗马页码、正文阿拉伯页码、动态双侧页眉、三线表边框、公式和参考文献内容规范需人工复核。",
+                ],
+                coverage_items=[
+                    _coverage(
+                        "3.14",
+                        "A4 与上 30、下 25、左/右 25 mm 页面设置",
+                        RulePackCoverageStatus.AUTOMATED,
+                        "同时设置页眉 16 mm、页脚 15 mm。",
+                    ),
+                    _coverage(
+                        "3.14",
+                        "10 mm 装订线",
+                        RulePackCoverageStatus.UNSUPPORTED,
+                        "FormattingSpec v1 尚无独立 gutter 字段，不以左页边距冒充装订线。",
+                    ),
+                    _coverage(
+                        "3.4",
+                        "摘要正文与关键词 12 磅、20 磅行距",
+                        RulePackCoverageStatus.AUTOMATED,
+                        "按中西文字体分别设置宋体与 Times New Roman。",
+                    ),
+                    _coverage(
+                        "3.9",
+                        "三级标题与正文段落",
+                        RulePackCoverageStatus.AUTOMATED,
+                        "执行 16/15/14 磅黑体标题和 12 磅正文。",
+                    ),
+                    _coverage(
+                        "3.9.4/3.9.5",
+                        "图题、表题和表内字号",
+                        RulePackCoverageStatus.AUTOMATED,
+                        "题注与表内文字设为宋体/Times New Roman 五号。",
+                    ),
+                    _coverage(
+                        "3.10/3.11",
+                        "参考文献与附录文字",
+                        RulePackCoverageStatus.AUTOMATED,
+                        "统一为 10.5 磅、16 磅固定行距。",
+                    ),
+                    _coverage(
+                        "3.14",
+                        "分节页码和动态页眉",
+                        RulePackCoverageStatus.UNSUPPORTED,
+                        "当前规则不能按前置/主体切换页码格式或填充左右不同的动态页眉。",
+                    ),
+                ],
+                automated_checks=[
+                    "输出通过 OOXML 内容与结构保护验证",
+                    "页面与页眉页脚距离一致",
+                    "三级标题字号、字体、对齐和间距一致",
+                    "正文、题注、表格、参考文献和附录段落属性一致",
+                ],
+                manual_checks=[
+                    "使用学校官方封面、书脊、题名页与声明模板并设置 10 mm 装订线",
+                    "核对摘要标题、目录、三线表、分节页码、动态页眉、公式与引文",
+                ],
+            ),
+            spec=bigc_master_thesis_2025_reference_spec(),
         ),
     ]
 

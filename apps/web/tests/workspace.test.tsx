@@ -114,11 +114,114 @@ describe("Workspace", () => {
   it("renders the Chinese-first local workspace", async () => {
     render(<Workspace />);
     expect(screen.getByRole("heading", { name: "先理解文档，再智能排版" })).toBeInTheDocument();
-    expect(await screen.findByText("常规、干净、可重复")).toBeInTheDocument();
+    expect(await screen.findByText("场景整理与规范参考")).toBeInTheDocument();
     expect(screen.getByText("通用方案 · 非机构合规")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("tab", { name: "自然语言编译" }));
     expect(screen.getByText("兼容模型未配置；默认整理模式仍可直接使用。")).toBeInTheDocument();
     expect(screen.getByText("本地处理")).toBeInTheDocument();
+  });
+
+  it("requires explicit coverage acknowledgment before applying a reference pack", async () => {
+    window.localStorage.setItem(
+      "docalign.workspace.v1",
+      JSON.stringify({ document_id: "doc_reference" }),
+    );
+    mocks.document.mockResolvedValue({
+      document_id: "doc_reference",
+      filename: "thesis.docx",
+      sha256: "reference-sha",
+      size_bytes: 1024,
+      status: "uploaded",
+    });
+    mocks.presets.mockResolvedValue({
+      presets: [
+        {
+          preset_id: "default-clean-cn",
+          name: "常规文档",
+          description: "通用整理。",
+          recommended_kinds: ["other"],
+          metadata: {
+            pack_version: "1.0.0",
+            claim_level: "generic",
+            scope_label: "DocAlign 内置通用整理规则",
+            maintained_by: "DocAlign",
+            last_reviewed_on: "2026-08-29",
+            source_references: [],
+            covered_capabilities: ["page_layout"],
+            limitations: ["不代表机构合规。"],
+          },
+          spec: { schema_version: "formatting-spec.v1", roles: {} },
+        },
+        {
+          preset_id: "nankai-thesis-2026-reference-cn",
+          name: "南开大学论文 2026 参考",
+          description: "执行正文页面与标题，其他条款人工复核。",
+          recommended_kinds: [],
+          metadata: {
+            pack_version: "1.0.0",
+            claim_level: "reference",
+            scope_label: "南开大学 2026 版可执行子集",
+            maintained_by: "DocAlign（依据公开规范整理）",
+            last_reviewed_on: "2026-08-30",
+            source_references: [
+              { title: "南开大学研究生院", url: "https://graduate.nankai.edu.cn", version: "2026版" },
+            ],
+            covered_capabilities: ["page_layout", "role_typography"],
+            coverage_items: [
+              {
+                requirement_id: "4.1",
+                requirement: "页面设置",
+                status: "automated",
+                implementation_note: "自动设置。",
+              },
+              {
+                requirement_id: "3.4",
+                requirement: "篇眉和页码",
+                status: "manual_review",
+                implementation_note: "人工核对。",
+              },
+              {
+                requirement_id: "2.1",
+                requirement: "封面模板",
+                status: "unsupported",
+                implementation_note: "使用官方模板。",
+              },
+            ],
+            acceptance_evidence: {
+              fixture_id: "institutional-reference-smoke-v1",
+              last_passed_on: "2026-08-30",
+              automated_checks: ["页面设置一致"],
+              manual_checks: ["核对封面"],
+            },
+            limitations: ["未经学校审核或背书。"],
+          },
+          spec: {
+            schema_version: "formatting-spec.v1",
+            roles: {},
+            auto_layout: { enabled: false },
+          },
+        },
+      ],
+    });
+
+    render(<Workspace />);
+    const referenceOption = await screen.findByRole("radio", {
+      name: /南开大学论文 2026 参考/,
+    });
+    fireEvent.click(referenceOption);
+
+    expect(screen.getByText("参考规则包 · 部分覆盖")).toBeInTheDocument();
+    expect(screen.getByText("自动执行")).toBeInTheDocument();
+    expect(screen.getByText("人工复核")).toBeInTheDocument();
+    expect(screen.getByText("暂不支持")).toBeInTheDocument();
+    expect(screen.getByText(/institutional-reference-smoke-v1/)).toBeInTheDocument();
+    expect(screen.getByText("人工验收清单")).toBeInTheDocument();
+    expect(screen.getByText("核对封面")).toBeInTheDocument();
+    const formatButton = screen.getByRole("button", { name: "格式化并验证" });
+    expect(formatButton).toBeDisabled();
+
+    fireEvent.click(screen.getByRole("checkbox", { name: /我已查看自动、人工和暂不支持条款/ }));
+    expect(formatButton).toBeEnabled();
   });
 
   it("extracts a reference template and waits for explicit confirmation", async () => {
@@ -220,7 +323,7 @@ describe("Workspace", () => {
     fireEvent.click(screen.getByRole("tab", { name: "默认整理模式" }));
 
     expect((editor as HTMLTextAreaElement).value).toContain('"remove_page_background": true');
-    expect(screen.getByRole("status")).toHaveTextContent("已载入默认整理模式");
+    expect(screen.getByRole("status")).toHaveTextContent("已载入通用整理方案");
   });
 
   it("restores the last local workspace after refresh", async () => {

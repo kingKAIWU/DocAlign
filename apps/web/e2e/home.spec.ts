@@ -57,6 +57,43 @@ test("extracts candidate rules from a reference Word without replacing the works
   await expect(editor).toHaveValue(/"type": "template"/);
 });
 
+test("requires an explicit scope acknowledgment before applying an official reference pack", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("radio", { name: /常规文档/ })).toBeVisible({ timeout: 10_000 });
+  await page.getByLabel("上传待处理 Word 文档").setInputFiles(fixture);
+  await page.getByRole("button", { name: "分析结构" }).click();
+  await expect(page.getByText(/分析完成：确定性分析；19 个段落/)).toBeVisible();
+
+  await page.getByRole("radio", { name: /南开大学论文 2026 参考/ }).click();
+  await expect(page.getByText("参考规则包 · 部分覆盖")).toBeVisible();
+  const coverageMatrix = page.getByRole("list", { name: "规范条款覆盖矩阵" });
+  await expect(coverageMatrix).toContainText("自动执行");
+  await expect(coverageMatrix).toContainText("人工复核");
+  await expect(coverageMatrix).toContainText("暂不支持");
+  await expect(page.getByText("自动验收证据")).toBeVisible();
+  await expect(page.getByText("人工验收清单")).toBeVisible();
+  await expect(page.getByRole("link", { name: /南开大学研究生院/ })).toHaveAttribute(
+    "href",
+    "https://graduate.nankai.edu.cn/2017/0222/c23238a56863/page.htm",
+  );
+  await expect(page.getByRole("checkbox", { name: /自动结构排版/ })).not.toBeChecked();
+
+  const formatButton = page.getByRole("button", { name: "格式化并验证" });
+  await expect(formatButton).toBeDisabled();
+  await expect(page.getByRole("button", { name: "只做格式体检" })).toBeEnabled();
+  await page.getByRole("checkbox", { name: /我已查看自动、人工和暂不支持条款/ }).check();
+  await expect(formatButton).toBeEnabled();
+
+  await page.getByRole("button", { name: "只做格式体检" }).click();
+  await expect(page.getByText(/格式体检完成：发现 \d+ 项偏差/)).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText(/源文件未修改/)).toBeVisible();
+
+  await formatButton.click();
+  await expect(page.getByText("自动排版与格式验证完成；当前文档无需额外拆分正文。"))
+    .toBeVisible({ timeout: 30_000 });
+  await expect(page.getByLabel("排版结果摘要").getByText("格式验证通过")).toBeVisible();
+});
+
 test("saves reusable rule revisions and restores history without duplicate writes", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("radio", { name: /常规文档/ })).toBeVisible({ timeout: 10_000 });

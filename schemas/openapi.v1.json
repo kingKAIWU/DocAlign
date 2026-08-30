@@ -3985,6 +3985,42 @@
         "type": "object",
         "title": "RoleOverrideRequest"
       },
+      "RulePackAcceptanceEvidence": {
+        "properties": {
+          "fixture_id": {
+            "type": "string",
+            "title": "Fixture Id"
+          },
+          "last_passed_on": {
+            "type": "string",
+            "format": "date",
+            "title": "Last Passed On"
+          },
+          "automated_checks": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Automated Checks"
+          },
+          "manual_checks": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Manual Checks"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "fixture_id",
+          "last_passed_on",
+          "automated_checks"
+        ],
+        "title": "RulePackAcceptanceEvidence"
+      },
       "RulePackApprovalStatus": {
         "type": "string",
         "enum": [
@@ -4190,6 +4226,43 @@
           "verified"
         ],
         "title": "RulePackClaimLevel"
+      },
+      "RulePackCoverageItem": {
+        "properties": {
+          "requirement_id": {
+            "type": "string",
+            "title": "Requirement Id"
+          },
+          "requirement": {
+            "type": "string",
+            "title": "Requirement"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RulePackCoverageStatus"
+          },
+          "implementation_note": {
+            "type": "string",
+            "title": "Implementation Note"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "requirement_id",
+          "requirement",
+          "status",
+          "implementation_note"
+        ],
+        "title": "RulePackCoverageItem"
+      },
+      "RulePackCoverageStatus": {
+        "type": "string",
+        "enum": [
+          "automated",
+          "manual_review",
+          "unsupported"
+        ],
+        "title": "RulePackCoverageStatus"
       },
       "RulePackCreateRequest": {
         "properties": {
@@ -4531,6 +4604,23 @@
             },
             "type": "array",
             "title": "Limitations"
+          },
+          "coverage_items": {
+            "items": {
+              "$ref": "#/components/schemas/RulePackCoverageItem"
+            },
+            "type": "array",
+            "title": "Coverage Items"
+          },
+          "acceptance_evidence": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RulePackAcceptanceEvidence"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "additionalProperties": false,

@@ -10,13 +10,17 @@ from docalign_core.domain.formatting_spec import (
     LineSpacingSpec,
     ParagraphSpec,
     RoleFormattingSpec,
+    RulePackCoverageStatus,
     VisualCleanupSpec,
+    bigc_master_thesis_2025_reference_spec,
     cleanup_preset_catalog,
     compact_cleanup_spec,
     contract_cleanup_spec,
     default_academic_spec,
     default_cleanup_spec,
+    gbt_9704_body_reference_spec,
     merge_specs,
+    nankai_thesis_2026_reference_spec,
     normalize_font_size,
     resolve_role_spec,
     wide_table_cleanup_spec,
@@ -102,13 +106,17 @@ def test_cleanup_catalog_covers_compact_contract_and_wide_table_scenarios() -> N
         "compact-clean-cn",
         "contract-clean-cn",
         "wide-table-clean-cn",
+        "gbt-9704-2012-body-reference-cn",
+        "nankai-thesis-2026-reference-cn",
+        "bigc-master-thesis-2025-reference-cn",
     ]
-    assert all(item.metadata.claim_level == "generic" for item in catalog)
+    assert all(item.metadata.claim_level == "generic" for item in catalog[:4])
+    assert all(item.metadata.claim_level == "reference" for item in catalog[4:])
     assert all(item.metadata.pack_version == "1.0.0" for item in catalog)
     assert all(item.metadata.covered_capabilities for item in catalog)
     assert all(
         any("不代表" in limitation for limitation in item.metadata.limitations)
-        for item in catalog
+        for item in catalog[:4]
     )
     compact = compact_cleanup_spec()
     assert compact.roles[SemanticRole.BODY].font.size_pt == 11
@@ -119,6 +127,32 @@ def test_cleanup_catalog_covers_compact_contract_and_wide_table_scenarios() -> N
     assert wide.document is not None
     assert wide.document.page.preserve_existing_landscape_sections
     assert not wide.document.page.force_orientation_all_sections
+
+    for item in catalog[4:]:
+        assert item.metadata.source_references
+        assert item.metadata.coverage_items
+        assert item.metadata.acceptance_evidence is not None
+        statuses = {coverage.status for coverage in item.metadata.coverage_items}
+        assert RulePackCoverageStatus.AUTOMATED in statuses
+        assert RulePackCoverageStatus.UNSUPPORTED in statuses
+        assert item.recommended_kinds == []
+
+
+def test_institutional_reference_specs_keep_structural_rewrites_disabled() -> None:
+    specs = [
+        gbt_9704_body_reference_spec(),
+        nankai_thesis_2026_reference_spec(),
+        bigc_master_thesis_2025_reference_spec(),
+    ]
+
+    assert all(not spec.auto_layout.enabled for spec in specs)
+    assert all(not spec.behavior.apply_to_unknown_roles for spec in specs)
+    assert specs[0].document is not None
+    assert specs[0].document.page.margin_top_mm == 37
+    assert specs[1].document is not None
+    assert specs[1].document.page.margin_left_mm == 32
+    assert specs[2].document is not None
+    assert specs[2].document.page.margin_top_mm == 30
 
 
 def test_visual_cleanup_color_is_normalized() -> None:
@@ -145,9 +179,7 @@ def test_document_baseline_is_inherited_and_role_override_wins() -> None:
             font=FontSpec(east_asia="宋体", ascii="Times New Roman", size_pt=12)
         ),
         roles={
-            SemanticRole.HEADING_1: RoleFormattingSpec(
-                font=FontSpec(east_asia="黑体", size_pt=16)
-            )
+            SemanticRole.HEADING_1: RoleFormattingSpec(font=FontSpec(east_asia="黑体", size_pt=16))
         },
     )
 
@@ -164,9 +196,7 @@ def test_document_baseline_is_inherited_and_role_override_wins() -> None:
 
 def test_hanging_indent_role_replaces_baseline_first_line_indent() -> None:
     spec = FormattingSpec(
-        baseline=RoleFormattingSpec(
-            paragraph=ParagraphSpec(first_line_indent_pt=24)
-        ),
+        baseline=RoleFormattingSpec(paragraph=ParagraphSpec(first_line_indent_pt=24)),
         roles={
             SemanticRole.BIBLIOGRAPHY_ENTRY: RoleFormattingSpec(
                 paragraph=ParagraphSpec(hanging_indent_pt=21)
@@ -184,9 +214,7 @@ def test_first_line_indent_role_replaces_baseline_hanging_indent() -> None:
     spec = FormattingSpec(
         baseline=RoleFormattingSpec(paragraph=ParagraphSpec(hanging_indent_pt=21)),
         roles={
-            SemanticRole.BODY: RoleFormattingSpec(
-                paragraph=ParagraphSpec(first_line_indent_pt=24)
-            )
+            SemanticRole.BODY: RoleFormattingSpec(paragraph=ParagraphSpec(first_line_indent_pt=24))
         },
     )
 

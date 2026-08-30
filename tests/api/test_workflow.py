@@ -94,10 +94,16 @@ def test_complete_structured_api_workflow(academic_docx: Path, tmp_path: Path) -
             "compact-clean-cn",
             "contract-clean-cn",
             "wide-table-clean-cn",
+            "gbt-9704-2012-body-reference-cn",
+            "nankai-thesis-2026-reference-cn",
+            "bigc-master-thesis-2025-reference-cn",
         ]
-        assert all(item["metadata"]["claim_level"] == "generic" for item in preset_items)
+        assert all(item["metadata"]["claim_level"] == "generic" for item in preset_items[:4])
+        assert all(item["metadata"]["claim_level"] == "reference" for item in preset_items[4:])
         assert all(item["metadata"]["pack_version"] == "1.0.0" for item in preset_items)
         assert all(item["metadata"]["limitations"] for item in preset_items)
+        assert all(item["metadata"]["coverage_items"] for item in preset_items[4:])
+        assert all(item["metadata"]["acceptance_evidence"] for item in preset_items[4:])
 
         analysis_response = client.post(f"/api/v1/documents/{document_id}/analyze")
         assert analysis_response.status_code == 201, analysis_response.text
@@ -195,25 +201,22 @@ def test_complete_structured_api_workflow(academic_docx: Path, tmp_path: Path) -
         assert result_summary["validation_passed"] is True
         assert result_summary["content_integrity_passed"] is True
         assert result_summary["changed_mutations"] > 0
-        assert sum(result_summary["change_categories"].values()) == result_summary[
-            "changed_mutations"
-        ]
+        assert (
+            sum(result_summary["change_categories"].values()) == result_summary["changed_mutations"]
+        )
         assert 0 < len(result_summary["change_details"]) <= 32
         assert isinstance(result_summary["change_details_truncated"], bool)
         assert any(item["locator"] for item in result_summary["change_details"])
         assert all(item["property_path"] for item in result_summary["change_details"])
         assert all(
-            item["before_value"] != item["after_value"]
+            item["before_value"] != item["after_value"] for item in result_summary["change_details"]
+        )
+        assert any(
+            item["property_path"] == "section.layout" and "mm" in (item["after_value"] or "")
             for item in result_summary["change_details"]
         )
         assert any(
-            item["property_path"] == "section.layout"
-            and "mm" in (item["after_value"] or "")
-            for item in result_summary["change_details"]
-        )
-        assert any(
-            item["property_path"].startswith("runs.")
-            and "中文字体" in (item["after_value"] or "")
+            item["property_path"].startswith("runs.") and "中文字体" in (item["after_value"] or "")
             for item in result_summary["change_details"]
         )
 
@@ -224,9 +227,9 @@ def test_complete_structured_api_workflow(academic_docx: Path, tmp_path: Path) -
         assert audit.status_code == 200
         audit_payload = audit.json()
         assert audit_payload["validation"]["valid"] is True
-        assert result_summary["remaining_review_items"] == audit_payload["summary"][
-            "unknown_blocks"
-        ]
+        assert (
+            result_summary["remaining_review_items"] == audit_payload["summary"]["unknown_blocks"]
+        )
         audit_markdown = client.get(f"/api/v1/jobs/{job_id}/audit.md")
         assert audit_markdown.status_code == 200
         assert "DocAlign 格式化审计" in audit_markdown.text
@@ -434,8 +437,7 @@ def test_smart_analysis_reviews_plain_semantics_with_configured_model(
             candidate = next(
                 block
                 for block in deterministic.document_ir.blocks
-                if isinstance(block, ParagraphIR)
-                and block.detected_role == SemanticRole.BODY
+                if isinstance(block, ParagraphIR) and block.detected_role == SemanticRole.BODY
             )
             return SemanticAnalysisDraft(
                 document_kind=DocumentKind.ACADEMIC_PAPER,
@@ -450,9 +452,7 @@ def test_smart_analysis_reviews_plain_semantics_with_configured_model(
                 ],
             )
 
-    monkeypatch.setattr(
-        service_module, "OpenAICompatibleSemanticAnalyzer", FakeSemanticAnalyzer
-    )
+    monkeypatch.setattr(service_module, "OpenAICompatibleSemanticAnalyzer", FakeSemanticAnalyzer)
     data_dir = tmp_path / "api-smart-analysis"
     settings = Settings(
         data_dir=data_dir,

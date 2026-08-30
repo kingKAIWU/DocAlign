@@ -38,6 +38,11 @@ const capabilityLabels: Record<string, string> = {
   document_background_cleanup: "高亮、底纹与页面背景清理",
   auto_layout: "标题层级识别与正文自动分段",
 };
+const coverageStatusLabels: Record<string, string> = {
+  automated: "自动执行",
+  manual_review: "人工复核",
+  unsupported: "暂不支持",
+};
 
 type CompilationReport = {
   applied_capabilities: string[];
@@ -87,6 +92,7 @@ export function Workspace() {
   const [defaultSpec, setDefaultSpec] = useState<FormattingSpec | null>(null);
   const [presets, setPresets] = useState<CleanupPreset[]>([]);
   const [selectedPresetId, setSelectedPresetId] = useState("default-clean-cn");
+  const [referenceCoverageAcknowledged, setReferenceCoverageAcknowledged] = useState(false);
   const [serviceOnline, setServiceOnline] = useState<boolean | null>(null);
   const [connectionAttempt, setConnectionAttempt] = useState(0);
   const [compilationReport, setCompilationReport] = useState<CompilationReport | null>(null);
@@ -292,6 +298,23 @@ export function Workspace() {
   );
   const unknownCount = analysis?.summary.unknown_count ?? 0;
   const selectedPreset = presets.find((preset) => preset.preset_id === selectedPresetId);
+  const presetGroups = [
+    {
+      label: "通用整理方案",
+      description: "按文档类型自动推荐",
+      items: presets.filter((preset) => preset.metadata.claim_level === "generic"),
+    },
+    {
+      label: "官方规范参考包",
+      description: "需按覆盖矩阵人工确认",
+      items: presets.filter((preset) => preset.metadata.claim_level !== "generic"),
+    },
+  ].filter((group) => group.items.length > 0);
+  const referencePackNeedsAcknowledgment = Boolean(
+    ruleMode === "default" &&
+    selectedPreset?.metadata.claim_level === "reference" &&
+    !referenceCoverageAcknowledged,
+  );
   const templateRoleMappings = templateCandidate?.role_mappings ?? [];
   const templateAmbiguities = templateCandidate?.ambiguities ?? [];
   const templateUnsupported = templateCandidate?.unsupported_features ?? [];
@@ -363,11 +386,11 @@ export function Workspace() {
         : "确定性分析；";
       setMessage(`分析完成：${smartDetail}${result.summary.paragraph_count} 个段落，${result.summary.unknown_count} 个待确认。`);
       const recommended = presets.find((preset) =>
-        result.document_ir.blocks.some(
+        preset.metadata.claim_level === "generic" && (result.document_ir.blocks.some(
           (block) => block.kind === "table" && block.columns_estimate >= 8,
         )
           ? preset.preset_id === "wide-table-clean-cn"
-          : preset.recommended_kinds.includes(result.summary.document_kind ?? "other"),
+          : preset.recommended_kinds.includes(result.summary.document_kind ?? "other")),
       );
       if (ruleMode === "default" && recommended) selectCleanupPreset(recommended, false);
     } catch (caught) {
@@ -482,13 +505,18 @@ export function Workspace() {
   function selectCleanupPreset(preset: CleanupPreset, announce = true) {
     setRuleMode("default");
     setSelectedPresetId(preset.preset_id);
+    setReferenceCoverageAcknowledged(false);
     setSpecText(JSON.stringify(preset.spec, null, 2));
     setAutoLayout(preset.spec.auto_layout?.enabled ?? true);
     setCompilationReport(null);
     setCompliance(null);
     if (announce) {
       clearNotices();
-      setMessage(`已载入默认整理模式“${preset.name}”：${preset.description}`);
+      setMessage(
+        preset.metadata.claim_level === "generic"
+          ? `已载入通用整理方案“${preset.name}”：${preset.description}`
+          : `已载入规范参考包“${preset.name}”；请先核对自动、人工和未支持条款。`,
+      );
     }
   }
 
@@ -518,6 +546,10 @@ export function Workspace() {
 
   async function startFormatting() {
     if (!document || jobActive) return;
+    if (referencePackNeedsAcknowledgment) {
+      setError("请先查看规范参考包的覆盖矩阵，并确认理解未覆盖条款。");
+      return;
+    }
     setBusy("format");
     clearNotices();
     try {
@@ -752,7 +784,10 @@ export function Workspace() {
           </a>
           <button
             className="button primary"
-            disabled={!document || !specText || Boolean(busy) || jobActive}
+            disabled={
+              !document || !specText || Boolean(busy) || jobActive ||
+              referencePackNeedsAcknowledgment
+            }
             onClick={startFormatting}
           >
             {busy === "format"
@@ -940,34 +975,62 @@ export function Workspace() {
             </div>
             {ruleMode === "default" ? (
               <div className="default-mode-card" role="tabpanel">
-                <strong>常规、干净、可重复</strong>
-                <p>先按文档类型推荐方案，你仍可随时切换；所有方案都统一字体颜色、清除突出与底纹，并保留原文。</p>
-                <div className="preset-grid" role="radiogroup" aria-label="整理方案">
-                  {presets.map((preset) => {
-                    const recommended = analysis
-                      ? analysis.document_ir.blocks.some(
-                          (block) => block.kind === "table" && block.columns_estimate >= 8,
-                        )
-                        ? preset.preset_id === "wide-table-clean-cn"
-                        : preset.recommended_kinds.includes(analysis.summary.document_kind ?? "other")
-                      : preset.preset_id === "default-clean-cn";
-                    return (
-                      <button
-                        key={preset.preset_id}
-                        type="button"
-                        role="radio"
-                        aria-checked={selectedPresetId === preset.preset_id}
-                        className={`preset-option ${selectedPresetId === preset.preset_id ? "active" : ""}`}
-                        onClick={() => selectCleanupPreset(preset)}
-                      >
-                        <strong>{preset.name}{recommended ? " · 推荐" : ""}</strong>
-                        <small>{preset.description}</small>
-                      </button>
-                    );
-                  })}
+                <strong>场景整理与规范参考</strong>
+                <p>
+                  通用方案按文档类型推荐；官方规范参考包只执行覆盖矩阵中的条款，
+                  不会自动宣称完整合规。
+                </p>
+                <div className="preset-groups">
+                  {presetGroups.map((group) => (
+                    <section className="preset-group" key={group.label}>
+                      <header>
+                        <strong>{group.label}</strong>
+                        <span>{group.description}</span>
+                      </header>
+                      <div className="preset-grid" role="radiogroup" aria-label={group.label}>
+                        {group.items.map((preset) => {
+                          const recommended = preset.metadata.claim_level === "generic" && (
+                            analysis
+                              ? analysis.document_ir.blocks.some(
+                                  (block) => block.kind === "table" && block.columns_estimate >= 8,
+                                )
+                                ? preset.preset_id === "wide-table-clean-cn"
+                                : preset.recommended_kinds.includes(
+                                    analysis.summary.document_kind ?? "other",
+                                  )
+                              : preset.preset_id === "default-clean-cn"
+                          );
+                          return (
+                            <button
+                              key={preset.preset_id}
+                              type="button"
+                              role="radio"
+                              aria-checked={selectedPresetId === preset.preset_id}
+                              className={`preset-option ${selectedPresetId === preset.preset_id ? "active" : ""}`}
+                              onClick={() => selectCleanupPreset(preset)}
+                            >
+                              <strong>
+                                {preset.name}
+                                {recommended
+                                  ? " · 推荐"
+                                  : preset.metadata.claim_level === "reference"
+                                    ? " · 部分覆盖"
+                                    : ""}
+                              </strong>
+                              <small>{preset.description}</small>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </section>
+                  ))}
                 </div>
                 {selectedPreset && (
-                  <div className="preset-trust-card" role="note" aria-label="规则来源与适用边界">
+                  <div
+                    className={`preset-trust-card ${selectedPreset.metadata.claim_level === "reference" ? "reference" : ""}`}
+                    role="note"
+                    aria-label="规则来源与适用边界"
+                  >
                     <div>
                       <strong>
                         {selectedPreset.metadata.claim_level === "generic"
@@ -981,9 +1044,11 @@ export function Workspace() {
                     <p>
                       {selectedPreset.metadata.scope_label} · {selectedPreset.metadata.maintained_by} 维护 · {selectedPreset.metadata.last_reviewed_on} 复核
                     </p>
-                    <details>
+                    <details open={selectedPreset.metadata.claim_level === "reference"}>
                       <summary>
-                        查看覆盖范围与限制（{selectedPreset.metadata.limitations.length}）
+                        查看逐条覆盖与限制（
+                        {(selectedPreset.metadata.coverage_items?.length ?? 0) +
+                          selectedPreset.metadata.limitations.length}）
                       </summary>
                       <p>
                         覆盖：{selectedPreset.metadata.covered_capabilities
@@ -1000,12 +1065,66 @@ export function Workspace() {
                           ))}
                         </ul>
                       )}
+                      {(selectedPreset.metadata.coverage_items?.length ?? 0) > 0 && (
+                        <ul className="preset-coverage-list" aria-label="规范条款覆盖矩阵">
+                          {selectedPreset.metadata.coverage_items?.map((item) => (
+                            <li key={`${item.requirement_id}-${item.requirement}`}>
+                              <span className={`coverage-status ${item.status}`}>
+                                {coverageStatusLabels[item.status] ?? item.status}
+                              </span>
+                              <strong>{item.requirement_id} · {item.requirement}</strong>
+                              <p>{item.implementation_note}</p>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      {selectedPreset.metadata.acceptance_evidence && (
+                        <div className="preset-acceptance">
+                          <strong>自动验收证据</strong>
+                          <span>
+                            {selectedPreset.metadata.acceptance_evidence.fixture_id} ·
+                            {selectedPreset.metadata.acceptance_evidence.last_passed_on} ·
+                            {selectedPreset.metadata.acceptance_evidence.automated_checks.length} 项
+                          </span>
+                          <ul>
+                            {selectedPreset.metadata.acceptance_evidence.automated_checks.map(
+                              (check) => <li key={check}>{check}</li>,
+                            )}
+                          </ul>
+                          {(selectedPreset.metadata.acceptance_evidence.manual_checks?.length ?? 0) > 0 && (
+                            <>
+                              <strong className="preset-manual-checks-title">人工验收清单</strong>
+                              <ul>
+                                {selectedPreset.metadata.acceptance_evidence.manual_checks?.map(
+                                  (check) => <li key={check}>{check}</li>,
+                                )}
+                              </ul>
+                            </>
+                          )}
+                        </div>
+                      )}
+                      <strong className="preset-limitations-title">未覆盖与限制</strong>
                       <ul>
                         {selectedPreset.metadata.limitations.map((limitation) => (
                           <li key={limitation}>{limitation}</li>
                         ))}
                       </ul>
                     </details>
+                    {selectedPreset.metadata.claim_level === "reference" && (
+                      <label className="preset-coverage-acknowledgment">
+                        <input
+                          type="checkbox"
+                          checked={referenceCoverageAcknowledged}
+                          onChange={(event) => {
+                            setReferenceCoverageAcknowledged(event.target.checked);
+                            setError("");
+                          }}
+                        />
+                        <span>
+                          我已查看自动、人工和暂不支持条款，理解这不是发布机构认证或完整合规结论。
+                        </span>
+                      </label>
+                    )}
                   </div>
                 )}
                 <button

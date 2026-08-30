@@ -1504,6 +1504,20 @@ export interface components {
             /** Overrides */
             overrides?: components["schemas"]["RoleOverride"][];
         };
+        /** RulePackAcceptanceEvidence */
+        RulePackAcceptanceEvidence: {
+            /** Fixture Id */
+            fixture_id: string;
+            /**
+             * Last Passed On
+             * Format: date
+             */
+            last_passed_on: string;
+            /** Automated Checks */
+            automated_checks: string[];
+            /** Manual Checks */
+            manual_checks?: string[];
+        };
         /**
          * RulePackApprovalStatus
          * @enum {string}
@@ -1589,6 +1603,21 @@ export interface components {
          * @enum {string}
          */
         RulePackClaimLevel: "generic" | "reference" | "verified";
+        /** RulePackCoverageItem */
+        RulePackCoverageItem: {
+            /** Requirement Id */
+            requirement_id: string;
+            /** Requirement */
+            requirement: string;
+            status: components["schemas"]["RulePackCoverageStatus"];
+            /** Implementation Note */
+            implementation_note: string;
+        };
+        /**
+         * RulePackCoverageStatus
+         * @enum {string}
+         */
+        RulePackCoverageStatus: "automated" | "manual_review" | "unsupported";
         /** RulePackCreateRequest */
         RulePackCreateRequest: {
             /** Request Id */
@@ -1728,6 +1757,9 @@ export interface components {
             covered_capabilities: string[];
             /** Limitations */
             limitations: string[];
+            /** Coverage Items */
+            coverage_items?: components["schemas"]["RulePackCoverageItem"][];
+            acceptance_evidence?: components["schemas"]["RulePackAcceptanceEvidence"] | null;
         };
         /** RulePackReference */
         RulePackReference: {
