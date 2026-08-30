@@ -147,6 +147,36 @@ test("completes the local structured formatting workflow and restores it", async
   await expect(resultSummary.getByText("格式验证通过")).toBeVisible();
   await expect(resultSummary.getByText("原文与受保护结构通过")).toBeVisible();
   await expect(resultSummary.getByText("项实际格式调整")).toBeVisible();
+
+  await resultSummary.getByRole("button", { name: "查看格式前后对照" }).click();
+  const comparison = page.getByRole("dialog", { name: "格式前后对照" });
+  await expect(comparison).toBeVisible();
+  await expect(comparison.getByText("预览已就绪")).toHaveCount(2);
+  await expect(comparison.getByText(/浏览器近似渲染/)).toBeVisible();
+  await expect(comparison.locator(".comparison-scroll a[href]")).toHaveCount(0);
+  const sourcePreview = comparison.getByLabel("源文件预览滚动区");
+  const outputPreview = comparison.getByLabel("已验证输出预览滚动区");
+  const sourceRange = await sourcePreview.evaluate((element) => (
+    element.scrollHeight - element.clientHeight
+  ));
+  expect(sourceRange).toBeGreaterThan(0);
+  await sourcePreview.evaluate((element) => {
+    element.scrollTop = Math.min(320, element.scrollHeight - element.clientHeight);
+    element.dispatchEvent(new Event("scroll", { bubbles: true }));
+  });
+  await expect.poll(() => outputPreview.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(comparison).toBeVisible();
+  const panePositions = await comparison.locator(".comparison-pane").evaluateAll((elements) => (
+    elements.map((element) => element.getBoundingClientRect().top)
+  ));
+  expect(panePositions[1]).toBeGreaterThan(panePositions[0]);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth))
+    .toBe(await page.evaluate(() => document.documentElement.clientWidth));
+  await comparison.getByRole("button", { name: "关闭对照" }).click();
+  await page.setViewportSize({ width: 1280, height: 720 });
+
   await resultSummary.getByText(/查看具体改动/).click();
   const firstChangeLocator = resultSummary.getByRole("button", { name: /定位到/ }).first();
   await expect(firstChangeLocator).toBeVisible();

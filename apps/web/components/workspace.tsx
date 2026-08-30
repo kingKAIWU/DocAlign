@@ -3,9 +3,11 @@
 import { ChangeEvent, DragEvent, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 
+import { DocumentComparisonDialog } from "@/components/document-comparison-dialog";
 import { JobOutcomeSummary } from "@/components/job-outcome-summary";
 import { RulePackLibrary } from "@/components/rule-pack-library";
 import { api, ApiError, API_BASE, apiUrl } from "@/lib/api";
+import { renderSafeDocxPreview } from "@/lib/docx-preview";
 import { errorLabels, jobStatusLabels, roleLabels, roles } from "@/lib/messages";
 import type {
   Analysis,
@@ -98,6 +100,7 @@ export function Workspace() {
   const [showOnlyUncertain, setShowOnlyUncertain] = useState(false);
   const [showTextImport, setShowTextImport] = useState(false);
   const [highlightedLocator, setHighlightedLocator] = useState<string | null>(null);
+  const [comparisonOpen, setComparisonOpen] = useState(false);
   const [plainText, setPlainText] = useState("");
   const [plainFilename, setPlainFilename] = useState("未命名文档.docx");
   const previewRef = useRef<HTMLDivElement>(null);
@@ -254,14 +257,8 @@ export function Workspace() {
         return response.blob();
       })
       .then(async (blob) => {
-        const { renderAsync } = await import("docx-preview");
         if (!cancelled && previewRef.current) {
-          await renderAsync(blob, previewRef.current, undefined, {
-            className: "docx-preview-page",
-            inWrapper: true,
-            ignoreWidth: false,
-            ignoreHeight: false,
-          });
+          await renderSafeDocxPreview(blob, previewRef.current, "docx-preview-page");
         }
       })
       .catch(() => {
@@ -880,6 +877,7 @@ export function Workspace() {
                   <JobOutcomeSummary
                     job={job}
                     onLocate={analysis ? locateChange : undefined}
+                    onCompare={() => setComparisonOpen(true)}
                     onReview={analysis && unknownCount > 0
                       ? () => {
                           setShowOnlyUncertain(true);
@@ -1199,6 +1197,17 @@ export function Workspace() {
           </div>
         </aside>
       </section>
+
+      {document && job?.status === "completed" && job.output_document_url && (
+        <DocumentComparisonDialog
+          open={comparisonOpen}
+          sourcePath={`/api/v1/documents/${document.document_id}/source`}
+          outputPath={job.output_document_url}
+          summary={job.result_summary}
+          onClose={() => setComparisonOpen(false)}
+          onLocate={analysis ? locateChange : undefined}
+        />
+      )}
 
       <footer className="app-footer">
         <span>API: {API_BASE}</span>

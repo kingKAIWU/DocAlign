@@ -81,5 +81,6 @@ describe("JobPage", () => {
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
     expect(screen.getByText("格式验证通过")).toBeInTheDocument();
     expect(screen.getByText("查看具体改动（1）")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "查看格式前后对照" })).toBeInTheDocument();
   });
 });

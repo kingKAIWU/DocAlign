@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { DocumentComparisonDialog } from "@/components/document-comparison-dialog";
 import { JobOutcomeSummary } from "@/components/job-outcome-summary";
 import { api, ApiError, apiUrl } from "@/lib/api";
 import { jobStatusLabels } from "@/lib/messages";
@@ -14,6 +15,7 @@ export function JobPageClient() {
   const jobId = searchParams.get("jobId")?.trim() ?? "";
   const [job, setJob] = useState<Job | null>(null);
   const [connectionMessage, setConnectionMessage] = useState("");
+  const [comparisonOpen, setComparisonOpen] = useState(false);
 
   useEffect(() => {
     if (!jobId) return;
@@ -77,7 +79,9 @@ export function JobPageClient() {
             {job?.error_code && <div className="job-error"><strong>{job.error_code}</strong><p>{job.error_message}</p></div>}
             {job?.status === "completed" && (
               <>
-                <div className="standalone-outcome"><JobOutcomeSummary job={job} /></div>
+                <div className="standalone-outcome">
+                  <JobOutcomeSummary job={job} onCompare={() => setComparisonOpen(true)} />
+                </div>
                 <div className="download-row standalone">
                   <a className="button primary" href={apiUrl(job.output_document_url)}>下载格式化 DOCX</a>
                   <a className="button secondary" href={apiUrl(job.audit_json_url)}>下载审计 JSON</a>
@@ -88,6 +92,15 @@ export function JobPageClient() {
           </>
         )}
       </section>
+      {job?.status === "completed" && job.output_document_url && (
+        <DocumentComparisonDialog
+          open={comparisonOpen}
+          sourcePath={`/api/v1/documents/${job.document_id}/source`}
+          outputPath={job.output_document_url}
+          summary={job.result_summary}
+          onClose={() => setComparisonOpen(false)}
+        />
+      )}
     </main>
   );
 }

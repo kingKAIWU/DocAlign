@@ -321,6 +321,7 @@ describe("Workspace", () => {
     expect(screen.getByText("原文与受保护结构通过")).toBeInTheDocument();
     expect(screen.getByText("62")).toBeInTheDocument();
     expect(screen.getByText("标题与段落")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "查看格式前后对照" })).toBeInTheDocument();
     fireEvent.click(screen.getByText("查看具体改动（1）"));
     expect(screen.getByText("Normal")).toBeInTheDocument();
     expect(screen.getByText("DA Body")).toBeInTheDocument();

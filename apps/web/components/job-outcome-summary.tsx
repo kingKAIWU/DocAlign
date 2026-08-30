@@ -15,6 +15,7 @@ type JobOutcomeSummaryProps = {
   job: Job;
   onReview?: () => void;
   onLocate?: (locator: string) => void;
+  onCompare?: () => void;
 };
 
 const changePropertyLabels: Record<string, string> = {
@@ -34,21 +35,30 @@ const changePropertyLabels: Record<string, string> = {
   "visual_cleanup.remove_page_background": "页面背景",
 };
 
-function changePropertyLabel(propertyPath: string): string {
+export function changePropertyLabel(propertyPath: string): string {
   if (propertyPath.startsWith("styles.")) return "角色样式";
   if (propertyPath.startsWith("runs.")) return "文字字体与强调";
   return changePropertyLabels[propertyPath] ?? "其他格式";
 }
 
-export function JobOutcomeSummary({ job, onReview, onLocate }: JobOutcomeSummaryProps) {
+export function JobOutcomeSummary({ job, onReview, onLocate, onCompare }: JobOutcomeSummaryProps) {
   const summary = job.result_summary;
   if (!summary) {
     return (
-      <p>
-        源文件未修改；{job.auto_layout_splits > 0
-          ? `已安全重构 ${job.auto_layout_splits} 处连续正文。`
-          : "未发现需要拆分的连续正文。"}
-      </p>
+      <>
+        <p>
+          源文件未修改；{job.auto_layout_splits > 0
+            ? `已安全重构 ${job.auto_layout_splits} 处连续正文。`
+            : "未发现需要拆分的连续正文。"}
+        </p>
+        {onCompare && (
+          <div className="outcome-actions">
+            <button type="button" className="outcome-compare-button" onClick={onCompare}>
+              查看格式前后对照
+            </button>
+          </div>
+        )}
+      </>
     );
   }
 
@@ -144,10 +154,19 @@ export function JobOutcomeSummary({ job, onReview, onLocate }: JobOutcomeSummary
           {paragraphChange ? `（${paragraphChange}）` : ""}。
         </p>
       )}
-      {summary.remaining_review_items > 0 && onReview && (
-        <button type="button" className="outcome-review-button" onClick={onReview}>
-          查看待确认段落
-        </button>
+      {(onCompare || (summary.remaining_review_items > 0 && onReview)) && (
+        <div className="outcome-actions">
+          {onCompare && (
+            <button type="button" className="outcome-compare-button" onClick={onCompare}>
+              查看格式前后对照
+            </button>
+          )}
+          {summary.remaining_review_items > 0 && onReview && (
+            <button type="button" className="outcome-review-button" onClick={onReview}>
+              查看待确认段落
+            </button>
+          )}
+        </div>
       )}
     </section>
   );
