@@ -87,6 +87,20 @@ export default function SettingsPage() {
     }
   }
 
+  async function quitDesktop() {
+    if (!window.confirm("安全退出 DocAlign？正在处理的任务会先完成安全收尾，然后应用停止运行。源文件和已完成结果都会保留。")) return;
+    setBusy("quit");
+    setError("");
+    setMessage("");
+    try {
+      await api.quitDesktop();
+      setMessage("DocAlign 正在安全退出。任务收尾和本地数据关闭完成后，你可以关闭这个浏览器页面。");
+    } catch (caught) {
+      setError(readableError(caught));
+      setBusy(null);
+    }
+  }
+
   async function deleteBatch(item: StorageBatchItem) {
     if (!window.confirm(`永久删除批次“${item.name}”及其 ${item.item_count} 份源文件、分析、作业、输出和审计？共享规则包不会被删除。`)) return;
     setBusy(`batch:${item.batch_id}`);
@@ -138,6 +152,17 @@ export default function SettingsPage() {
         <div className="setting-row"><span>单批文件数</span><b>{capabilities?.max_batch_files ?? 20} 个</b></div>
         <div className="setting-row"><span>单批总大小</span><b>{capabilities?.max_batch_total_mb ?? 200} MB</b></div>
       </section>
+
+      {capabilities?.desktop_app && <section className="settings-card app-lifecycle-card">
+        <div>
+          <p className="eyebrow">APPLICATION LIFECYCLE</p>
+          <h2>安全退出 DocAlign</h2>
+          <p>关闭浏览器页面不会停止本地任务。完成使用后请从这里退出；正在处理的任务会先安全收尾，源文件、规则和已完成结果不会被删除。</p>
+        </div>
+        <button className="button danger" disabled={Boolean(busy)} onClick={() => void quitDesktop()}>
+          {busy === "quit" ? "正在安全退出…" : "安全退出应用"}
+        </button>
+      </section>}
 
       <section className="settings-card storage-card">
         <div className="storage-heading">

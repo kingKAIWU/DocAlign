@@ -253,7 +253,17 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         port = select_port(arguments.port)
         settings = desktop_settings(data_dir)
-        application = create_app(settings, static_dir=static_dir)
+        server_holder: list[uvicorn.Server] = []
+
+        def request_shutdown() -> None:
+            if server_holder:
+                server_holder[0].should_exit = True
+
+        application = create_app(
+            settings,
+            static_dir=static_dir,
+            desktop_shutdown=request_shutdown,
+        )
         _write_runtime_file(runtime_file, port)
         if not arguments.no_browser:
             threading.Thread(
@@ -262,13 +272,16 @@ def main(argv: Sequence[str] | None = None) -> int:
                 daemon=True,
                 name="docalign-browser-opener",
             ).start()
-        uvicorn.run(
+        config = uvicorn.Config(
             application,
             host=HOST,
             port=port,
             access_log=False,
             log_level="info",
         )
+        server = uvicorn.Server(config)
+        server_holder.append(server)
+        server.run()
         return 0
     finally:
         runtime_file.unlink(missing_ok=True)

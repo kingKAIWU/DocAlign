@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Annotated
@@ -20,7 +20,7 @@ from docalign_core.domain.manifest import FormatManifest
 from docalign_core.domain.rule_pack import RulePackArtifact
 from docalign_core.domain.template_candidate import TemplateRuleCandidate
 from docalign_core.domain.workspace import WorkspaceStorageReport
-from fastapi import FastAPI, File, Form, Query, Request, UploadFile
+from fastapi import BackgroundTasks, FastAPI, File, Form, Query, Request, UploadFile
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -56,7 +56,11 @@ from apps.api.storage import LocalStorage
 from apps.api.workspace import WorkspaceService
 
 
-def create_app(settings: Settings | None = None, static_dir: Path | None = None) -> FastAPI:
+def create_app(
+    settings: Settings | None = None,
+    static_dir: Path | None = None,
+    desktop_shutdown: Callable[[], None] | None = None,
+) -> FastAPI:
     settings = settings or Settings()
     settings.data_dir.mkdir(parents=True, exist_ok=True)
     database = Database(settings.database_url)
@@ -140,7 +144,40 @@ def create_app(settings: Settings | None = None, static_dir: Path | None = None)
             "max_batch_total_mb": settings.max_batch_total_mb,
             "max_upload_mb": settings.max_upload_mb,
             "local_only": True,
+            "desktop_app": desktop_shutdown is not None,
         }
+
+    @application.post("/api/v1/system/quit", status_code=202)
+    def quit_desktop(request: Request, background_tasks: BackgroundTasks) -> dict[str, str]:
+        if desktop_shutdown is None:
+            raise ApiError(
+                404,
+                "DESKTOP_ACTION_UNAVAILABLE",
+                "The desktop shutdown action is not available in this runtime.",
+            )
+        if request.headers.get("x-docalign-action") != "quit":
+            raise ApiError(
+                403,
+                "DESKTOP_ACTION_FORBIDDEN",
+                "The desktop shutdown action requires an explicit same-origin request.",
+            )
+        fetch_site = request.headers.get("sec-fetch-site")
+        if fetch_site and fetch_site not in {"same-origin", "none"}:
+            raise ApiError(
+                403,
+                "DESKTOP_ACTION_FORBIDDEN",
+                "Cross-site desktop actions are not allowed.",
+            )
+        origin = request.headers.get("origin")
+        expected_origin = f"{request.url.scheme}://{request.url.netloc}"
+        if origin and origin != expected_origin:
+            raise ApiError(
+                403,
+                "DESKTOP_ACTION_FORBIDDEN",
+                "Cross-origin desktop actions are not allowed.",
+            )
+        background_tasks.add_task(desktop_shutdown)
+        return {"status": "shutting_down"}
 
     @application.get("/api/v1/diagnostics")
     def diagnostics() -> SupportDiagnosticReport:

@@ -83,6 +83,7 @@ export type Capabilities = {
   max_batch_total_mb: number;
   max_upload_mb: number;
   local_only: boolean;
+  desktop_app: boolean;
 };
 
 export type Job = components["schemas"]["JobResponse"];

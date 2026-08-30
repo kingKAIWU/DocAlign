@@ -46,6 +46,28 @@
         }
       }
     },
+    "/api/v1/system/quit": {
+      "post": {
+        "summary": "Quit Desktop",
+        "operationId": "quit_desktop_api_v1_system_quit_post",
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Quit Desktop Api V1 System Quit Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/diagnostics": {
       "get": {
         "summary": "Diagnostics",

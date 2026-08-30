@@ -39,6 +39,24 @@ def _wait_for_page(url: str, expected: bytes, process: subprocess.Popen[bytes]) 
     raise RuntimeError(f"DocAlign did not serve {url}: {last_error}")
 
 
+def _request_graceful_shutdown(port: int) -> None:
+    origin = f"http://{HOST}:{port}"
+    request = urllib.request.Request(
+        f"{origin}/api/v1/system/quit",
+        data=b"{}",
+        method="POST",
+        headers={
+            "Content-Type": "application/json",
+            "X-DocAlign-Action": "quit",
+            "Origin": origin,
+            "Sec-Fetch-Site": "same-origin",
+        },
+    )
+    with urllib.request.urlopen(request, timeout=5) as response:
+        if response.status != 202 or b"shutting_down" not in response.read():
+            raise RuntimeError("The distribution rejected its graceful shutdown request.")
+
+
 def smoke_distribution(launcher: Path) -> None:
     if not launcher.is_file():
         raise RuntimeError(f"Distribution launcher does not exist: {launcher}")
@@ -72,13 +90,22 @@ def smoke_distribution(launcher: Path) -> None:
                 raise RuntimeError("A second launch did not activate the existing instance.")
             if (launch_dir / "data").exists():
                 raise RuntimeError("The distribution wrote data into its launch directory.")
+            _request_graceful_shutdown(port)
+            process.wait(timeout=20)
+            if process.returncode != 0:
+                raise RuntimeError(
+                    f"DocAlign returned {process.returncode} after graceful shutdown."
+                )
+            if (data_dir / "runtime.json").exists():
+                raise RuntimeError("Graceful shutdown left stale runtime metadata behind.")
         finally:
-            process.terminate()
-            try:
-                process.wait(timeout=10)
-            except subprocess.TimeoutExpired:  # pragma: no cover - defensive cleanup
-                process.kill()
-                process.wait(timeout=5)
+            if process.poll() is None:
+                process.terminate()
+                try:
+                    process.wait(timeout=10)
+                except subprocess.TimeoutExpired:  # pragma: no cover - defensive cleanup
+                    process.kill()
+                    process.wait(timeout=5)
 
 
 def _build_parser() -> argparse.ArgumentParser:

@@ -15,7 +15,9 @@ Developer ID 或 Windows Authenticode 证书签名，也没有自动更新器，
 1. 从 GitHub Actions 的 `distribution` 工作流下载与机器架构对应的 macOS ZIP。
 2. 解压后把 `DocAlign.app` 拖到“应用程序”。
 3. 双击启动；应用会自动打开浏览器。再次启动只会打开已运行的同一个工作台，不会创建第二套服务。
-4. 未签名测试版首次运行可能被 Gatekeeper 阻止。内部测试者可在 Finder 中按住 Control 点击应用，
+4. 完成使用后进入“设置”，点击“安全退出应用”。只关闭浏览器页面不会停止后台任务；安全退出会先
+   等待正在处理的任务收尾，再关闭数据库与本地服务，且不会删除源文件、规则或结果。
+5. 未签名测试版首次运行可能被 Gatekeeper 阻止。内部测试者可在 Finder 中按住 Control 点击应用，
    选择“打开”并确认；公开发行前应完成签名与公证，不能要求普通用户长期绕过系统保护。
 
 ### Windows
@@ -23,7 +25,8 @@ Developer ID 或 Windows Authenticode 证书签名，也没有自动更新器，
 1. 从 GitHub Actions 下载 Windows ZIP，并完整解压到一个固定目录。
 2. 双击目录内的 `DocAlign.exe`；不要只把 EXE 单独移出，因为 `_internal` 包含运行依赖。
 3. 应用会自动打开浏览器。重复双击会复用当前本地实例。
-4. 未签名测试版可能显示 SmartScreen 提示。公开发行前应完成 Authenticode 签名并提供安装器。
+4. 完成使用后进入“设置”，点击“安全退出应用”；不要直接在任务运行时结束进程。
+5. 未签名测试版可能显示 SmartScreen 提示。公开发行前应完成 Authenticode 签名并提供安装器。
 
 默认工作数据不会写入应用安装目录：
 
@@ -62,15 +65,18 @@ dist\distribution\DocAlign\DocAlign.exe --self-test
 
 自检会在临时目录验证静态网站资源和完整数据库迁移，不读取或修改用户工作区。构建脚本默认先清理明确的
 `dist/distribution` 与 `build/pyinstaller` 目录，并拒绝把项目根目录或更宽的路径作为清理目标。
-CI 还会实际启动产物，访问健康检查、主页和设置页，再启动第二次确认它复用现有实例，避免出现
-“文件能生成但应用打不开”的假阳性。
+CI 还会实际启动产物，访问健康检查、主页和设置页，再启动第二次确认它复用现有实例，最后通过与
+设置页相同的受限接口优雅退出并确认运行元数据已清理，避免出现“文件能生成但应用打不开/关不掉”
+的假阳性。
 
 实现依据：Next.js 的[静态导出指南](https://nextjs.org/docs/app/guides/static-exports)说明
 `output: 'export'` 会生成可由任意 Web 服务器托管的 `out`；PyInstaller 的
 [官方手册](https://pyinstaller.org/en/stable/)说明产物包含解释器和依赖、用户无需另装 Python，
 同时明确它不是跨平台编译器；[使用说明](https://pyinstaller.org/en/stable/usage.html)将 one-folder
 列为默认模式；[spec 文件说明](https://pyinstaller.org/en/stable/spec-files.html)定义了把网站与迁移
-作为 `datas` 放入产物的方式。
+作为 `datas` 放入产物的方式。桌面启动器使用 Uvicorn 官方建议的
+[`Config` 与 `Server` 生命周期接口](https://www.uvicorn.org/#config-and-server-instances)，退出时先
+完成 FastAPI lifespan 清理，再删除运行元数据并释放单实例锁。
 
 ## 正式公开发行前的剩余门槛
 

@@ -292,6 +292,11 @@ a { color: inherit; }
 .settings-nav .back-link { margin-bottom: 0; }
 .settings-intro { margin: 13px 0 35px; color: var(--muted); }
 .settings-card { margin-top: 14px; background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow); }
+.app-lifecycle-card { padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border-color: #d8b9b3; background: #fffaf8; }
+.app-lifecycle-card > div { min-width: 0; }
+.app-lifecycle-card h2 { margin: 2px 0 5px; font-family: var(--serif); font-size: 19px; }
+.app-lifecycle-card p:last-child { max-width: 760px; margin: 0; color: var(--muted); font-size: 11px; line-height: 1.6; }
+.app-lifecycle-card .button { flex: 0 0 auto; }
 .setting-row { min-height: 58px; padding: 0 18px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); font-size: 12px; }
 .setting-row:last-child { border-bottom: 0; }
 .setting-row span { color: var(--muted); }
@@ -474,6 +479,8 @@ a { color: inherit; }
   .app-footer { flex-direction: column; gap: 5px; }
   .settings-shell { width: min(100% - 24px, 1040px); padding-top: 24px; }
   .settings-nav { margin-bottom: 38px; }
+  .app-lifecycle-card { align-items: stretch; flex-direction: column; gap: 14px; }
+  .app-lifecycle-card .button { width: 100%; }
   .storage-heading { align-items: stretch; flex-direction: column; gap: 14px; }
   .storage-overview { grid-template-columns: 1fr 1fr; }
   .storage-categories > div { grid-template-columns: minmax(105px, 1fr) minmax(90px, 1.4fr) 62px; gap: 8px; }

@@ -10,7 +10,8 @@ DocAlign 是一个本地优先、确定性执行的 DOCX 自动排版与格式�
 
 仓库已提供 macOS 与 Windows 的可重复桌面构建：静态工作台和 FastAPI 在同一个仅监听本机的
 应用中运行，最终用户无需安装 Python 或 Node.js。GitHub Actions 会分别在两个系统构建并运行
-隔离自检。当前产物尚未代码签名、公证或接入自动更新，因此是内部测试分发版，不是公开正式发行版。
+隔离自检；设置页提供受同源请求保护的安全退出入口，先等待任务收尾再关闭数据库与本地服务。
+当前产物尚未代码签名、公证或接入自动更新，因此是内部测试分发版，不是公开正式发行版。
 安装、升级、卸载、构建和剩余发行门槛见 [桌面分发与安装](docs/DISTRIBUTION.md)。
 
 ## 核心能力
@@ -242,6 +243,7 @@ uv run docalign spec compile \
 | `GET /api/v1/jobs/{id}/audit.md` | 下载人工审计报告 |
 | `GET /api/v1/diagnostics` | 运行隐私安全的本机诊断 |
 | `GET /api/v1/diagnostics/export` | 下载可先审阅的支持诊断 JSON |
+| `POST /api/v1/system/quit` | 仅桌面分发版可用；同源确认后安全退出应用 |
 | `GET /api/v1/workspace/storage` | 获取分类存储、磁盘余量和可清理项目清单 |
 
 完整接口定义位于 [schemas/openapi.v1.json](schemas/openapi.v1.json)，生成的独立数据模型包括：

@@ -205,6 +205,12 @@ export const api = {
       signal,
       cache: "no-store",
     }),
+  quitDesktop: () =>
+    request<{ status: "shutting_down" }>("/system/quit", {
+      method: "POST",
+      headers: { "X-DocAlign-Action": "quit" },
+      body: "{}",
+    }),
   retryBatchItem: (batchId: string, itemId: string, requestId: string) =>
     request<BatchAudit>(`/batches/${batchId}/items/${itemId}/retry`, {
       method: "POST",

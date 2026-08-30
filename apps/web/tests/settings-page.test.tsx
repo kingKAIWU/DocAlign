@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   capabilities: vi.fn(),
   workspaceStorage: vi.fn(),
   diagnostics: vi.fn(),
+  quitDesktop: vi.fn(),
   deleteBatch: vi.fn(),
   deleteDocument: vi.fn(),
 }));
@@ -154,6 +155,7 @@ describe("SettingsPage storage center", () => {
     window.localStorage.clear();
     mocks.capabilities.mockResolvedValue({
       local_only: true,
+      desktop_app: false,
       llm_configured: false,
       max_upload_mb: 20,
       max_batch_files: 20,
@@ -163,6 +165,7 @@ describe("SettingsPage storage center", () => {
     mocks.deleteDocument.mockResolvedValue(undefined);
     mocks.workspaceStorage.mockResolvedValue(report);
     mocks.diagnostics.mockResolvedValue(diagnosticReport);
+    mocks.quitDesktop.mockResolvedValue({ status: "shutting_down" });
   });
 
   afterEach(() => cleanup());
@@ -226,5 +229,24 @@ describe("SettingsPage storage center", () => {
       "http://127.0.0.1:8000/api/v1/diagnostics/export",
     );
     expect(mocks.diagnostics).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows an explicit desktop-only safe exit action", async () => {
+    mocks.capabilities.mockResolvedValueOnce({
+      local_only: true,
+      desktop_app: true,
+      llm_configured: false,
+      max_upload_mb: 20,
+      max_batch_files: 20,
+      max_batch_total_mb: 200,
+    });
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+
+    render(<SettingsPage />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "安全退出应用" }));
+    await waitFor(() => expect(mocks.quitDesktop).toHaveBeenCalledTimes(1));
+    expect(screen.getByText(/DocAlign 正在安全退出/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "正在安全退出…" })).toBeDisabled();
   });
 });
