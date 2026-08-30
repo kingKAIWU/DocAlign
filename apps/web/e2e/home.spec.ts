@@ -61,7 +61,9 @@ test("saves reusable rule revisions and restores history without duplicate write
   await page.getByRole("tab", { name: "我的规则包" }).click();
 
   const saveDetails = page.locator(".rule-pack-save");
-  if (!(await saveDetails.getAttribute("open"))) await saveDetails.locator("summary").click();
+  if (!(await saveDetails.evaluate((element) => (element as HTMLDetailsElement).open))) {
+    await saveDetails.locator("summary").click();
+  }
   const uniqueName = `端到端月报规则-${Date.now()}`;
   await page.getByLabel("规则包名称").fill(uniqueName);
   await page.getByLabel("具体适用范围").fill("端到端测试内部月报");
@@ -70,7 +72,9 @@ test("saves reusable rule revisions and restores history without duplicate write
   await expect(page.getByText(`已保存“${uniqueName}”修订 1。`)).toBeVisible();
   await expect(page.locator(".rule-pack-history").getByText(uniqueName)).toBeVisible();
 
-  if (!(await saveDetails.getAttribute("open"))) await saveDetails.locator("summary").click();
+  if (!(await saveDetails.evaluate((element) => (element as HTMLDetailsElement).open))) {
+    await saveDetails.locator("summary").click();
+  }
   await page.getByLabel("本次变更说明").fill("验证第二个不可变修订");
   await page.getByRole("button", { name: "保存到所选包的新修订" }).click();
   await expect(page.getByText(`已创建“${uniqueName}”修订 2。`)).toBeVisible();
@@ -127,7 +131,7 @@ test("completes the local structured formatting workflow and restores it", async
 
   const jobId = auditUrl?.match(/\/jobs\/([^/]+)\/audit\.json$/)?.[1];
   expect(jobId).toBeTruthy();
-  await page.goto(`/jobs/${jobId}`);
+  await page.goto(`/jobs?jobId=${jobId}`);
   await expect(page.getByRole("heading", { name: "任务状态" })).toBeVisible();
   await expect(page.getByText("已完成", { exact: true })).toBeVisible();
   await expect(page.getByLabel("排版结果摘要").getByText("格式验证通过")).toBeVisible();

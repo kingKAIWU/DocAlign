@@ -25,7 +25,7 @@ API 启动时会对当前 `DOCALIGN_DATABASE_URL` 自动执行向后兼容的数
 终端一：
 
 ```bash
-uv run uvicorn apps.api.main:app --host 127.0.0.1 --port 8000
+uv run uvicorn apps.api.main:create_app --factory --host 127.0.0.1 --port 8000
 ```
 
 终端二：

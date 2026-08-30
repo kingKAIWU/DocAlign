@@ -25,6 +25,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response
+from fastapi.staticfiles import StaticFiles
 
 from apps.api.batches import BatchService
 from apps.api.db import Database
@@ -55,7 +56,7 @@ from apps.api.storage import LocalStorage
 from apps.api.workspace import WorkspaceService
 
 
-def create_app(settings: Settings | None = None) -> FastAPI:
+def create_app(settings: Settings | None = None, static_dir: Path | None = None) -> FastAPI:
     settings = settings or Settings()
     settings.data_dir.mkdir(parents=True, exist_ok=True)
     database = Database(settings.database_url)
@@ -425,6 +426,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             job.audit_markdown_path, media_type="text/markdown", filename="audit.md"
         )
 
+    if static_dir is not None:
+        web_root = static_dir.resolve()
+        if not (web_root / "index.html").is_file():
+            raise ValueError(f"Static web build is missing index.html: {web_root}")
+        application.mount("/", StaticFiles(directory=web_root, html=True), name="web")
+
     return application
 
 
@@ -438,6 +445,3 @@ def _error_response(
         status_code=status_code,
         content={"error": {"code": code, "message": message, "details": details or {}}},
     )
-
-
-app = create_app()

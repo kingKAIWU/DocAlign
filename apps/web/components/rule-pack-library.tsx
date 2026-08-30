@@ -41,6 +41,7 @@ function newRequestId(): string {
 
 export function RulePackLibrary({ specText, disabled, onApply }: RulePackLibraryProps) {
   const [catalog, setCatalog] = useState<RulePackCatalogItem[]>([]);
+  const [catalogLoaded, setCatalogLoaded] = useState(false);
   const [selectedPackId, setSelectedPackId] = useState("");
   const [detail, setDetail] = useState<RulePackDetail | null>(null);
   const [selectedRevision, setSelectedRevision] = useState<number | null>(null);
@@ -80,7 +81,10 @@ export function RulePackLibrary({ specText, disabled, onApply }: RulePackLibrary
         }
       })
       .finally(() => {
-        if (active) setBusy(null);
+        if (active) {
+          setCatalogLoaded(true);
+          setBusy(null);
+        }
       });
     return () => {
       active = false;
@@ -381,7 +385,7 @@ export function RulePackLibrary({ specText, disabled, onApply }: RulePackLibrary
         </div>
       )}
 
-      <details className="rule-pack-save" open={catalog.length === 0}>
+      {catalogLoaded && <details className="rule-pack-save" open={catalog.length === 0}>
         <summary>{detail ? "保存当前规则" : "创建第一个规则包"}</summary>
         <div className="rule-pack-fields">
           <label htmlFor="rule-pack-name">规则包名称</label>
@@ -449,7 +453,7 @@ export function RulePackLibrary({ specText, disabled, onApply }: RulePackLibrary
             </button>
           </div>
         </div>
-      </details>
+      </details>}
 
       {(notice || error) && (
         <p className={`rule-pack-message ${error ? "error" : "success"}`} role="status">

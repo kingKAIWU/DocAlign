@@ -1,12 +1,12 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import JobPage from "@/app/jobs/[jobId]/page";
+import { JobPageClient } from "@/app/jobs/job-page-client";
 
 const mocks = vi.hoisted(() => ({ job: vi.fn() }));
 
 vi.mock("next/navigation", () => ({
-  useParams: () => ({ jobId: "job_reconnect" }),
+  useSearchParams: () => new URLSearchParams("jobId=job_reconnect"),
 }));
 
 vi.mock("@/lib/api", () => ({
@@ -72,7 +72,7 @@ describe("JobPage", () => {
       updated_at: "2026-08-28T00:00:01Z",
     });
 
-    render(<JobPage />);
+    render(<JobPageClient />);
 
     expect(await screen.findByText("进度连接暂时中断，任务仍在本地运行，正在自动恢复…"))
       .toBeInTheDocument();

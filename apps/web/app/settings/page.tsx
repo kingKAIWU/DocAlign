@@ -39,6 +39,7 @@ const diagnosticOverallLabels: Record<SupportDiagnosticReport["overall"], string
 };
 
 export default function SettingsPage() {
+  const packagedMode = API_BASE.startsWith("/");
   const [capabilities, setCapabilities] = useState<Capabilities | null>(null);
   const [storage, setStorage] = useState<WorkspaceStorageReport | null>(null);
   const [diagnostic, setDiagnostic] = useState<SupportDiagnosticReport | null>(null);
@@ -215,7 +216,12 @@ export default function SettingsPage() {
 
       <section className="settings-card prose-card">
         <h2>启用自然语言规则编译</h2>
-        <p>在项目根目录的 <code>.env</code> 设置下列变量，然后重启 API。完整文档不会发送给模型；只发送格式要求和结构统计。</p>
+        <p>
+          {packagedMode
+            ? "桌面分发版只从启动进程的系统环境变量读取兼容模型配置，不读取当前目录中的 .env。重启 DocAlign 后生效。"
+            : <>在项目根目录的 <code>.env</code> 设置下列变量，然后重启 API。</>}
+          完整文档不会发送给模型；只发送格式要求和结构统计。
+        </p>
         <pre>{`DOCALIGN_LLM_BASE_URL=https://your-endpoint.example/v1
 DOCALIGN_LLM_API_KEY=...
 DOCALIGN_LLM_MODEL=your-model

@@ -5,7 +5,7 @@ export default defineConfig({
   use: { baseURL: "http://127.0.0.1:3000", trace: "on-first-retry" },
   webServer: [
     {
-      command: "uv run uvicorn apps.api.main:app --host 127.0.0.1 --port 8000",
+      command: "uv run uvicorn apps.api.main:create_app --factory --host 127.0.0.1 --port 8000",
       cwd: "../..",
       url: "http://127.0.0.1:8000/api/v1/health",
       reuseExistingServer: true,

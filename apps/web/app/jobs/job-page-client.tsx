@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { JobOutcomeSummary } from "@/components/job-outcome-summary";
@@ -9,12 +9,15 @@ import { api, ApiError, apiUrl } from "@/lib/api";
 import { jobStatusLabels } from "@/lib/messages";
 import type { Job } from "@/lib/types";
 
-export default function JobPage() {
-  const params = useParams<{ jobId: string }>();
+export function JobPageClient() {
+  const searchParams = useSearchParams();
+  const jobId = searchParams.get("jobId")?.trim() ?? "";
   const [job, setJob] = useState<Job | null>(null);
   const [connectionMessage, setConnectionMessage] = useState("");
 
   useEffect(() => {
+    if (!jobId) return;
+
     let active = true;
     let timeout: number | undefined;
     let controller: AbortController | undefined;
@@ -24,7 +27,7 @@ export default function JobPage() {
       controller = new AbortController();
       const requestTimeout = window.setTimeout(() => controller?.abort(), 10_000);
       try {
-        const next = await api.job(params.jobId, controller.signal);
+        const next = await api.job(jobId, controller.signal);
         if (!active) return;
         failureCount = 0;
         setConnectionMessage("");
@@ -52,7 +55,7 @@ export default function JobPage() {
       if (timeout) window.clearTimeout(timeout);
       controller?.abort();
     };
-  }, [params.jobId]);
+  }, [jobId]);
 
   return (
     <main className="settings-shell job-page">
@@ -60,19 +63,28 @@ export default function JobPage() {
       <p className="eyebrow">PROCESSING JOB</p>
       <h1>任务状态</h1>
       <section className="settings-card">
-        {connectionMessage && <div className="job-connection-note" role="status">{connectionMessage}</div>}
-        <div className="setting-row"><span>任务 ID</span><code>{params.jobId}</code></div>
-        <div className="setting-row"><span>状态</span><b>{job ? jobStatusLabels[job.status] : "读取中"}</b></div>
-        <div className="setting-row"><span>进度</span><b>{job?.progress ?? 0}%</b></div>
-        {job?.error_code && <div className="job-error"><strong>{job.error_code}</strong><p>{job.error_message}</p></div>}
-        {job?.status === "completed" && (
+        {!jobId ? (
+          <div className="job-error" role="alert">
+            <strong>缺少任务 ID</strong>
+            <p>请从工作台重新进入任务，或确认链接包含 jobId 参数。</p>
+          </div>
+        ) : (
           <>
-            <div className="standalone-outcome"><JobOutcomeSummary job={job} /></div>
-            <div className="download-row standalone">
-              <a className="button primary" href={apiUrl(job.output_document_url)}>下载格式化 DOCX</a>
-              <a className="button secondary" href={apiUrl(job.audit_json_url)}>下载审计 JSON</a>
-              <a className="text-link" href={apiUrl(job.audit_markdown_url)}>下载审计 Markdown</a>
-            </div>
+            {connectionMessage && <div className="job-connection-note" role="status">{connectionMessage}</div>}
+            <div className="setting-row"><span>任务 ID</span><code>{jobId}</code></div>
+            <div className="setting-row"><span>状态</span><b>{job ? jobStatusLabels[job.status] : "读取中"}</b></div>
+            <div className="setting-row"><span>进度</span><b>{job?.progress ?? 0}%</b></div>
+            {job?.error_code && <div className="job-error"><strong>{job.error_code}</strong><p>{job.error_message}</p></div>}
+            {job?.status === "completed" && (
+              <>
+                <div className="standalone-outcome"><JobOutcomeSummary job={job} /></div>
+                <div className="download-row standalone">
+                  <a className="button primary" href={apiUrl(job.output_document_url)}>下载格式化 DOCX</a>
+                  <a className="button secondary" href={apiUrl(job.audit_json_url)}>下载审计 JSON</a>
+                  <a className="text-link" href={apiUrl(job.audit_markdown_url)}>下载审计 Markdown</a>
+                </div>
+              </>
+            )}
           </>
         )}
       </section>

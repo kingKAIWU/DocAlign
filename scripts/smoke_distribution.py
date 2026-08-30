@@ -1,0 +1,98 @@
+from __future__ import annotations
+
+import argparse
+import socket
+import subprocess
+import tempfile
+import time
+import urllib.error
+import urllib.request
+from collections.abc import Sequence
+from pathlib import Path
+
+HOST = "127.0.0.1"
+
+
+def _free_port() -> int:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+        probe.bind((HOST, 0))
+        return int(probe.getsockname()[1])
+
+
+def _wait_for_page(url: str, expected: bytes, process: subprocess.Popen[bytes]) -> None:
+    deadline = time.monotonic() + 20
+    last_error = "not started"
+    while time.monotonic() < deadline:
+        if process.poll() is not None:
+            raise RuntimeError(
+                f"DocAlign exited before becoming ready (code {process.returncode})."
+            )
+        try:
+            with urllib.request.urlopen(url, timeout=1) as response:
+                body = response.read()
+                if response.status == 200 and expected in body:
+                    return
+                last_error = f"unexpected response {response.status}"
+        except (OSError, urllib.error.URLError) as caught:
+            last_error = type(caught).__name__
+        time.sleep(0.1)
+    raise RuntimeError(f"DocAlign did not serve {url}: {last_error}")
+
+
+def smoke_distribution(launcher: Path) -> None:
+    if not launcher.is_file():
+        raise RuntimeError(f"Distribution launcher does not exist: {launcher}")
+
+    with tempfile.TemporaryDirectory(prefix="docalign-distribution-smoke-") as directory:
+        test_root = Path(directory)
+        launch_dir = test_root / "launch-directory"
+        data_dir = test_root / "workspace"
+        launch_dir.mkdir()
+        subprocess.run([launcher, "--self-test"], check=True, timeout=30, cwd=launch_dir)
+        port = _free_port()
+        command = [
+            launcher,
+            "--no-browser",
+            "--data-dir",
+            data_dir,
+            "--port",
+            str(port),
+        ]
+        process = subprocess.Popen(command, cwd=launch_dir)
+        try:
+            _wait_for_page(
+                f"http://{HOST}:{port}/api/v1/health",
+                b'"status":"ok"',
+                process,
+            )
+            _wait_for_page(f"http://{HOST}:{port}/", b"DocAlign", process)
+            _wait_for_page(f"http://{HOST}:{port}/settings/", b"DocAlign", process)
+            second = subprocess.run(command, check=False, timeout=10, cwd=launch_dir)
+            if second.returncode != 0:
+                raise RuntimeError("A second launch did not activate the existing instance.")
+            if (launch_dir / "data").exists():
+                raise RuntimeError("The distribution wrote data into its launch directory.")
+        finally:
+            process.terminate()
+            try:
+                process.wait(timeout=10)
+            except subprocess.TimeoutExpired:  # pragma: no cover - defensive cleanup
+                process.kill()
+                process.wait(timeout=5)
+
+
+def _build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description="Smoke-test a built DocAlign application.")
+    parser.add_argument("--launcher", type=Path, required=True)
+    return parser
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    arguments = _build_parser().parse_args(argv)
+    smoke_distribution(arguments.launcher.resolve())
+    print(f"Distribution smoke test passed: {arguments.launcher}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
