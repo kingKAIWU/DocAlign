@@ -1252,6 +1252,7 @@ export function Workspace() {
                 checked={autoLayout}
                 onChange={(event) => {
                   setAutoLayout(event.target.checked);
+                  setReferenceCoverageAcknowledged(false);
                   setCompliance(null);
                 }}
               />
@@ -1309,6 +1310,7 @@ export function Workspace() {
                 value={specText}
                 onChange={(event) => {
                   setSpecText(event.target.value);
+                  setReferenceCoverageAcknowledged(false);
                   setCompliance(null);
                 }}
               />

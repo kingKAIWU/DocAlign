@@ -11,6 +11,11 @@ const changeCategoryLabels: Record<string, string> = {
   other: "其他格式",
 };
 
+const reviewStatusLabels: Record<string, string> = {
+  manual_review: "人工复核",
+  unsupported: "暂不支持",
+};
+
 type JobOutcomeSummaryProps = {
   job: Job;
   onReview?: () => void;
@@ -72,16 +77,37 @@ export function JobOutcomeSummary({ job, onReview, onLocate, onCompare }: JobOut
       ? `${summary.paragraphs_before} → ${summary.paragraphs_after} 段`
       : null;
   const changeDetails = summary.change_details ?? [];
+  const executionEvidence = summary.execution_evidence;
+  const appliedPreset = executionEvidence?.applied_preset;
+  const reviewRequirements = appliedPreset?.review_requirements ?? [];
+  const acceptanceManualChecks = appliedPreset?.acceptance_manual_checks ?? [];
+  const structureReviewItems = summary.structure_review_items ?? summary.remaining_review_items;
+  const deliveryReviewItems = summary.delivery_review_items ?? (
+    reviewRequirements.length +
+    acceptanceManualChecks.length +
+    (appliedPreset && !appliedPreset.matches_catalog_spec ? 1 : 0)
+  );
+  const isReferencePack = appliedPreset?.claim_level === "reference";
+  const validationLabel = summary.validation_passed
+    ? isReferencePack
+      ? "已声明自动条款验证通过"
+      : "格式验证通过"
+    : "格式验证需检查";
 
   return (
     <section className="outcome-summary" aria-label="排版结果摘要">
       <div className="outcome-assurance">
         <span className={summary.validation_passed ? "passed" : "failed"}>
-          {summary.validation_passed ? "格式验证通过" : "格式验证需检查"}
+          {validationLabel}
         </span>
         <span className={summary.content_integrity_passed ? "passed" : "failed"}>
           {summary.content_integrity_passed ? "原文与受保护结构通过" : "内容保护需检查"}
         </span>
+        {appliedPreset && (
+          <span className={appliedPreset.matches_catalog_spec ? "passed" : "failed"}>
+            {appliedPreset.matches_catalog_spec ? "目录规则原样执行" : "目录规则已被修改"}
+          </span>
+        )}
       </div>
       <div className="outcome-metrics">
         <div>
@@ -89,12 +115,89 @@ export function JobOutcomeSummary({ job, onReview, onLocate, onCompare }: JobOut
           <span>项实际格式调整</span>
           <small>{summary.format_operations} 个规则动作已执行</small>
         </div>
-        <div className={summary.remaining_review_items > 0 ? "needs-review" : ""}>
-          <strong>{summary.remaining_review_items}</strong>
-          <span>项仍建议人工复核</span>
+        <div className={structureReviewItems > 0 ? "needs-review" : ""}>
+          <strong>{structureReviewItems}</strong>
+          <span>个结构段落待确认</span>
           <small>{summary.warning_count} 条执行提醒</small>
         </div>
+        {appliedPreset && (
+          <div className={deliveryReviewItems > 0 ? "needs-review" : ""}>
+            <strong>{deliveryReviewItems}</strong>
+            <span>项交付前人工核对</span>
+            <small>{reviewRequirements.length} 条规范边界</small>
+          </div>
+        )}
       </div>
+      {appliedPreset && (
+        <section
+          className={`outcome-rule-evidence ${appliedPreset.matches_catalog_spec ? "matched" : "modified"}`}
+          aria-label="规则交付边界"
+        >
+          <header>
+            <div>
+              <strong>{appliedPreset.preset_name}</strong>
+              <span>v{appliedPreset.pack_version} · {appliedPreset.scope_label}</span>
+            </div>
+            <b>{appliedPreset.matches_catalog_spec ? "规则一致" : "规则已修改"}</b>
+          </header>
+          {executionEvidence && (
+            <p className="outcome-rule-identity">
+              引擎 {executionEvidence.engine_version} · 规则 SHA-256 {executionEvidence.spec_sha256}
+            </p>
+          )}
+          {!appliedPreset.matches_catalog_spec && (
+            <div className="outcome-rule-warning" role="alert">
+              当前执行规则与目录原始版本不同；原参考包的自动覆盖和验收结论不能直接代表本次输出。
+            </div>
+          )}
+          {(appliedPreset.source_references?.length ?? 0) > 0 && (
+            <ul className="outcome-rule-sources" aria-label="规则公开来源">
+              {appliedPreset.source_references?.map((source) => (
+                <li key={`${source.title}-${source.url}`}>
+                  <a href={source.url} target="_blank" rel="noreferrer">
+                    {source.title}
+                  </a>
+                  {source.version && <span> · {source.version}</span>}
+                </li>
+              ))}
+            </ul>
+          )}
+          {(reviewRequirements.length > 0 || acceptanceManualChecks.length > 0) && (
+            <details className="outcome-rule-review" open>
+              <summary>交付前核对清单（{deliveryReviewItems}）</summary>
+              {reviewRequirements.length > 0 && (
+                <ul>
+                  {reviewRequirements.map((item) => (
+                    <li key={`${item.requirement_id}-${item.requirement}`}>
+                      <span className={`coverage-status ${item.status}`}>
+                        {reviewStatusLabels[item.status] ?? item.status}
+                      </span>
+                      <div>
+                        <strong>{item.requirement_id} · {item.requirement}</strong>
+                        <p>{item.implementation_note}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {acceptanceManualChecks.length > 0 && (
+                <div className="outcome-acceptance-checks">
+                  <strong>人工验收步骤</strong>
+                  <ul>
+                    {acceptanceManualChecks.map((item) => <li key={item}>{item}</li>)}
+                  </ul>
+                </div>
+              )}
+            </details>
+          )}
+          {(appliedPreset.limitations?.length ?? 0) > 0 && (
+            <details className="outcome-rule-limitations">
+              <summary>查看未覆盖与限制（{appliedPreset.limitations?.length ?? 0}）</summary>
+              <ul>{appliedPreset.limitations?.map((item) => <li key={item}>{item}</li>)}</ul>
+            </details>
+          )}
+        </section>
+      )}
       {categories.length > 0 && (
         <div className="outcome-changes">
           <strong>改动分布</strong>
@@ -154,14 +257,14 @@ export function JobOutcomeSummary({ job, onReview, onLocate, onCompare }: JobOut
           {paragraphChange ? `（${paragraphChange}）` : ""}。
         </p>
       )}
-      {(onCompare || (summary.remaining_review_items > 0 && onReview)) && (
+      {(onCompare || (structureReviewItems > 0 && onReview)) && (
         <div className="outcome-actions">
           {onCompare && (
             <button type="button" className="outcome-compare-button" onClick={onCompare}>
               查看格式前后对照
             </button>
           )}
-          {summary.remaining_review_items > 0 && onReview && (
+          {structureReviewItems > 0 && onReview && (
             <button type="button" className="outcome-review-button" onClick={onReview}>
               查看待确认段落
             </button>

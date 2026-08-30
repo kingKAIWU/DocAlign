@@ -30,6 +30,8 @@ const summary = {
   warning_count: 0,
   validation_issue_count: 0,
   remaining_review_items: 0,
+  structure_review_items: 0,
+  delivery_review_items: 0,
   paragraphs_before: 4,
   paragraphs_after: 4,
   auto_layout_splits: 0,

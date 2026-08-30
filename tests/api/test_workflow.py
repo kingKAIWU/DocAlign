@@ -200,6 +200,12 @@ def test_complete_structured_api_workflow(academic_docx: Path, tmp_path: Path) -
         result_summary = job["result_summary"]
         assert result_summary["validation_passed"] is True
         assert result_summary["content_integrity_passed"] is True
+        assert result_summary["structure_review_items"] == result_summary["remaining_review_items"]
+        assert result_summary["delivery_review_items"] == 0
+        execution_evidence = result_summary["execution_evidence"]
+        assert execution_evidence["engine_version"] == "0.1.0"
+        assert len(execution_evidence["spec_sha256"]) == 64
+        assert execution_evidence["applied_preset"] is None
         assert result_summary["changed_mutations"] > 0
         assert (
             sum(result_summary["change_categories"].values()) == result_summary["changed_mutations"]

@@ -1,5 +1,156 @@
 {
   "$defs": {
+    "AppliedPresetEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "preset_id": {
+          "title": "Preset Id",
+          "type": "string"
+        },
+        "preset_name": {
+          "title": "Preset Name",
+          "type": "string"
+        },
+        "pack_version": {
+          "title": "Pack Version",
+          "type": "string"
+        },
+        "claim_level": {
+          "$ref": "#/$defs/RulePackClaimLevel"
+        },
+        "scope_label": {
+          "title": "Scope Label",
+          "type": "string"
+        },
+        "maintained_by": {
+          "title": "Maintained By",
+          "type": "string"
+        },
+        "last_reviewed_on": {
+          "format": "date",
+          "title": "Last Reviewed On",
+          "type": "string"
+        },
+        "source_references": {
+          "items": {
+            "$ref": "#/$defs/RulePackReference"
+          },
+          "title": "Source References",
+          "type": "array"
+        },
+        "catalog_spec_sha256": {
+          "title": "Catalog Spec Sha256",
+          "type": "string"
+        },
+        "matches_catalog_spec": {
+          "title": "Matches Catalog Spec",
+          "type": "boolean"
+        },
+        "automated_requirements": {
+          "items": {
+            "$ref": "#/$defs/RulePackCoverageItem"
+          },
+          "title": "Automated Requirements",
+          "type": "array"
+        },
+        "review_requirements": {
+          "items": {
+            "$ref": "#/$defs/RulePackCoverageItem"
+          },
+          "title": "Review Requirements",
+          "type": "array"
+        },
+        "acceptance_fixture_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Acceptance Fixture Id"
+        },
+        "acceptance_last_passed_on": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Acceptance Last Passed On"
+        },
+        "acceptance_automated_checks": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Acceptance Automated Checks",
+          "type": "array"
+        },
+        "acceptance_manual_checks": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Acceptance Manual Checks",
+          "type": "array"
+        },
+        "limitations": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Limitations",
+          "type": "array"
+        }
+      },
+      "required": [
+        "preset_id",
+        "preset_name",
+        "pack_version",
+        "claim_level",
+        "scope_label",
+        "maintained_by",
+        "last_reviewed_on",
+        "catalog_spec_sha256",
+        "matches_catalog_spec"
+      ],
+      "title": "AppliedPresetEvidence",
+      "type": "object"
+    },
+    "AuditExecutionEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "engine_version": {
+          "title": "Engine Version",
+          "type": "string"
+        },
+        "spec_sha256": {
+          "title": "Spec Sha256",
+          "type": "string"
+        },
+        "applied_preset": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AppliedPresetEvidence"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "engine_version",
+        "spec_sha256"
+      ],
+      "title": "AuditExecutionEvidence",
+      "type": "object"
+    },
     "AuditSummary": {
       "additionalProperties": false,
       "properties": {
@@ -193,6 +344,83 @@
         "message"
       ],
       "title": "PlanWarning",
+      "type": "object"
+    },
+    "RulePackClaimLevel": {
+      "enum": [
+        "generic",
+        "reference",
+        "verified"
+      ],
+      "title": "RulePackClaimLevel",
+      "type": "string"
+    },
+    "RulePackCoverageItem": {
+      "additionalProperties": false,
+      "properties": {
+        "requirement_id": {
+          "title": "Requirement Id",
+          "type": "string"
+        },
+        "requirement": {
+          "title": "Requirement",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/RulePackCoverageStatus"
+        },
+        "implementation_note": {
+          "title": "Implementation Note",
+          "type": "string"
+        }
+      },
+      "required": [
+        "requirement_id",
+        "requirement",
+        "status",
+        "implementation_note"
+      ],
+      "title": "RulePackCoverageItem",
+      "type": "object"
+    },
+    "RulePackCoverageStatus": {
+      "enum": [
+        "automated",
+        "manual_review",
+        "unsupported"
+      ],
+      "title": "RulePackCoverageStatus",
+      "type": "string"
+    },
+    "RulePackReference": {
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        },
+        "version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Version"
+        }
+      },
+      "required": [
+        "title",
+        "url"
+      ],
+      "title": "RulePackReference",
       "type": "object"
     },
     "Severity": {
@@ -505,6 +733,17 @@
       "anyOf": [
         {
           "$ref": "#/$defs/SpecSource"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "execution_evidence": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/AuditExecutionEvidence"
         },
         {
           "type": "null"

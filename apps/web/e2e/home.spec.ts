@@ -91,7 +91,16 @@ test("requires an explicit scope acknowledgment before applying an official refe
   await formatButton.click();
   await expect(page.getByText("自动排版与格式验证完成；当前文档无需额外拆分正文。"))
     .toBeVisible({ timeout: 30_000 });
-  await expect(page.getByLabel("排版结果摘要").getByText("格式验证通过")).toBeVisible();
+  const resultSummary = page.getByLabel("排版结果摘要");
+  await expect(resultSummary.getByText("已声明自动条款验证通过")).toBeVisible();
+  await expect(resultSummary.getByText("个结构段落待确认")).toBeVisible();
+  await expect(resultSummary.getByText("项交付前人工核对")).toBeVisible();
+  await expect(resultSummary.getByText("目录规则原样执行")).toBeVisible();
+  const deliveryBoundary = resultSummary.getByLabel("规则交付边界");
+  await expect(deliveryBoundary.getByText("交付前核对清单（4）")).toBeVisible();
+  await expect(deliveryBoundary.getByText("人工复核")).toBeVisible();
+  await expect(deliveryBoundary.getByText("暂不支持")).toBeVisible();
+  await expect(deliveryBoundary.getByText("人工验收步骤")).toBeVisible();
 });
 
 test("saves reusable rule revisions and restores history without duplicate writes", async ({ page }) => {

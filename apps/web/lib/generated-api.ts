@@ -741,6 +741,53 @@ export interface components {
             /** @default deterministic */
             mode: components["schemas"]["AnalysisMode"];
         };
+        /** AppliedPresetEvidence */
+        AppliedPresetEvidence: {
+            /** Preset Id */
+            preset_id: string;
+            /** Preset Name */
+            preset_name: string;
+            /** Pack Version */
+            pack_version: string;
+            claim_level: components["schemas"]["RulePackClaimLevel"];
+            /** Scope Label */
+            scope_label: string;
+            /** Maintained By */
+            maintained_by: string;
+            /**
+             * Last Reviewed On
+             * Format: date
+             */
+            last_reviewed_on: string;
+            /** Source References */
+            source_references?: components["schemas"]["RulePackReference"][];
+            /** Catalog Spec Sha256 */
+            catalog_spec_sha256: string;
+            /** Matches Catalog Spec */
+            matches_catalog_spec: boolean;
+            /** Automated Requirements */
+            automated_requirements?: components["schemas"]["RulePackCoverageItem"][];
+            /** Review Requirements */
+            review_requirements?: components["schemas"]["RulePackCoverageItem"][];
+            /** Acceptance Fixture Id */
+            acceptance_fixture_id?: string | null;
+            /** Acceptance Last Passed On */
+            acceptance_last_passed_on?: string | null;
+            /** Acceptance Automated Checks */
+            acceptance_automated_checks?: string[];
+            /** Acceptance Manual Checks */
+            acceptance_manual_checks?: string[];
+            /** Limitations */
+            limitations?: string[];
+        };
+        /** AuditExecutionEvidence */
+        AuditExecutionEvidence: {
+            /** Engine Version */
+            engine_version: string;
+            /** Spec Sha256 */
+            spec_sha256: string;
+            applied_preset?: components["schemas"]["AppliedPresetEvidence"] | null;
+        };
         /**
          * AutoLayoutSpec
          * @description Deterministic structural layout applied before role-based formatting.
@@ -1347,12 +1394,23 @@ export interface components {
             validation_issue_count: number;
             /** Remaining Review Items */
             remaining_review_items: number;
+            /**
+             * Structure Review Items
+             * @default 0
+             */
+            structure_review_items: number;
+            /**
+             * Delivery Review Items
+             * @default 0
+             */
+            delivery_review_items: number;
             /** Paragraphs Before */
             paragraphs_before: number | null;
             /** Paragraphs After */
             paragraphs_after: number | null;
             /** Auto Layout Splits */
             auto_layout_splits: number;
+            execution_evidence?: components["schemas"]["AuditExecutionEvidence"] | null;
         };
         /**
          * JobStatus

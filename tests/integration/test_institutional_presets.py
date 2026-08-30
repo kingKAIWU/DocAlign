@@ -12,6 +12,7 @@ from docalign_core.domain.formatting_spec import (
     gbt_9704_body_reference_spec,
     nankai_thesis_2026_reference_spec,
 )
+from docalign_core.domain.rule_pack import formatting_spec_sha256
 from docalign_core.services.processing import process_document
 from docx import Document
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -130,6 +131,21 @@ def test_institutional_reference_acceptance_fixture(
 
     assert result.audit.validation.valid
     assert parse_docx(output).content_fingerprint.digest == document_ir.content_fingerprint.digest
+    execution_evidence = result.audit.execution_evidence
+    assert execution_evidence is not None
+    assert execution_evidence.spec_sha256 == formatting_spec_sha256(spec)
+    assert execution_evidence.engine_version == "0.1.0"
+    preset_evidence = execution_evidence.applied_preset
+    assert preset_evidence is not None
+    assert preset_evidence.preset_id == preset_id
+    assert preset_evidence.matches_catalog_spec is True
+    assert preset_evidence.automated_requirements
+    assert preset_evidence.review_requirements
+    assert preset_evidence.acceptance_automated_checks
+    assert preset_evidence.acceptance_manual_checks
+    audit_markdown = Path(result.audit_markdown_path).read_text(encoding="utf-8")
+    assert "规则覆盖与交付边界" in audit_markdown
+    assert "与目录原始规则一致" in audit_markdown
     formatted = Document(output)
     section = formatted.sections[0]
     actual_margins = (
@@ -207,3 +223,30 @@ def test_institutional_reference_acceptance_fixture(
         )
         _assert_paragraph(formatted, "1.1 一级标题", east_asia="黑体", size_pt=15)
         _assert_paragraph(formatted, "1.1.1 二级标题", east_asia="黑体", size_pt=14)
+
+
+def test_modified_reference_spec_invalidates_catalog_match(tmp_path: Path) -> None:
+    source = tmp_path / "modified-reference-source.docx"
+    output = tmp_path / "modified-reference-output.docx"
+    _source_document(source)
+    document_ir = _role_tagged_ir(source)
+    spec = nankai_thesis_2026_reference_spec()
+    assert spec.document is not None
+    spec.document.page.margin_left_mm = 31
+
+    result = process_document(
+        source,
+        document_ir,
+        spec,
+        output,
+        job_id="acceptance-modified-reference",
+        artifact_dir=tmp_path / "modified-reference-artifacts",
+    )
+
+    execution_evidence = result.audit.execution_evidence
+    assert execution_evidence is not None
+    assert execution_evidence.applied_preset is not None
+    assert execution_evidence.applied_preset.matches_catalog_spec is False
+    audit_markdown = Path(result.audit_markdown_path).read_text(encoding="utf-8")
+    assert "已偏离目录原始规则" in audit_markdown
+    assert "自动覆盖与验收结论不能直接代表本次输出" in audit_markdown

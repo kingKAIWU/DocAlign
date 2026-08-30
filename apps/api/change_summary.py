@@ -29,6 +29,16 @@ def build_job_result_summary(audit: AuditReport) -> JobResultSummary:
         )
         for mutation in unique_changes[:CHANGE_DETAIL_LIMIT]
     ]
+    applied_preset = (
+        audit.execution_evidence.applied_preset if audit.execution_evidence else None
+    )
+    delivery_review_items = (
+        len(applied_preset.review_requirements)
+        + len(applied_preset.acceptance_manual_checks)
+        + (0 if applied_preset.matches_catalog_spec else 1)
+        if applied_preset
+        else 0
+    )
     return JobResultSummary(
         validation_passed=audit.validation.valid,
         content_integrity_passed=not any(
@@ -42,9 +52,12 @@ def build_job_result_summary(audit: AuditReport) -> JobResultSummary:
         warning_count=len(audit.warnings),
         validation_issue_count=len(audit.validation.issues),
         remaining_review_items=audit.summary.unknown_blocks,
+        structure_review_items=audit.summary.unknown_blocks,
+        delivery_review_items=delivery_review_items,
         paragraphs_before=audit.summary.paragraphs_before,
         paragraphs_after=audit.summary.paragraphs_after,
         auto_layout_splits=audit.summary.auto_layout_splits,
+        execution_evidence=audit.execution_evidence,
     )
 
 

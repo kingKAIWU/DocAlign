@@ -1741,6 +1741,154 @@
         "type": "object",
         "title": "AnalyzeRequest"
       },
+      "AppliedPresetEvidence": {
+        "properties": {
+          "preset_id": {
+            "type": "string",
+            "title": "Preset Id"
+          },
+          "preset_name": {
+            "type": "string",
+            "title": "Preset Name"
+          },
+          "pack_version": {
+            "type": "string",
+            "title": "Pack Version"
+          },
+          "claim_level": {
+            "$ref": "#/components/schemas/RulePackClaimLevel"
+          },
+          "scope_label": {
+            "type": "string",
+            "title": "Scope Label"
+          },
+          "maintained_by": {
+            "type": "string",
+            "title": "Maintained By"
+          },
+          "last_reviewed_on": {
+            "type": "string",
+            "format": "date",
+            "title": "Last Reviewed On"
+          },
+          "source_references": {
+            "items": {
+              "$ref": "#/components/schemas/RulePackReference"
+            },
+            "type": "array",
+            "title": "Source References"
+          },
+          "catalog_spec_sha256": {
+            "type": "string",
+            "title": "Catalog Spec Sha256"
+          },
+          "matches_catalog_spec": {
+            "type": "boolean",
+            "title": "Matches Catalog Spec"
+          },
+          "automated_requirements": {
+            "items": {
+              "$ref": "#/components/schemas/RulePackCoverageItem"
+            },
+            "type": "array",
+            "title": "Automated Requirements"
+          },
+          "review_requirements": {
+            "items": {
+              "$ref": "#/components/schemas/RulePackCoverageItem"
+            },
+            "type": "array",
+            "title": "Review Requirements"
+          },
+          "acceptance_fixture_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acceptance Fixture Id"
+          },
+          "acceptance_last_passed_on": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acceptance Last Passed On"
+          },
+          "acceptance_automated_checks": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Acceptance Automated Checks"
+          },
+          "acceptance_manual_checks": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Acceptance Manual Checks"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Limitations"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "preset_id",
+          "preset_name",
+          "pack_version",
+          "claim_level",
+          "scope_label",
+          "maintained_by",
+          "last_reviewed_on",
+          "catalog_spec_sha256",
+          "matches_catalog_spec"
+        ],
+        "title": "AppliedPresetEvidence"
+      },
+      "AuditExecutionEvidence": {
+        "properties": {
+          "engine_version": {
+            "type": "string",
+            "title": "Engine Version"
+          },
+          "spec_sha256": {
+            "type": "string",
+            "title": "Spec Sha256"
+          },
+          "applied_preset": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AppliedPresetEvidence"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "engine_version",
+          "spec_sha256"
+        ],
+        "title": "AuditExecutionEvidence"
+      },
       "AutoLayoutSpec": {
         "properties": {
           "enabled": {
@@ -3428,6 +3576,18 @@
             "minimum": 0.0,
             "title": "Remaining Review Items"
           },
+          "structure_review_items": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Structure Review Items",
+            "default": 0
+          },
+          "delivery_review_items": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Delivery Review Items",
+            "default": 0
+          },
           "paragraphs_before": {
             "anyOf": [
               {
@@ -3456,6 +3616,16 @@
             "type": "integer",
             "minimum": 0.0,
             "title": "Auto Layout Splits"
+          },
+          "execution_evidence": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AuditExecutionEvidence"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "additionalProperties": false,

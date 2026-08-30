@@ -3,10 +3,13 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from docalign_core import __version__
 from docalign_core.analysis.classifier import count_reviewable_unknowns
 from docalign_core.docx.parser import parse_docx
 from docalign_core.docx.safety import sha256_file
 from docalign_core.domain.audit import (
+    AppliedPresetEvidence,
+    AuditExecutionEvidence,
     AuditReport,
     AuditSummary,
     FormattingOperation,
@@ -17,7 +20,12 @@ from docalign_core.domain.audit import (
 from docalign_core.domain.base import StrictModel
 from docalign_core.domain.document_ir import DocumentIR, ParagraphIR
 from docalign_core.domain.enums import SemanticRole
-from docalign_core.domain.formatting_spec import FormattingSpec
+from docalign_core.domain.formatting_spec import (
+    FormattingSpec,
+    RulePackCoverageStatus,
+    cleanup_preset_catalog,
+)
+from docalign_core.domain.rule_pack import formatting_spec_sha256
 from docalign_core.engine.auto_layout import (
     AutoLayoutIntegrityError,
     apply_auto_layout,
@@ -159,6 +167,7 @@ def process_document(
         validation=validation,
         assumptions=spec.source.assumptions,
         spec_source=spec.source,
+        execution_evidence=_execution_evidence(spec),
     )
     audit_json_path = artifact_dir / "audit.json"
     audit_markdown_path = artifact_dir / "audit.md"
@@ -216,3 +225,52 @@ def _copy_role_assignments(source: DocumentIR, target: DocumentIR) -> None:
         block.role_confidence = previous.role_confidence
         block.role_source = previous.role_source
         block.role_evidence = list(previous.role_evidence)
+
+
+def _execution_evidence(spec: FormattingSpec) -> AuditExecutionEvidence:
+    spec_sha256 = formatting_spec_sha256(spec)
+    preset_id = spec.source.preset_id
+    catalog_item = next(
+        (item for item in cleanup_preset_catalog() if item.preset_id == preset_id),
+        None,
+    )
+    if catalog_item is None:
+        return AuditExecutionEvidence(
+            engine_version=__version__,
+            spec_sha256=spec_sha256,
+        )
+
+    metadata = catalog_item.metadata
+    acceptance = metadata.acceptance_evidence
+    catalog_spec_sha256 = formatting_spec_sha256(catalog_item.spec)
+    return AuditExecutionEvidence(
+        engine_version=__version__,
+        spec_sha256=spec_sha256,
+        applied_preset=AppliedPresetEvidence(
+            preset_id=catalog_item.preset_id,
+            preset_name=catalog_item.name,
+            pack_version=metadata.pack_version,
+            claim_level=metadata.claim_level,
+            scope_label=metadata.scope_label,
+            maintained_by=metadata.maintained_by,
+            last_reviewed_on=metadata.last_reviewed_on,
+            source_references=metadata.source_references,
+            catalog_spec_sha256=catalog_spec_sha256,
+            matches_catalog_spec=spec_sha256 == catalog_spec_sha256,
+            automated_requirements=[
+                item
+                for item in metadata.coverage_items
+                if item.status == RulePackCoverageStatus.AUTOMATED
+            ],
+            review_requirements=[
+                item
+                for item in metadata.coverage_items
+                if item.status != RulePackCoverageStatus.AUTOMATED
+            ],
+            acceptance_fixture_id=acceptance.fixture_id if acceptance else None,
+            acceptance_last_passed_on=acceptance.last_passed_on if acceptance else None,
+            acceptance_automated_checks=acceptance.automated_checks if acceptance else [],
+            acceptance_manual_checks=acceptance.manual_checks if acceptance else [],
+            limitations=metadata.limitations,
+        ),
+    )

@@ -220,8 +220,23 @@ describe("Workspace", () => {
     const formatButton = screen.getByRole("button", { name: "格式化并验证" });
     expect(formatButton).toBeDisabled();
 
-    fireEvent.click(screen.getByRole("checkbox", { name: /我已查看自动、人工和暂不支持条款/ }));
+    const acknowledgment = screen.getByRole("checkbox", {
+      name: /我已查看自动、人工和暂不支持条款/,
+    });
+    fireEvent.click(acknowledgment);
     expect(formatButton).toBeEnabled();
+
+    fireEvent.change(screen.getByLabelText("结构化规则"), {
+      target: {
+        value: JSON.stringify({
+          schema_version: "formatting-spec.v1",
+          roles: {},
+          auto_layout: { enabled: false },
+        }),
+      },
+    });
+    expect(acknowledgment).not.toBeChecked();
+    expect(formatButton).toBeDisabled();
   });
 
   it("extracts a reference template and waits for explicit confirmation", async () => {

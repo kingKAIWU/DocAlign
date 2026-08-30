@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import date
 from enum import StrEnum
 from typing import Literal
 
@@ -8,7 +9,12 @@ from pydantic import Field
 
 from docalign_core.domain.base import StrictModel
 from docalign_core.domain.enums import SemanticRole, Severity
-from docalign_core.domain.formatting_spec import SpecSource
+from docalign_core.domain.formatting_spec import (
+    RulePackClaimLevel,
+    RulePackCoverageItem,
+    RulePackReference,
+    SpecSource,
+)
 
 CONTENT_INTEGRITY_CODES = frozenset(
     {
@@ -107,6 +113,32 @@ class AuditSummary(StrictModel):
     auto_layout_splits: int = 0
 
 
+class AppliedPresetEvidence(StrictModel):
+    preset_id: str
+    preset_name: str
+    pack_version: str
+    claim_level: RulePackClaimLevel
+    scope_label: str
+    maintained_by: str
+    last_reviewed_on: date
+    source_references: list[RulePackReference] = Field(default_factory=list)
+    catalog_spec_sha256: str
+    matches_catalog_spec: bool
+    automated_requirements: list[RulePackCoverageItem] = Field(default_factory=list)
+    review_requirements: list[RulePackCoverageItem] = Field(default_factory=list)
+    acceptance_fixture_id: str | None = None
+    acceptance_last_passed_on: date | None = None
+    acceptance_automated_checks: list[str] = Field(default_factory=list)
+    acceptance_manual_checks: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+
+
+class AuditExecutionEvidence(StrictModel):
+    engine_version: str
+    spec_sha256: str
+    applied_preset: AppliedPresetEvidence | None = None
+
+
 class AuditReport(StrictModel):
     schema_version: Literal["audit-report.v1"] = "audit-report.v1"
     job_id: str
@@ -121,6 +153,7 @@ class AuditReport(StrictModel):
     validation: ValidationReport
     assumptions: list[str] = Field(default_factory=list)
     spec_source: SpecSource | None = None
+    execution_evidence: AuditExecutionEvidence | None = None
 
     def to_markdown(self) -> str:
         status = "通过" if self.validation.valid else "需要检查"
@@ -141,11 +174,67 @@ class AuditReport(StrictModel):
             f"- 格式操作：{self.summary.format_operations}",
             f"- 实际变更：{self.summary.changed_mutations}",
             f"- 规则来源：{self.spec_source.type.value if self.spec_source else '未知'}",
+            *(
+                [
+                    f"- 引擎版本：{self.execution_evidence.engine_version}",
+                    f"- 规则 SHA-256：`{self.execution_evidence.spec_sha256}`",
+                ]
+                if self.execution_evidence
+                else []
+            ),
             "",
             "## 角色统计",
             "",
         ]
         lines.extend(f"- {role}: {count}" for role, count in sorted(self.roles.items()))
+        preset = self.execution_evidence.applied_preset if self.execution_evidence else None
+        if preset:
+            match_label = (
+                "与目录原始规则一致"
+                if preset.matches_catalog_spec
+                else "已偏离目录原始规则"
+            )
+            lines.extend(
+                [
+                    "",
+                    "## 规则覆盖与交付边界",
+                    "",
+                    f"- 规则：{preset.preset_name}（`{preset.preset_id}`，v{preset.pack_version}）",
+                    f"- 声明级别：{preset.claim_level.value}",
+                    f"- 适用范围：{preset.scope_label}",
+                    f"- 规则一致性：**{match_label}**",
+                    f"- 目录规则 SHA-256：`{preset.catalog_spec_sha256}`",
+                    f"- 自动条款：{len(preset.automated_requirements)} 项",
+                    f"- 人工或暂不支持条款：{len(preset.review_requirements)} 项",
+                ]
+            )
+            if preset.source_references:
+                lines.extend(["", "### 公开来源", ""])
+                lines.extend(
+                    f"- [{reference.title}]({reference.url})"
+                    f"{f' · {reference.version}' if reference.version else ''}"
+                    for reference in preset.source_references
+                )
+            if not preset.matches_catalog_spec:
+                lines.extend(
+                    [
+                        "",
+                        "> 当前执行规则已被修改，目录中的自动覆盖与验收结论不能直接代表本次输出。",
+                    ]
+                )
+            if preset.review_requirements:
+                lines.extend(["", "### 人工复核与暂不支持条款", ""])
+                lines.extend(
+                    f"- `{item.status.value}` · `{item.requirement_id}` · "
+                    f"{item.requirement}：{item.implementation_note}"
+                    for item in preset.review_requirements
+                )
+            if preset.acceptance_manual_checks:
+                lines.extend(["", "### 交付前人工验收清单", ""])
+                lines.extend(f"- {item}" for item in preset.acceptance_manual_checks)
+            if preset.limitations:
+                lines.extend(["", "### 未覆盖与限制", ""])
+                lines.extend(f"- {item}" for item in preset.limitations)
         changed = [mutation for mutation in self.mutations if mutation.status == "changed"]
         if changed:
             lines.extend(["", "## 实际格式变更", ""])
