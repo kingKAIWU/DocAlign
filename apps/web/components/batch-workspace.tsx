@@ -16,6 +16,9 @@ import type {
 
 const STORAGE_KEY = "docalign.batch.v1";
 const TERMINAL = new Set(["completed", "completed_with_errors", "failed", "canceled"]);
+const BATCH_CONNECTION_ERROR = "无法连接本地服务，页面会按退避间隔自动重试。";
+const BATCH_RECOVERY_CONNECTION_ERROR =
+  "上次批次暂时无法读取，记录已保留；本地服务恢复后会自动重试。";
 
 type PendingRetry = { request_id: string; attempt_count: number };
 type StoredBatch = { batch_id: string; pending_retries?: Record<string, PendingRetry> };
@@ -44,8 +47,21 @@ function requestId(prefix: string): string {
 function readStoredBatch(): StoredBatch | null {
   try {
     const value = window.localStorage.getItem(STORAGE_KEY);
-    return value ? (JSON.parse(value) as StoredBatch) : null;
+    if (!value) return null;
+    const parsed = JSON.parse(value) as Partial<StoredBatch>;
+    if (typeof parsed.batch_id !== "string" || !parsed.batch_id.trim()) {
+      window.localStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
+    return {
+      batch_id: parsed.batch_id,
+      pending_retries:
+        parsed.pending_retries && typeof parsed.pending_retries === "object"
+          ? parsed.pending_retries
+          : {},
+    };
   } catch {
+    window.localStorage.removeItem(STORAGE_KEY);
     return null;
   }
 }
@@ -90,6 +106,8 @@ export function BatchWorkspace() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [serviceOnline, setServiceOnline] = useState<boolean | null>(null);
+  const [recoveryNeedsRetry, setRecoveryNeedsRetry] = useState(false);
+  const [connectionAttempt, setConnectionAttempt] = useState(0);
   const [draftAccepted, setDraftAccepted] = useState(false);
   const [processingBoundaryAccepted, setProcessingBoundaryAccepted] = useState(false);
   const pendingCreateRef = useRef<PendingCreate | null>(null);
@@ -105,6 +123,7 @@ export function BatchWorkspace() {
     [files],
   );
   const activeBatchId = batch && !TERMINAL.has(batch.status) ? batch.batch_id : null;
+  const connectionRecovering = serviceOnline === false || recoveryNeedsRetry;
 
   const applyBatch = useCallback((current: BatchAudit) => {
     const pending = { ...pendingRetriesRef.current };
@@ -128,15 +147,33 @@ export function BatchWorkspace() {
         setPacks(catalog.rule_packs);
         setSelectedPackId((current) => current || catalog.rule_packs[0]?.pack_id || "");
         setServiceOnline(true);
+        setError((current) =>
+          current === BATCH_CONNECTION_ERROR ? "" : current,
+        );
       })
-      .catch(() => {
+      .catch((caught) => {
         if (!controller.signal.aborted) {
-          setServiceOnline(false);
-          setError("无法连接本地服务，页面会自动恢复连接。 ");
+          if (caught instanceof ApiError) {
+            setServiceOnline(true);
+            setError(`本地服务暂时无法准备批处理：${readableError(caught)}`);
+          } else {
+            setServiceOnline(false);
+            setError(BATCH_CONNECTION_ERROR);
+          }
         }
       });
     return () => controller.abort();
-  }, []);
+  }, [connectionAttempt]);
+
+  useEffect(() => {
+    if (!connectionRecovering || activeBatchId) return;
+    const retryDelay = Math.min(30_000, 3_000 * 2 ** Math.min(connectionAttempt, 3));
+    const timer = window.setTimeout(
+      () => setConnectionAttempt((value) => value + 1),
+      retryDelay,
+    );
+    return () => window.clearTimeout(timer);
+  }, [activeBatchId, connectionAttempt, connectionRecovering]);
 
   useEffect(() => {
     if (!selectedPackId) return;
@@ -161,16 +198,35 @@ export function BatchWorkspace() {
     api.batch(stored.batch_id, controller.signal)
       .then((current) => {
         applyBatch(current);
+        setRecoveryNeedsRetry(false);
+        setError((currentError) =>
+          currentError === BATCH_RECOVERY_CONNECTION_ERROR ? "" : currentError,
+        );
         setMessage("已恢复上次批次，可继续查看进度或重试失败文件。 ");
       })
-      .catch(() => {
+      .catch((caught) => {
         if (!controller.signal.aborted) {
-          setServiceOnline(false);
-          setError("上次批次暂时无法连接，记录已保留，服务恢复后会继续。 ");
+          if (caught instanceof ApiError && caught.status === 404) {
+            window.localStorage.removeItem(STORAGE_KEY);
+            pendingRetriesRef.current = {};
+            setBatch(null);
+            setServiceOnline(true);
+            setRecoveryNeedsRetry(false);
+            setError("");
+            setMessage("上次批次已不在当前本地存储，旧恢复记录已自动清理；可以新建批次。");
+          } else if (caught instanceof ApiError) {
+            setServiceOnline(true);
+            setRecoveryNeedsRetry(false);
+            setError(`上次批次无法恢复：${readableError(caught)}`);
+          } else {
+            setServiceOnline(false);
+            setRecoveryNeedsRetry(true);
+            setError(BATCH_RECOVERY_CONNECTION_ERROR);
+          }
         }
       });
     return () => controller.abort();
-  }, [applyBatch]);
+  }, [applyBatch, connectionAttempt]);
 
   useEffect(() => {
     if (!activeBatchId) return;
@@ -187,11 +243,26 @@ export function BatchWorkspace() {
         applyBatch(current);
         setError("");
         if (!TERMINAL.has(current.status)) timer = window.setTimeout(refresh, 1_000);
-      } catch {
+      } catch (caught) {
         if (cancelled) return;
+        if (caught instanceof ApiError && caught.status === 404) {
+          window.localStorage.removeItem(STORAGE_KEY);
+          pendingRetriesRef.current = {};
+          setBatch(null);
+          setServiceOnline(true);
+          setRecoveryNeedsRetry(false);
+          setError("");
+          setMessage("当前批次已不在本地存储；已停止无效重连，可以新建批次。");
+          return;
+        }
         failures += 1;
-        setServiceOnline(false);
-        setMessage("进度连接暂时中断，任务仍在本地后台运行，正在自动重连…");
+        if (caught instanceof ApiError) {
+          setServiceOnline(true);
+          setError(`批次进度暂时无法读取：${readableError(caught)}`);
+        } else {
+          setServiceOnline(false);
+          setMessage("进度连接暂时中断，任务仍在本地后台运行，正在自动恢复…");
+        }
         timer = window.setTimeout(refresh, Math.min(8_000, 500 * 2 ** failures));
       } finally {
         window.clearTimeout(timeout);
@@ -365,8 +436,8 @@ export function BatchWorkspace() {
           <div><strong>DocAlign</strong><span>文档格式合规工作台</span></div>
         </Link>
         <div className="topbar-actions">
-          <span className={`privacy-pill ${serviceOnline ? "ready" : ""}`}>
-            <i /> {serviceOnline === false ? "正在重连" : "本地处理"}
+          <span className={`privacy-pill ${connectionRecovering ? "" : "ready"}`}>
+            <i /> {connectionRecovering ? "正在重连" : "本地处理"}
           </span>
           <Link href="/">单文档</Link>
           <Link href="/settings">设置</Link>
@@ -389,7 +460,12 @@ export function BatchWorkspace() {
       </section>
 
       {message && <div className="notice success"><span>状态</span>{message}</div>}
-      {error && <div className="notice error"><span>提示</span>{error}</div>}
+      {error && <div className="notice error"><span>提示</span>{error}{connectionRecovering && (
+        <button
+          className="button secondary compact"
+          onClick={() => setConnectionAttempt((value) => value + 1)}
+        >立即重试</button>
+      )}</div>}
 
       {!batch ? (
         <section className="batch-setup-grid">

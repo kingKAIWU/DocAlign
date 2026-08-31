@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Workspace } from "@/components/workspace";
+import { ApiError } from "@/lib/api";
 
 const mocks = vi.hoisted(() => ({
   capabilities: vi.fn(),
@@ -18,9 +19,34 @@ const mocks = vi.hoisted(() => ({
   compliance: vi.fn(),
 }));
 
+const onlineCapabilities = {
+  docx: true,
+  structured_spec: true,
+  llm_configured: false,
+  llm_protocol: "openai-compatible-chat-completions",
+  smart_semantic_analysis: false,
+  smart_analysis_sends_paragraph_text: true,
+  auto_layout: true,
+  default_cleanup_preset: true,
+  audit_only: true,
+  format_manifest: true,
+  template_rule_candidate: true,
+  max_upload_mb: 20,
+  local_only: true,
+};
+
 vi.mock("@/lib/api", () => ({
   API_BASE: "http://127.0.0.1:8000/api/v1",
-  ApiError: class ApiError extends Error {},
+  ApiError: class ApiError extends Error {
+    constructor(
+      public code: string,
+      message: string,
+      public status: number,
+      public details: Record<string, unknown> = {},
+    ) {
+      super(message);
+    }
+  },
   apiUrl: (path: string) => path,
   api: {
     capabilities: mocks.capabilities,
@@ -48,21 +74,7 @@ describe("Workspace", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.localStorage.clear();
-    mocks.capabilities.mockResolvedValue({
-      docx: true,
-      structured_spec: true,
-      llm_configured: false,
-      llm_protocol: "openai-compatible-chat-completions",
-      smart_semantic_analysis: false,
-      smart_analysis_sends_paragraph_text: true,
-      auto_layout: true,
-      default_cleanup_preset: true,
-      audit_only: true,
-      format_manifest: true,
-      template_rule_candidate: true,
-      max_upload_mb: 20,
-      local_only: true,
-    });
+    mocks.capabilities.mockResolvedValue(onlineCapabilities);
     mocks.preset.mockResolvedValue({
       preset_id: "default-clean-cn",
       spec: {
@@ -327,6 +339,139 @@ describe("Workspace", () => {
     await waitFor(() => expect(mocks.capabilities).toHaveBeenCalledTimes(2));
     await waitFor(() => expect(error).not.toBeInTheDocument());
     expect(screen.getByText("本地处理")).toBeInTheDocument();
+  });
+
+  it("self-heals a local recovery record whose document no longer exists", async () => {
+    window.localStorage.setItem(
+      "docalign.workspace.v1",
+      JSON.stringify({ document_id: "doc_deleted", analysis_id: "analysis_deleted" }),
+    );
+    mocks.document.mockRejectedValue(
+      new ApiError("DOCUMENT_NOT_FOUND", "Document not found.", 404),
+    );
+
+    render(<Workspace />);
+
+    expect(await screen.findByText(/旧恢复记录已自动清理/)).toBeInTheDocument();
+    expect(window.localStorage.getItem("docalign.workspace.v1")).toBeNull();
+    expect(screen.queryByRole("button", { name: "重试连接" })).not.toBeInTheDocument();
+    expect(screen.queryByText(/上次工作区暂时无法/)).not.toBeInTheDocument();
+  });
+
+  it("restores the document and removes only missing child references", async () => {
+    window.localStorage.setItem(
+      "docalign.workspace.v1",
+      JSON.stringify({
+        document_id: "doc_kept",
+        analysis_id: "analysis_deleted",
+        job_id: "job_deleted",
+      }),
+    );
+    mocks.document.mockResolvedValue({
+      document_id: "doc_kept",
+      filename: "保留的文档.docx",
+      sha256: "source-sha",
+      size_bytes: 1024,
+      status: "uploaded",
+    });
+    mocks.analysis.mockRejectedValue(
+      new ApiError("ANALYSIS_NOT_FOUND", "Analysis not found.", 404),
+    );
+    mocks.job.mockRejectedValue(new ApiError("JOB_NOT_FOUND", "Job not found.", 404));
+
+    render(<Workspace />);
+
+    expect(await screen.findByText("保留的文档.docx")).toBeInTheDocument();
+    expect(screen.getByText(/清理了不存在的分析和任务引用/)).toBeInTheDocument();
+    expect(JSON.parse(window.localStorage.getItem("docalign.workspace.v1") ?? "{}"))
+      .toEqual({ document_id: "doc_kept" });
+  });
+
+  it("preserves and retries a workspace after a real transport interruption", async () => {
+    window.localStorage.setItem(
+      "docalign.workspace.v1",
+      JSON.stringify({ document_id: "doc_retry" }),
+    );
+    mocks.document
+      .mockRejectedValueOnce(new TypeError("Failed to fetch"))
+      .mockResolvedValueOnce({
+        document_id: "doc_retry",
+        filename: "已恢复.docx",
+        sha256: "source-sha",
+        size_bytes: 1024,
+        status: "uploaded",
+      });
+
+    render(<Workspace />);
+
+    expect(await screen.findByText(/本地服务恢复后会自动重试/)).toBeInTheDocument();
+    expect(window.localStorage.getItem("docalign.workspace.v1")).not.toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "重试连接" }));
+    expect(await screen.findByText("已恢复.docx")).toBeInTheDocument();
+    expect(screen.getByText(/已恢复上次本地工作区/)).toBeInTheDocument();
+  });
+
+  it("keeps recovery retry active when the general service check finishes later", async () => {
+    window.localStorage.setItem(
+      "docalign.workspace.v1",
+      JSON.stringify({ document_id: "doc_race" }),
+    );
+    let resolveCapabilities: ((value: typeof onlineCapabilities) => void) | undefined;
+    mocks.capabilities.mockReturnValue(
+      new Promise((resolve) => {
+        resolveCapabilities = resolve;
+      }),
+    );
+    mocks.document.mockRejectedValue(new TypeError("Failed to fetch"));
+
+    render(<Workspace />);
+
+    expect(await screen.findByText(/上次工作区暂时无法读取/)).toBeInTheDocument();
+    resolveCapabilities?.(onlineCapabilities);
+    await waitFor(() => expect(mocks.capabilities).toHaveBeenCalledTimes(1));
+    expect(screen.getByRole("button", { name: "重试连接" })).toBeInTheDocument();
+  });
+
+  it("stops polling when an active job was removed from local storage", async () => {
+    window.localStorage.setItem(
+      "docalign.workspace.v1",
+      JSON.stringify({ document_id: "doc_active", job_id: "job_removed" }),
+    );
+    mocks.document.mockResolvedValue({
+      document_id: "doc_active",
+      filename: "进行中的文档.docx",
+      sha256: "source-sha",
+      size_bytes: 1024,
+      status: "uploaded",
+    });
+    mocks.job
+      .mockResolvedValueOnce({
+        job_id: "job_removed",
+        document_id: "doc_active",
+        analysis_id: "analysis_active",
+        spec_id: "spec_active",
+        processing_boundary_acknowledgment: "not_required",
+        status: "formatting",
+        progress: 50,
+        auto_layout_splits: 0,
+        result_summary: null,
+        output_document_url: null,
+        delivery_package_url: null,
+        audit_json_url: null,
+        audit_markdown_url: null,
+        error_code: null,
+        error_message: null,
+        created_at: "2026-08-31T00:00:00Z",
+        updated_at: "2026-08-31T00:00:00Z",
+      })
+      .mockRejectedValueOnce(new ApiError("JOB_NOT_FOUND", "Job not found.", 404));
+
+    render(<Workspace />);
+
+    expect(await screen.findByText(/已停止无效重连/)).toBeInTheDocument();
+    expect(JSON.parse(window.localStorage.getItem("docalign.workspace.v1") ?? "{}"))
+      .toEqual({ document_id: "doc_active" });
+    expect(mocks.job).toHaveBeenCalledTimes(2);
   });
 
   it("restores the deterministic cleanup rules from the default mode tab", async () => {

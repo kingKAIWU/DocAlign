@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { BatchWorkspace } from "@/components/batch-workspace";
+import { ApiError } from "@/lib/api";
 import type { BatchAudit } from "@/lib/types";
 
 const mocks = vi.hoisted(() => ({
@@ -14,6 +15,14 @@ const mocks = vi.hoisted(() => ({
   cancelBatch: vi.fn(),
   deleteBatch: vi.fn(),
 }));
+
+const onlineBatchCapabilities = {
+  local_only: true,
+  batch_processing: true,
+  max_batch_files: 20,
+  max_batch_total_mb: 200,
+  max_upload_mb: 20,
+};
 
 vi.mock("@/lib/api", () => ({
   ApiError: class ApiError extends Error {
@@ -125,13 +134,7 @@ describe("BatchWorkspace", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.localStorage.clear();
-    mocks.capabilities.mockResolvedValue({
-      local_only: true,
-      batch_processing: true,
-      max_batch_files: 20,
-      max_batch_total_mb: 200,
-      max_upload_mb: 20,
-    });
+    mocks.capabilities.mockResolvedValue(onlineBatchCapabilities);
     mocks.rulePacks.mockResolvedValue({ rule_packs: [] });
   });
 
@@ -159,6 +162,80 @@ describe("BatchWorkspace", () => {
       completedBatch.output_zip_url,
     );
     expect(mocks.batch).toHaveBeenCalledWith("batch_saved", expect.any(AbortSignal));
+  });
+
+  it("clears a stale batch recovery record instead of retrying forever", async () => {
+    window.localStorage.setItem(
+      "docalign.batch.v1",
+      JSON.stringify({ batch_id: "batch_deleted", pending_retries: {} }),
+    );
+    mocks.batch.mockRejectedValue(new ApiError("BATCH_NOT_FOUND", "Batch not found.", 404));
+
+    render(<BatchWorkspace />);
+
+    expect(await screen.findByText(/旧恢复记录已自动清理/)).toBeInTheDocument();
+    expect(window.localStorage.getItem("docalign.batch.v1")).toBeNull();
+    expect(screen.queryByText("正在重连")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "立即重试" })).not.toBeInTheDocument();
+  });
+
+  it("preserves and manually retries a batch after a transport interruption", async () => {
+    window.localStorage.setItem(
+      "docalign.batch.v1",
+      JSON.stringify({ batch_id: "batch_saved", pending_retries: {} }),
+    );
+    mocks.batch
+      .mockRejectedValueOnce(new TypeError("Failed to fetch"))
+      .mockResolvedValueOnce(completedBatch);
+
+    render(<BatchWorkspace />);
+
+    expect(await screen.findByText(/上次批次暂时无法读取/)).toBeInTheDocument();
+    expect(window.localStorage.getItem("docalign.batch.v1")).not.toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "立即重试" }));
+    expect(await screen.findByText("月度材料")).toBeInTheDocument();
+    expect(screen.getByText(/已恢复上次批次，可继续查看进度或重试失败文件/))
+      .toBeInTheDocument();
+  });
+
+  it("keeps batch recovery retry active when bootstrap finishes later", async () => {
+    window.localStorage.setItem(
+      "docalign.batch.v1",
+      JSON.stringify({ batch_id: "batch_race", pending_retries: {} }),
+    );
+    let resolveCapabilities:
+      | ((value: typeof onlineBatchCapabilities) => void)
+      | undefined;
+    mocks.capabilities.mockReturnValue(
+      new Promise((resolve) => {
+        resolveCapabilities = resolve;
+      }),
+    );
+    mocks.batch.mockRejectedValue(new TypeError("Failed to fetch"));
+
+    render(<BatchWorkspace />);
+
+    expect(await screen.findByText(/上次批次暂时无法读取/)).toBeInTheDocument();
+    resolveCapabilities?.(onlineBatchCapabilities);
+    await waitFor(() => expect(mocks.capabilities).toHaveBeenCalledTimes(1));
+    expect(screen.getByRole("button", { name: "立即重试" })).toBeInTheDocument();
+  });
+
+  it("stops polling when an active batch was removed from local storage", async () => {
+    window.localStorage.setItem(
+      "docalign.batch.v1",
+      JSON.stringify({ batch_id: "batch_saved", pending_retries: {} }),
+    );
+    mocks.batch
+      .mockResolvedValueOnce(activeBatch)
+      .mockRejectedValueOnce(new ApiError("BATCH_NOT_FOUND", "Batch not found.", 404));
+
+    render(<BatchWorkspace />);
+
+    expect(await screen.findByText(/已停止无效重连/)).toBeInTheDocument();
+    expect(window.localStorage.getItem("docalign.batch.v1")).toBeNull();
+    expect(mocks.batch).toHaveBeenCalledTimes(2);
+    expect(screen.queryByText("正在重连")).not.toBeInTheDocument();
   });
 
   it("reuses one retry request when the response is lost", async () => {

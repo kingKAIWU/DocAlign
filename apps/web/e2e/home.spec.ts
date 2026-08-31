@@ -40,6 +40,36 @@ test("keeps advanced rules reachable in short desktop and mobile layouts", async
     .toBe(await page.evaluate(() => document.documentElement.clientWidth));
 });
 
+test("self-heals stale local recovery handles without false reconnect warnings", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => {
+    window.localStorage.setItem(
+      "docalign.workspace.v1",
+      JSON.stringify({ document_id: "doc_from_another_workspace" }),
+    );
+  });
+  await page.reload();
+
+  await expect(page.getByText(/旧恢复记录已自动清理/)).toBeVisible();
+  expect(await page.evaluate(() => window.localStorage.getItem("docalign.workspace.v1")))
+    .toBeNull();
+  await expect(page.getByRole("button", { name: "重试连接" })).toHaveCount(0);
+
+  await page.goto("/batches");
+  await page.evaluate(() => {
+    window.localStorage.setItem(
+      "docalign.batch.v1",
+      JSON.stringify({ batch_id: "batch_from_another_workspace", pending_retries: {} }),
+    );
+  });
+  await page.reload();
+
+  await expect(page.getByText(/旧恢复记录已自动清理/)).toBeVisible();
+  expect(await page.evaluate(() => window.localStorage.getItem("docalign.batch.v1")))
+    .toBeNull();
+  await expect(page.getByText("正在重连")).toHaveCount(0);
+});
+
 test("extracts candidate rules from a reference Word without replacing the workspace document", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("radio", { name: /常规文档/ })).toBeVisible({ timeout: 10_000 });

@@ -26,6 +26,8 @@ import type {
 
 const WORKSPACE_STORAGE_KEY = "docalign.workspace.v1";
 const SERVICE_CONNECTION_ERROR = "无法连接本地排版服务。请确认 API 已启动，然后点击重试连接。";
+const WORKSPACE_RECOVERY_CONNECTION_ERROR =
+  "上次工作区暂时无法读取，记录已保留；本地服务恢复后会自动重试。";
 const SERVICE_RETRY_DELAY_MS = 3_000;
 const capabilityLabels: Record<string, string> = {
   page_layout: "页面布局",
@@ -68,8 +70,19 @@ function readableError(caught: unknown): string {
 function readStoredWorkspace(): StoredWorkspace | null {
   try {
     const value = window.localStorage.getItem(WORKSPACE_STORAGE_KEY);
-    return value ? (JSON.parse(value) as StoredWorkspace) : null;
+    if (!value) return null;
+    const parsed = JSON.parse(value) as Partial<StoredWorkspace>;
+    if (typeof parsed.document_id !== "string" || !parsed.document_id.trim()) {
+      window.localStorage.removeItem(WORKSPACE_STORAGE_KEY);
+      return null;
+    }
+    return {
+      document_id: parsed.document_id,
+      analysis_id: typeof parsed.analysis_id === "string" ? parsed.analysis_id : undefined,
+      job_id: typeof parsed.job_id === "string" ? parsed.job_id : undefined,
+    };
   } catch {
+    window.localStorage.removeItem(WORKSPACE_STORAGE_KEY);
     return null;
   }
 }
@@ -96,6 +109,7 @@ export function Workspace() {
   const [referenceCoverageAcknowledged, setReferenceCoverageAcknowledged] = useState(false);
   const [processingBoundaryAcknowledged, setProcessingBoundaryAcknowledged] = useState(false);
   const [serviceOnline, setServiceOnline] = useState<boolean | null>(null);
+  const [recoveryNeedsRetry, setRecoveryNeedsRetry] = useState(false);
   const [connectionAttempt, setConnectionAttempt] = useState(0);
   const [compilationReport, setCompilationReport] = useState<CompilationReport | null>(null);
   const [templateCandidate, setTemplateCandidate] = useState<TemplateRuleCandidate | null>(null);
@@ -122,6 +136,7 @@ export function Workspace() {
         : null;
   const jobActive = Boolean(job && !["completed", "failed"].includes(job.status));
   const activeJobId = jobActive ? job?.job_id ?? null : null;
+  const connectionRecovering = serviceOnline === false || recoveryNeedsRetry;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -153,13 +168,17 @@ export function Workspace() {
   }, [connectionAttempt]);
 
   useEffect(() => {
-    if (serviceOnline !== false) return;
+    if (!connectionRecovering) return;
+    const retryDelay = Math.min(
+      30_000,
+      SERVICE_RETRY_DELAY_MS * 2 ** Math.min(connectionAttempt, 3),
+    );
     const timer = window.setTimeout(
       () => setConnectionAttempt((value) => value + 1),
-      SERVICE_RETRY_DELAY_MS,
+      retryDelay,
     );
     return () => window.clearTimeout(timer);
-  }, [connectionAttempt, serviceOnline]);
+  }, [connectionAttempt, connectionRecovering]);
 
   useEffect(() => {
     if (!activeJobId) return;
@@ -201,10 +220,27 @@ export function Workspace() {
           return;
         }
         timer = window.setTimeout(refreshJob, 1000);
-      } catch {
+      } catch (caught) {
         if (cancelled) return;
+        if (caught instanceof ApiError && caught.status === 404) {
+          const stored = readStoredWorkspace();
+          if (stored?.job_id === pollingJobId) {
+            storeWorkspace({
+              document_id: stored.document_id,
+              analysis_id: stored.analysis_id,
+            });
+          }
+          setJob(null);
+          setMessage("");
+          setError("当前任务已不在本地存储；已停止无效重连，可以重新开始排版。");
+          return;
+        }
         failureCount += 1;
-        setMessage("进度连接暂时不可用，任务仍在本地后台运行，正在自动恢复…");
+        if (caught instanceof ApiError) {
+          setError(`任务进度暂时无法读取：${readableError(caught)}`);
+        } else {
+          setMessage("进度连接暂时不可用，任务仍在本地后台运行，正在自动恢复…");
+        }
         const retryDelay = Math.min(5000, 500 * 2 ** Math.min(failureCount, 4));
         timer = window.setTimeout(refreshJob, retryDelay);
       } finally {
@@ -237,11 +273,74 @@ export function Workspace() {
         if (!active) return;
         if (documentResult.status === "fulfilled") {
           setDocument(documentResult.value);
-          if (analysisResult.status === "fulfilled") setAnalysis(analysisResult.value);
-          if (jobResult.status === "fulfilled") setJob(jobResult.value);
-          setMessage("已恢复上次本地工作区。 ");
+          setServiceOnline(true);
+          const nextStored: StoredWorkspace = { document_id: stored.document_id };
+          const missingReferences: string[] = [];
+          const unreadableReferences: string[] = [];
+          if (analysisResult.status === "fulfilled" && analysisResult.value) {
+            setAnalysis(analysisResult.value);
+            nextStored.analysis_id = stored.analysis_id;
+          } else if (analysisResult.status === "rejected" && stored.analysis_id) {
+            if (analysisResult.reason instanceof ApiError && analysisResult.reason.status === 404) {
+              setAnalysis(null);
+              missingReferences.push("分析");
+            } else {
+              nextStored.analysis_id = stored.analysis_id;
+              unreadableReferences.push("分析");
+            }
+          }
+          if (jobResult.status === "fulfilled" && jobResult.value) {
+            setJob(jobResult.value);
+            nextStored.job_id = stored.job_id;
+          } else if (jobResult.status === "rejected" && stored.job_id) {
+            if (jobResult.reason instanceof ApiError && jobResult.reason.status === 404) {
+              setJob(null);
+              missingReferences.push("任务");
+            } else {
+              nextStored.job_id = stored.job_id;
+              unreadableReferences.push("任务");
+            }
+          }
+          storeWorkspace(nextStored);
+          if (unreadableReferences.length) {
+            setRecoveryNeedsRetry(true);
+            setError(
+              `已恢复上次文档，但${unreadableReferences.join("和")}暂时无法读取；记录已保留，正在自动重试。`,
+            );
+          } else {
+            setRecoveryNeedsRetry(false);
+            setError((current) =>
+              current === WORKSPACE_RECOVERY_CONNECTION_ERROR
+              || current.startsWith("已恢复上次文档，但")
+                ? ""
+                : current,
+            );
+            setMessage(
+              missingReferences.length
+                ? `已恢复上次文档，并清理了不存在的${missingReferences.join("和")}引用；需要时可重新分析或排版。`
+                : "已恢复上次本地工作区。 ",
+            );
+          }
         } else if (!controller.signal.aborted) {
-          setError("上次工作区暂时无法连接，记录已保留；服务恢复后刷新即可继续。 ");
+          const caught = documentResult.reason;
+          if (caught instanceof ApiError && caught.status === 404) {
+            window.localStorage.removeItem(WORKSPACE_STORAGE_KEY);
+            setDocument(null);
+            setAnalysis(null);
+            setJob(null);
+            setServiceOnline(true);
+            setRecoveryNeedsRetry(false);
+            setError("");
+            setMessage("上次工作区已不在当前本地存储，旧恢复记录已自动清理；可以开始处理新文档。");
+          } else if (caught instanceof ApiError) {
+            setServiceOnline(true);
+            setRecoveryNeedsRetry(false);
+            setError(`上次工作区无法恢复：${readableError(caught)}`);
+          } else {
+            setServiceOnline(false);
+            setRecoveryNeedsRetry(true);
+            setError(WORKSPACE_RECOVERY_CONNECTION_ERROR);
+          }
         }
       })
       .catch(() => undefined);
@@ -249,7 +348,7 @@ export function Workspace() {
       active = false;
       controller.abort();
     };
-  }, []);
+  }, [connectionAttempt]);
 
   useEffect(() => {
     const target = previewRef.current;
@@ -754,7 +853,7 @@ export function Workspace() {
       {(message || error) && (
         <div className={`notice ${error ? "error" : "success"}`} role="status">
           <span>{error ? "!" : "✓"}</span>{error || message}
-          {serviceOnline === false && (
+          {connectionRecovering && (
             <button className="button secondary compact" onClick={() => setConnectionAttempt((value) => value + 1)}>
               重试连接
             </button>
