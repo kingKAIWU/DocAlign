@@ -3,6 +3,26 @@ import { resolve } from "node:path";
 
 const fixture = resolve(process.cwd(), "../../tests/fixtures/academic-comprehensive.docx");
 
+test("downloads a guarded complete workspace backup from settings", async ({ page }) => {
+  await page.goto("/settings");
+  await expect(page.getByRole("heading", { name: "完整工作区备份" })).toBeVisible({
+    timeout: 10_000,
+  });
+  await expect(page.getByText("敏感且未加密")).toBeVisible();
+  await expect(page.getByText(/只允许恢复到尚不存在的目录/)).toBeVisible();
+
+  page.once("dialog", (dialog) => dialog.accept());
+  const [download] = await Promise.all([
+    page.waitForEvent("download"),
+    page.getByRole("link", { name: "下载完整备份" }).click(),
+  ]);
+  expect(download.suggestedFilename()).toMatch(
+    /^DocAlign-workspace-backup-\d{8}-\d{6}Z-[0-9a-f]{8}\.zip$/,
+  );
+  const downloadedPath = await download.path();
+  expect(downloadedPath).not.toBeNull();
+});
+
 test("keeps advanced rules reachable in short desktop and mobile layouts", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto("/");

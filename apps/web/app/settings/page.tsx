@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { type ReactNode, useEffect, useState } from "react";
+import { type MouseEvent, type ReactNode, useEffect, useState } from "react";
 
 import { api, API_BASE, ApiError } from "@/lib/api";
 import { errorLabels } from "@/lib/messages";
@@ -154,6 +154,24 @@ export default function SettingsPage() {
     }
   }
 
+  function confirmWorkspaceBackup(event: MouseEvent<HTMLAnchorElement>) {
+    const blocked = !storage
+      || storage.records.active_jobs > 0
+      || storage.records.active_batches > 0;
+    if (blocked) {
+      event.preventDefault();
+      return;
+    }
+    if (!window.confirm(
+      "下载完整工作区备份？备份包含源 DOCX、原文件名、规则、任务记录和输出，未加密且没有数字签名。请保存在受保护的位置。",
+    )) {
+      event.preventDefault();
+      return;
+    }
+    setError("");
+    setMessage("正在生成一致的完整备份。大型工作区在浏览器显示下载前可能需要一些时间，请保持 DocAlign 运行。");
+  }
+
   return (
     <main className="settings-shell">
       <div className="settings-nav"><Link className="back-link" href="/">← 返回工作台</Link><Link href="/batches">批量处理</Link></div>
@@ -205,9 +223,33 @@ export default function SettingsPage() {
             </div>)}
           </div>
           <div className="storage-records">
-            <span>{storage.records.documents} 份文档</span><span>{storage.records.batches} 个批次</span><span>{storage.records.jobs} 个作业</span><span>{storage.records.rule_packs} 个规则包</span>
+            <span>{storage.records.documents} 份文档</span><span>{storage.records.batches} 个批次</span><span>{storage.records.jobs} 个作业</span><span>{storage.records.active_jobs} 个活动任务</span><span>{storage.records.rule_packs} 个规则包</span>
           </div>
         </>}
+      </section>
+
+      <section className="settings-card workspace-backup-card">
+        <div className="storage-heading">
+          <div>
+            <p className="eyebrow">RECOVERY BACKUP</p>
+            <h2>完整工作区备份</h2>
+            <p>一次下载源文档、分析、规则、任务审计、输出、批次产物和一致的数据库快照；环境变量、密钥、运行锁及 SQLite 临时文件不会收录。</p>
+          </div>
+          <a
+            className={`button secondary ${!storage || storage.records.active_jobs > 0 || storage.records.active_batches > 0 ? "disabled" : ""}`}
+            href={`${API_BASE}/workspace/backup`}
+            download
+            aria-disabled={!storage || storage.records.active_jobs > 0 || storage.records.active_batches > 0}
+            onClick={confirmWorkspaceBackup}
+          >下载完整备份</a>
+        </div>
+        <div className="workspace-backup-boundary">
+          <strong>敏感且未加密</strong>
+          <p>SHA-256 可以发现包内文件损坏或不一致，但不能证明备份由谁创建。请按原始文档的保密等级保存。</p>
+        </div>
+        {storage && (storage.records.active_jobs > 0 || storage.records.active_batches > 0)
+          ? <p className="workspace-backup-wait">当前有 {storage.records.active_jobs} 个活动任务、{storage.records.active_batches} 个活动批次。全部结束后刷新占用，再下载备份。</p>
+          : <p className="workspace-backup-restore">恢复时先安全退出 DocAlign，再执行 <code>docalign restore-workspace-backup 备份.zip --data-dir 新目录</code>；系统只允许恢复到尚不存在的目录，不会覆盖当前工作区。</p>}
       </section>
 
       <section className="settings-card delivery-verifier-card">
@@ -326,7 +368,7 @@ DOCALIGN_LLM_JSON_SCHEMA_MODE=auto`}</pre>
 
       <section className="settings-card prose-card">
         <h2>数据保留</h2>
-        <p>上传文件、分析结果、临时规则、独立规则包、任务、批次、重试历史和输出保存在本机 <code>DOCALIGN_DATA_DIR</code>。DocAlign 不预设统一自动过期时间，因为行政归档、论文复核和合同审计的留存要求不同。请先下载需要长期保存的成果，再从存储中心明确删除。</p>
+        <p>上传文件、分析结果、临时规则、独立规则包、任务、批次、重试历史和输出保存在本机 <code>DOCALIGN_DATA_DIR</code>。DocAlign 不预设统一自动过期时间，因为行政归档、论文复核和合同审计的留存要求不同。清理前请先创建并校验完整工作区备份，或单独下载需要长期保存的交付包，再从存储中心明确删除。</p>
       </section>
     </main>
   );

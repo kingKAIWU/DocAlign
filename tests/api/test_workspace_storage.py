@@ -97,6 +97,7 @@ def test_storage_report_protects_active_documents_and_lists_cleanup_candidates(
             "documents": 2,
             "analyses": 2,
             "jobs": 2,
+            "active_jobs": 0,
             "batches": 1,
             "active_batches": 0,
             "rule_packs": 1,

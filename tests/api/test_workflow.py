@@ -49,6 +49,8 @@ def test_complete_structured_api_workflow(academic_docx: Path, tmp_path: Path) -
         assert capabilities["format_manifest"] is True
         assert capabilities["template_rule_candidate"] is True
         assert capabilities["verifiable_delivery_packages"] is True
+        assert capabilities["verifiable_workspace_backup"] is True
+        assert capabilities["safe_workspace_restore"] is True
         assert capabilities["max_delivery_package_mb"] == 220
 
         with academic_docx.open("rb") as reference:

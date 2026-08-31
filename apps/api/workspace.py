@@ -65,6 +65,14 @@ class WorkspaceService:
             document_count = self._count(session, DocumentRecord)
             analysis_count = self._count(session, AnalysisRecord)
             job_count = self._count(session, JobRecord)
+            active_job_count = int(
+                session.scalar(
+                    select(func.count())
+                    .select_from(JobRecord)
+                    .where(JobRecord.status.in_(_ACTIVE_JOBS))
+                )
+                or 0
+            )
             batch_count = self._count(session, BatchRecord)
             rule_pack_count = self._count(session, RulePackRecord)
             batch_ids = list(session.scalars(select(BatchRecord.id)))
@@ -147,6 +155,7 @@ class WorkspaceService:
                 documents=document_count,
                 analyses=analysis_count,
                 jobs=job_count,
+                active_jobs=active_job_count,
                 batches=batch_count,
                 active_batches=active_batches,
                 rule_packs=rule_pack_count,

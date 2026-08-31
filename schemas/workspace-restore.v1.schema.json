@@ -1,0 +1,49 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "workspace-restore.v1",
+      "default": "workspace-restore.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "backup_id": {
+      "title": "Backup Id",
+      "type": "string"
+    },
+    "restored_at": {
+      "format": "date-time",
+      "title": "Restored At",
+      "type": "string"
+    },
+    "database_filename": {
+      "title": "Database Filename",
+      "type": "string"
+    },
+    "file_count": {
+      "minimum": 1,
+      "title": "File Count",
+      "type": "integer"
+    },
+    "payload_bytes": {
+      "minimum": 0,
+      "title": "Payload Bytes",
+      "type": "integer"
+    },
+    "source_document_count": {
+      "minimum": 0,
+      "title": "Source Document Count",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "backup_id",
+    "restored_at",
+    "database_filename",
+    "file_count",
+    "payload_bytes",
+    "source_document_count"
+  ],
+  "title": "WorkspaceRestoreReceipt",
+  "type": "object"
+}

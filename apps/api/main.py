@@ -59,6 +59,7 @@ from apps.api.schemas import (
 from apps.api.service import ApiService
 from apps.api.storage import LocalStorage
 from apps.api.workspace import WorkspaceService
+from apps.api.workspace_backups import WorkspaceBackupService
 
 
 def create_app(
@@ -74,6 +75,7 @@ def create_app(
     batch_service = BatchService(service, settings, database, storage)
     delivery_service = DeliveryService(service, batch_service, settings, storage)
     workspace_service = WorkspaceService(database, storage, batch_service)
+    workspace_backup_service = WorkspaceBackupService(database, storage)
     diagnostic_service = DiagnosticService(settings, database, storage)
     runner = JobRunner(service, settings.job_concurrency)
 
@@ -99,6 +101,7 @@ def create_app(
     application.state.batch_service = batch_service
     application.state.delivery_service = delivery_service
     application.state.workspace_service = workspace_service
+    application.state.workspace_backup_service = workspace_backup_service
     application.state.diagnostic_service = diagnostic_service
     application.state.runner = runner
     application.add_middleware(
@@ -154,6 +157,8 @@ def create_app(
             "rule_pack_import": True,
             "batch_processing": True,
             "verifiable_delivery_packages": True,
+            "verifiable_workspace_backup": True,
+            "safe_workspace_restore": True,
             "max_batch_files": settings.max_batch_files,
             "max_batch_total_mb": settings.max_batch_total_mb,
             "max_delivery_package_mb": settings.max_batch_total_mb + 20,
@@ -215,6 +220,21 @@ def create_app(
         item_limit: int = Query(default=50, ge=1, le=200),
     ) -> WorkspaceStorageReport:
         return workspace_service.storage_report(item_limit=item_limit)
+
+    @application.get(
+        "/api/v1/workspace/backup",
+        response_class=FileResponse,
+        responses={200: {"content": {"application/zip": {}}}},
+    )
+    def download_workspace_backup(background_tasks: BackgroundTasks) -> FileResponse:
+        artifact = workspace_backup_service.create()
+        background_tasks.add_task(artifact.cleanup)
+        return FileResponse(
+            artifact.path,
+            media_type="application/zip",
+            filename=artifact.filename,
+            background=background_tasks,
+        )
 
     @application.get("/api/v1/presets/generic-academic-cn")
     def generic_academic_preset() -> dict[str, object]:

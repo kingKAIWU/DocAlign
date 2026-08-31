@@ -49,6 +49,7 @@ const report: WorkspaceStorageReport = {
     documents: 3,
     analyses: 3,
     jobs: 3,
+    active_jobs: 0,
     batches: 1,
     active_batches: 0,
     rule_packs: 2,
@@ -193,6 +194,8 @@ describe("SettingsPage storage center", () => {
       max_batch_files: 20,
       max_batch_total_mb: 200,
       max_delivery_package_mb: 220,
+      verifiable_workspace_backup: true,
+      safe_workspace_restore: true,
     });
     mocks.deleteBatch.mockResolvedValue(undefined);
     mocks.deleteDocument.mockResolvedValue(undefined);
@@ -265,6 +268,22 @@ describe("SettingsPage storage center", () => {
     expect(mocks.diagnostics).toHaveBeenCalledTimes(1);
   });
 
+  it("offers a guarded full workspace backup and explains safe restore", async () => {
+    vi.spyOn(window, "confirm").mockReturnValue(false);
+    render(<SettingsPage />);
+
+    const backup = await screen.findByRole("link", { name: "下载完整备份" });
+    expect(backup).toHaveAttribute(
+      "href",
+      "http://127.0.0.1:8000/api/v1/workspace/backup",
+    );
+    expect(backup).toHaveAttribute("aria-disabled", "false");
+    expect(screen.getByText("敏感且未加密")).toBeInTheDocument();
+    expect(screen.getByText(/只允许恢复到尚不存在的目录/)).toBeInTheDocument();
+    expect(fireEvent.click(backup)).toBe(false);
+    expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining("源 DOCX"));
+  });
+
   it("verifies a delivery package locally and explains the unsigned boundary", async () => {
     render(<SettingsPage />);
 
@@ -289,6 +308,8 @@ describe("SettingsPage storage center", () => {
       max_batch_files: 20,
       max_batch_total_mb: 200,
       max_delivery_package_mb: 220,
+      verifiable_workspace_backup: true,
+      safe_workspace_restore: true,
     });
     vi.spyOn(window, "confirm").mockReturnValue(true);
 

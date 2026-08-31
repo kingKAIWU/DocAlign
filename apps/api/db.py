@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import sqlite3
 from collections.abc import Iterator
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import overload
 
 from sqlalchemy import (
@@ -287,6 +289,25 @@ class Database:
                     updated_at=utcnow(),
                 )
             )
+
+    def backup_sqlite(self, target: Path) -> None:
+        """Create a consistent snapshot through SQLite's online backup API."""
+        if self.engine.dialect.name != "sqlite":
+            raise RuntimeError("Workspace backup currently requires SQLite.")
+        if target.exists():
+            raise RuntimeError("The SQLite backup target already exists.")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        raw_connection = self.engine.raw_connection()
+        try:
+            driver_connection = getattr(raw_connection, "driver_connection", None)
+            if not isinstance(driver_connection, sqlite3.Connection):
+                raise RuntimeError("The active database is not a SQLite connection.")
+            with sqlite3.connect(target, timeout=5) as destination:
+                driver_connection.backup(destination, pages=256, sleep=0.05)
+                if destination.execute("PRAGMA quick_check").fetchone() != ("ok",):
+                    raise RuntimeError("The SQLite backup failed its integrity check.")
+        finally:
+            raw_connection.close()
 
 
 def _configure_sqlite(dbapi_connection: object, _: object) -> None:

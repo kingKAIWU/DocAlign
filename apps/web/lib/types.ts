@@ -91,6 +91,8 @@ export type Capabilities = {
   rule_pack_import: boolean;
   batch_processing: boolean;
   verifiable_delivery_packages: boolean;
+  verifiable_workspace_backup: boolean;
+  safe_workspace_restore: boolean;
   max_batch_files: number;
   max_batch_total_mb: number;
   max_delivery_package_mb: number;

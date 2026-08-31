@@ -90,6 +90,45 @@ def test_self_test_rejects_missing_static_export(tmp_path: Path) -> None:
         desktop.run_self_test(tmp_path)
 
 
+def test_packaged_launcher_exposes_offline_backup_verify_and_restore(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    package = tmp_path / "backup.zip"
+    package.write_bytes(b"test")
+    verification = Mock()
+    verification.model_dump_json.return_value = '{"valid":true}'
+    restored = Mock()
+    restored.model_dump_json.return_value = '{"backup_id":"backup_test"}'
+    verify = Mock(return_value=verification)
+    restore = Mock(return_value=restored)
+    monkeypatch.setattr(desktop, "verify_workspace_backup", verify)
+    monkeypatch.setattr(desktop, "restore_workspace_backup", restore)
+
+    assert desktop.main(["--verify-workspace-backup", str(package)]) == 0
+    assert json.loads(capsys.readouterr().out)["valid"] is True
+    verify.assert_called_once_with(package.resolve())
+
+    target = tmp_path / "new-workspace"
+    assert (
+        desktop.main(
+            [
+                "--restore-workspace-backup",
+                str(package),
+                "--data-dir",
+                str(target),
+            ]
+        )
+        == 0
+    )
+    assert json.loads(capsys.readouterr().out)["backup_id"] == "backup_test"
+    restore.assert_called_once_with(package.resolve(), target.resolve())
+
+    with pytest.raises(SystemExit):
+        desktop.main(["--restore-workspace-backup", str(package)])
+
+
 def test_desktop_settings_ignore_launch_folder_env(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

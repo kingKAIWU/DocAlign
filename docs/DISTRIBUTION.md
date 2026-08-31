@@ -39,8 +39,14 @@ Developer ID 或 Windows Authenticode 证书签名，也没有自动更新器，
 
 跨电脑只迁移某个规则修订时，可在来源电脑导出 `rule-pack.v1` JSON，在目标电脑通过“我的规则包”
 先检查再导入；系统会验证结构和规则摘要、避免完全相同的重复项，并把导入状态重置为草稿。这个文件
-不包含完整版本历史，也没有发布者数字签名。若要迁移整个工作区，请先从设置页安全退出应用，再备份
-并迁移完整数据目录，避免在数据库仍写入时复制。
+不包含完整版本历史，也没有发布者数字签名。若要迁移整个工作区，请在“设置 → 完整工作区备份”
+下载可验证 ZIP；到目标电脑后先校验，再用 `docalign restore-workspace-backup` 恢复到新数据目录。
+不要在应用运行时直接复制 SQLite 文件。
+
+打包版启动器也内置同一离线校验与恢复能力，不需要启动网站。macOS 可使用应用包中的
+`DocAlign.app/Contents/MacOS/DocAlign --verify-workspace-backup <ZIP>`，Windows 使用
+`DocAlign.exe --verify-workspace-backup <ZIP>`；恢复时把参数改为
+`--restore-workspace-backup <ZIP> --data-dir <尚不存在的新目录>`。恢复命令不会覆盖已有目录。
 
 ## 构建者流程
 

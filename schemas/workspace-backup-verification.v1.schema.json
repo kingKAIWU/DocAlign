@@ -1,0 +1,86 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "workspace-backup-verification.v1",
+      "default": "workspace-backup-verification.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "valid": {
+      "const": true,
+      "default": true,
+      "title": "Valid",
+      "type": "boolean"
+    },
+    "backup_id": {
+      "title": "Backup Id",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "application_version": {
+      "title": "Application Version",
+      "type": "string"
+    },
+    "database_revision": {
+      "title": "Database Revision",
+      "type": "string"
+    },
+    "checksum_algorithm": {
+      "const": "sha256",
+      "default": "sha256",
+      "title": "Checksum Algorithm",
+      "type": "string"
+    },
+    "signature_status": {
+      "const": "not_signed",
+      "default": "not_signed",
+      "title": "Signature Status",
+      "type": "string"
+    },
+    "encryption_status": {
+      "const": "not_encrypted",
+      "default": "not_encrypted",
+      "title": "Encryption Status",
+      "type": "string"
+    },
+    "file_count": {
+      "minimum": 1,
+      "title": "File Count",
+      "type": "integer"
+    },
+    "payload_bytes": {
+      "minimum": 0,
+      "title": "Payload Bytes",
+      "type": "integer"
+    },
+    "source_document_count": {
+      "minimum": 0,
+      "title": "Source Document Count",
+      "type": "integer"
+    },
+    "warnings": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Warnings",
+      "type": "array"
+    }
+  },
+  "required": [
+    "backup_id",
+    "created_at",
+    "application_version",
+    "database_revision",
+    "file_count",
+    "payload_bytes",
+    "source_document_count",
+    "warnings"
+  ],
+  "title": "WorkspaceBackupVerification",
+  "type": "object"
+}

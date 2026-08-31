@@ -191,6 +191,11 @@
           "title": "Jobs",
           "type": "integer"
         },
+        "active_jobs": {
+          "minimum": 0,
+          "title": "Active Jobs",
+          "type": "integer"
+        },
         "batches": {
           "minimum": 0,
           "title": "Batches",
@@ -211,6 +216,7 @@
         "documents",
         "analyses",
         "jobs",
+        "active_jobs",
         "batches",
         "active_batches",
         "rule_packs"

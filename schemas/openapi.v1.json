@@ -184,6 +184,20 @@
         }
       }
     },
+    "/api/v1/workspace/backup": {
+      "get": {
+        "summary": "Download Workspace Backup",
+        "operationId": "download_workspace_backup_api_v1_workspace_backup_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/zip": {}
+            }
+          }
+        }
+      }
+    },
     "/api/v1/presets/generic-academic-cn": {
       "get": {
         "summary": "Generic Academic Preset",
@@ -5829,6 +5843,11 @@
             "minimum": 0.0,
             "title": "Jobs"
           },
+          "active_jobs": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Active Jobs"
+          },
           "batches": {
             "type": "integer",
             "minimum": 0.0,
@@ -5851,6 +5870,7 @@
           "documents",
           "analyses",
           "jobs",
+          "active_jobs",
           "batches",
           "active_batches",
           "rule_packs"

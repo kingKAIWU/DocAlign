@@ -57,6 +57,17 @@ def _request_graceful_shutdown(port: int) -> None:
             raise RuntimeError("The distribution rejected its graceful shutdown request.")
 
 
+def _download_workspace_backup(port: int, target: Path) -> None:
+    with urllib.request.urlopen(
+        f"http://{HOST}:{port}/api/v1/workspace/backup", timeout=20
+    ) as response:
+        content_type = response.headers.get_content_type()
+        payload = response.read()
+    if content_type != "application/zip" or not payload.startswith(b"PK"):
+        raise RuntimeError("The packaged application did not return a workspace backup ZIP.")
+    target.write_bytes(payload)
+
+
 def smoke_distribution(launcher: Path) -> None:
     if not launcher.is_file():
         raise RuntimeError(f"Distribution launcher does not exist: {launcher}")
@@ -90,6 +101,29 @@ def smoke_distribution(launcher: Path) -> None:
                 raise RuntimeError("A second launch did not activate the existing instance.")
             if (launch_dir / "data").exists():
                 raise RuntimeError("The distribution wrote data into its launch directory.")
+            backup = test_root / "workspace-backup.zip"
+            _download_workspace_backup(port, backup)
+            subprocess.run(
+                [launcher, "--verify-workspace-backup", backup],
+                check=True,
+                timeout=30,
+                cwd=launch_dir,
+            )
+            restored_dir = test_root / "restored-workspace"
+            subprocess.run(
+                [
+                    launcher,
+                    "--restore-workspace-backup",
+                    backup,
+                    "--data-dir",
+                    restored_dir,
+                ],
+                check=True,
+                timeout=30,
+                cwd=launch_dir,
+            )
+            if not (restored_dir / "docalign.db").is_file():
+                raise RuntimeError("The packaged restore command did not create its database.")
             _request_graceful_shutdown(port)
             process.wait(timeout=20)
             if process.returncode != 0:

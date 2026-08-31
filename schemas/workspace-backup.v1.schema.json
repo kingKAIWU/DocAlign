@@ -1,0 +1,126 @@
+{
+  "$defs": {
+    "WorkspaceBackupFile": {
+      "additionalProperties": false,
+      "properties": {
+        "archive_path": {
+          "title": "Archive Path",
+          "type": "string"
+        },
+        "restore_path": {
+          "title": "Restore Path",
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/$defs/WorkspaceBackupFileRole"
+        },
+        "size_bytes": {
+          "minimum": 0,
+          "title": "Size Bytes",
+          "type": "integer"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        }
+      },
+      "required": [
+        "archive_path",
+        "restore_path",
+        "role",
+        "size_bytes",
+        "sha256"
+      ],
+      "title": "WorkspaceBackupFile",
+      "type": "object"
+    },
+    "WorkspaceBackupFileRole": {
+      "enum": [
+        "database",
+        "source_document",
+        "analysis",
+        "job_artifact",
+        "output",
+        "batch_artifact"
+      ],
+      "title": "WorkspaceBackupFileRole",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "workspace-backup.v1",
+      "default": "workspace-backup.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "backup_id": {
+      "pattern": "^backup_[0-9a-f]{32}$",
+      "title": "Backup Id",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "application_version": {
+      "title": "Application Version",
+      "type": "string"
+    },
+    "database_revision": {
+      "title": "Database Revision",
+      "type": "string"
+    },
+    "checksum_algorithm": {
+      "const": "sha256",
+      "default": "sha256",
+      "title": "Checksum Algorithm",
+      "type": "string"
+    },
+    "signature_status": {
+      "const": "not_signed",
+      "default": "not_signed",
+      "title": "Signature Status",
+      "type": "string"
+    },
+    "encryption_status": {
+      "const": "not_encrypted",
+      "default": "not_encrypted",
+      "title": "Encryption Status",
+      "type": "string"
+    },
+    "database_archive_path": {
+      "title": "Database Archive Path",
+      "type": "string"
+    },
+    "files": {
+      "items": {
+        "$ref": "#/$defs/WorkspaceBackupFile"
+      },
+      "minItems": 1,
+      "title": "Files",
+      "type": "array"
+    },
+    "excluded_runtime_data": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Excluded Runtime Data",
+      "type": "array"
+    }
+  },
+  "required": [
+    "backup_id",
+    "created_at",
+    "application_version",
+    "database_revision",
+    "database_archive_path",
+    "files",
+    "excluded_runtime_data"
+  ],
+  "title": "WorkspaceBackupManifest",
+  "type": "object"
+}

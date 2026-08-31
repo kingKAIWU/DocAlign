@@ -22,6 +22,11 @@ from docalign_core.llm.openai_compatible import OpenAICompatibleChatInterpreter
 from docalign_core.llm.semantic import OpenAICompatibleSemanticAnalyzer
 from docalign_core.services.processing import ProcessingFailure, process_document
 from docalign_core.validation.validator import DocumentValidator
+from docalign_core.workspace_backup import (
+    WorkspaceBackupError,
+    restore_workspace_backup,
+    verify_workspace_backup,
+)
 
 app = typer.Typer(help="DocAlign deterministic DOCX formatting engine.", no_args_is_help=True)
 spec_app = typer.Typer(help="Compile and inspect FormattingSpec documents.", no_args_is_help=True)
@@ -88,6 +93,47 @@ def verify_delivery(
         "Delivery package verified: "
         f"{verification.package_kind.value} {verification.package_id} · "
         f"{len(verification.items)} item(s) · unsigned"
+    )
+
+
+@app.command("verify-workspace-backup")
+def verify_backup(
+    package: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+    report: Annotated[Path | None, typer.Option("--report")] = None,
+) -> None:
+    if report is not None and report.resolve() == package.resolve():
+        raise typer.BadParameter("The verification report must not overwrite the backup.")
+    try:
+        verification = verify_workspace_backup(package)
+    except WorkspaceBackupError as exc:
+        typer.echo(f"{exc.code}: {exc.message}", err=True)
+        raise typer.Exit(2) from exc
+    if report is not None:
+        report.parent.mkdir(parents=True, exist_ok=True)
+        report.write_text(verification.model_dump_json(indent=2) + "\n", encoding="utf-8")
+        typer.echo(f"Verification report: {report}")
+    typer.echo(
+        "Workspace backup verified: "
+        f"{verification.backup_id} · {verification.file_count} file(s) · "
+        f"{verification.source_document_count} source document(s) · unencrypted · unsigned"
+    )
+
+
+@app.command("restore-workspace-backup")
+def restore_backup(
+    package: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+    data_dir: Annotated[Path, typer.Option("--data-dir", file_okay=False)],
+) -> None:
+    try:
+        receipt = restore_workspace_backup(package, data_dir)
+    except WorkspaceBackupError as exc:
+        typer.echo(f"{exc.code}: {exc.message}", err=True)
+        raise typer.Exit(2) from exc
+    typer.echo(
+        f"Workspace restored to new data directory: {data_dir.resolve()}\n"
+        f"Database: {receipt.database_filename}\n"
+        "Set DOCALIGN_DATA_DIR to this directory and DOCALIGN_DATABASE_URL to "
+        f"sqlite:///{data_dir.resolve() / receipt.database_filename} before starting DocAlign."
     )
 
 

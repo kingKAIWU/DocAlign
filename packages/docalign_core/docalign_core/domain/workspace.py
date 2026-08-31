@@ -36,6 +36,7 @@ class StorageRecordCounts(StrictModel):
     documents: int = Field(ge=0)
     analyses: int = Field(ge=0)
     jobs: int = Field(ge=0)
+    active_jobs: int = Field(ge=0)
     batches: int = Field(ge=0)
     active_batches: int = Field(ge=0)
     rule_packs: int = Field(ge=0)

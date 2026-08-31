@@ -464,6 +464,15 @@ a { color: inherit; }
 .storage-categories em { height: 100%; display: block; border-radius: inherit; background: var(--green); }
 .storage-categories > div > strong { text-align: right; font: 700 8px/1 ui-monospace, monospace; }
 .storage-records { margin-top: 17px; padding-top: 13px; display: flex; flex-wrap: wrap; gap: 7px 18px; border-top: 1px solid var(--line); color: var(--muted); font-size: 8px; }
+.workspace-backup-card { padding: 22px; }
+.workspace-backup-card .button { flex: 0 0 auto; }
+.workspace-backup-card .button.disabled { cursor: not-allowed; opacity: .48; pointer-events: auto; }
+.workspace-backup-boundary { margin-top: 17px; padding: 12px 14px; display: grid; grid-template-columns: auto minmax(0,1fr); align-items: start; gap: 12px; border-left: 3px solid var(--amber); background: #fff8ed; }
+.workspace-backup-boundary strong { color: #725119; font-size: 9px; white-space: nowrap; }
+.workspace-backup-boundary p, .workspace-backup-wait, .workspace-backup-restore { margin: 0; color: var(--muted); font-size: 9px; line-height: 1.65; }
+.workspace-backup-wait, .workspace-backup-restore { margin-top: 12px; }
+.workspace-backup-wait { color: #725119; }
+.workspace-backup-restore code { color: var(--green-2); font: 8px/1.5 ui-monospace, monospace; overflow-wrap: anywhere; }
 .storage-cleanup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .storage-list-card { min-width: 0; padding: 20px; }
 .storage-list { max-height: 410px; margin-top: 16px; overflow: auto; display: grid; gap: 6px; scrollbar-gutter: stable; }
@@ -646,6 +655,8 @@ a { color: inherit; }
   .storage-categories > div { grid-template-columns: minmax(105px, 1fr) minmax(90px, 1.4fr) 62px; gap: 8px; }
   .storage-categories > div > span { align-items: flex-start; flex-direction: column; gap: 2px; }
   .storage-cleanup-grid { grid-template-columns: 1fr; }
+  .workspace-backup-card .button { width: 100%; text-align: center; }
+  .workspace-backup-boundary { grid-template-columns: 1fr; gap: 6px; }
   .storage-list { max-height: none; }
   .delivery-verifier-form { grid-template-columns: 1fr; }
   .delivery-verifier-form .button { width: 100%; }

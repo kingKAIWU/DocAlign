@@ -294,6 +294,42 @@ uv run docalign verify-delivery delivery-package.zip --report verification.json
 服务端会复用原请求，不会重复建批。当前批量能力是单机本地队列，不包含文件夹自动监控、多人协作
 或正式审批流。
 
+### 9. 备份或迁移完整工作区
+
+需要换电脑、试运行清理策略或保留全部历史时，进入“设置 → 完整工作区备份”：
+
+1. 等待所有单文档任务和批次结束；活动任务期间按钮会显示原因并禁止下载，避免得到半成品工作区。
+2. 点击“下载完整备份”并阅读敏感数据确认。ZIP 包含源 DOCX、原文件名、分析、规则及其全部修订、
+   任务与批次记录、审计、格式化输出和数据库快照；不包含 `.env`、模型密钥、运行锁、进程元数据、
+   SQLite WAL/SHM 或数据目录中的非 DocAlign 管理文件。
+3. 将 ZIP 保存在加密磁盘或其他符合原文档保密等级的位置。备份本身**未加密、未数字签名**；
+   SHA-256 能发现包内损坏或不一致，不能证明创建者身份。
+4. 收到或搬运备份后先校验：
+
+   ```bash
+   docalign verify-workspace-backup DocAlign-workspace-backup-*.zip \
+     --report backup-verification.json
+   ```
+
+5. 恢复前安全退出 DocAlign，再指定一个尚不存在的新目录：
+
+   ```bash
+   docalign restore-workspace-backup DocAlign-workspace-backup-*.zip \
+     --data-dir /path/to/new-docalign-data
+   ```
+
+   恢复器会再次检查路径穿越、重复项、符号链接、压缩炸弹、清单覆盖、全部 SHA-256、SQLite 完整性、
+   数据库版本与文档产物对应关系，然后把数据库中的旧机器路径迁移到新目录。它不会覆盖当前目录或
+   任何已经存在的目标目录。命令结束时会显示需要设置的 `DOCALIGN_DATA_DIR` 和
+   `DOCALIGN_DATABASE_URL`；设置后再启动 DocAlign。
+
+打包版无需安装 Python CLI：macOS 可从终端运行
+`DocAlign.app/Contents/MacOS/DocAlign --restore-workspace-backup 备份.zip --data-dir 新目录`，Windows
+使用 `DocAlign.exe` 和同样参数。详细位置见[桌面分发说明](DISTRIBUTION.md)。
+
+这份工作区备份用于灾难恢复和完整迁移，不替代“完整交付包”。对外提交排版成果仍应使用任务或批次
+交付包，因为交付包不携带源 DOCX，并包含面向接收方的逐项审计证据。
+
 ## 四、数据与隐私
 
 - 上传文件、分析结果、规则、任务、批次、尝试历史和输出默认保存在本机 `DOCALIGN_DATA_DIR`。
@@ -302,7 +338,8 @@ uv run docalign verify-delivery delivery-package.zip --report verification.json
 - 点击“删除本地批次”会精确删除该批次及全部关联文档和产物，且不可撤销；活动批次必须先取消并
   等待安全停止。
 - “我的规则包”是跨文档独立保存的数据，不会随当前文档删除；可导出单个修订，在另一台电脑先
-  检查再导入。导入不等于自动同步，若要完整迁移全部历史，应在关闭应用后备份整个数据目录。
+  检查再导入。导入不等于自动同步；若要迁移全部历史，使用“完整工作区备份”，不要在应用运行时
+  直接复制 SQLite 文件。
 - “智能分析”仅在用户确认后发送段落文字和格式摘要。
 - “自然语言编译”只发送格式要求和精简结构统计。
 - “参考样例提取”完全在本地临时解析，候选返回后立即清理参考文件。

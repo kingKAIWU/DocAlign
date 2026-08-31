@@ -18,6 +18,11 @@ from typing import BinaryIO, Self
 
 import uvicorn
 from docalign_core.config import Settings
+from docalign_core.workspace_backup import (
+    WorkspaceBackupError,
+    restore_workspace_backup,
+    verify_workspace_backup,
+)
 
 from apps.api.db import Database
 from apps.api.main import create_app
@@ -227,12 +232,39 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--port", type=int, default=DEFAULT_PORT)
     parser.add_argument("--no-browser", action="store_true")
     parser.add_argument("--self-test", action="store_true")
+    backup_group = parser.add_mutually_exclusive_group()
+    backup_group.add_argument("--verify-workspace-backup", type=Path, default=None)
+    backup_group.add_argument("--restore-workspace-backup", type=Path, default=None)
     parser.add_argument("--version", action="version", version=f"%(prog)s {APP_VERSION}")
     return parser
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    arguments = _build_parser().parse_args(argv)
+    parser = _build_parser()
+    arguments = parser.parse_args(argv)
+    if arguments.restore_workspace_backup is not None and arguments.data_dir is None:
+        parser.error("--restore-workspace-backup requires an explicit --data-dir.")
+    if arguments.verify_workspace_backup is not None:
+        try:
+            verification = verify_workspace_backup(
+                arguments.verify_workspace_backup.expanduser().resolve()
+            )
+        except WorkspaceBackupError as exc:
+            print(f"{exc.code}: {exc.message}", file=sys.stderr)
+            return 2
+        print(verification.model_dump_json(indent=2))
+        return 0
+    if arguments.restore_workspace_backup is not None:
+        try:
+            receipt = restore_workspace_backup(
+                arguments.restore_workspace_backup.expanduser().resolve(),
+                arguments.data_dir.expanduser().resolve(),
+            )
+        except WorkspaceBackupError as exc:
+            print(f"{exc.code}: {exc.message}", file=sys.stderr)
+            return 2
+        print(receipt.model_dump_json(indent=2))
+        return 0
     data_dir = (arguments.data_dir or default_data_dir()).expanduser().resolve()
     static_dir = (arguments.static_dir or bundled_web_root()).expanduser().resolve()
 
