@@ -2,6 +2,9 @@ import type { components } from "./generated-api";
 
 export type SemanticRole = components["schemas"]["SemanticRole"];
 
+export type DocumentProcessingBoundary =
+  components["schemas"]["DocumentProcessingBoundary"];
+
 export type ParagraphBlock = {
   kind: "paragraph";
   node_id: string;
@@ -54,6 +57,7 @@ export type Analysis = {
     model_reviewed_paragraphs: number;
     model_provider: string | null;
     model_name: string | null;
+    processing_boundary: DocumentProcessingBoundary;
   };
 };
 

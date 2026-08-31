@@ -341,6 +341,94 @@ describe("Workspace", () => {
     expect(screen.getByRole("status")).toHaveTextContent("已载入通用整理方案");
   });
 
+  it("requires acknowledgment when source content has manual processing boundaries", async () => {
+    window.localStorage.setItem(
+      "docalign.workspace.v1",
+      JSON.stringify({ document_id: "doc_complex", analysis_id: "analysis_complex" }),
+    );
+    mocks.document.mockResolvedValue({
+      document_id: "doc_complex",
+      filename: "复杂投标文件.docx",
+      sha256: "complex-sha",
+      size_bytes: 2048,
+      status: "uploaded",
+    });
+    mocks.analysis.mockResolvedValue({
+      analysis_id: "analysis_complex",
+      document_ir: {
+        source_filename: "复杂投标文件.docx",
+        warnings: [],
+        blocks: [
+          {
+            kind: "paragraph",
+            node_id: "node_1",
+            locator: "p1",
+            index: 0,
+            text: "项目方案",
+            detected_role: "title",
+            role_confidence: 0.99,
+            role_source: "deterministic",
+            role_evidence: ["known-style"],
+            contains_drawing: false,
+            is_empty: false,
+          },
+        ],
+      },
+      summary: {
+        paragraph_count: 1,
+        table_count: 0,
+        image_count: 0,
+        unknown_count: 0,
+        role_counts: { title: 1 },
+        analysis_mode: "deterministic",
+        document_kind: "business_report",
+        document_kind_confidence: 0.9,
+        model_reviewed_paragraphs: 0,
+        model_provider: null,
+        model_name: null,
+        processing_boundary: {
+          status: "review_required",
+          detected_feature_count: 2,
+          review_feature_count: 1,
+          acknowledgment_required: true,
+          items: [
+            {
+              code: "text_box",
+              count: 2,
+              handling: "preserve_only",
+              review_required: true,
+              locators: ["p4"],
+              locators_truncated: false,
+            },
+            {
+              code: "multiple_sections",
+              count: 3,
+              handling: "format_and_validate",
+              review_required: false,
+              locators: ["s1", "s2", "s3"],
+              locators_truncated: false,
+            },
+          ],
+        },
+      },
+    });
+
+    render(<Workspace />);
+
+    expect(await screen.findByText("1 类复杂内容需人工核对")).toBeInTheDocument();
+    expect(screen.getByText("文本框")).toBeInTheDocument();
+    expect(screen.getByLabelText("文档处理范围预检")).toHaveTextContent(
+      "2 处 · 只保留，不做专门格式化",
+    );
+    const formatButton = screen.getByRole("button", { name: "自动排版并验证" });
+    expect(formatButton).toBeDisabled();
+    const acknowledgment = screen.getByRole("checkbox", {
+      name: /我已了解这些复杂内容需要在 Word\/WPS 中逐项核对/,
+    });
+    fireEvent.click(acknowledgment);
+    expect(formatButton).toBeEnabled();
+  });
+
   it("restores the last local workspace after refresh", async () => {
     window.localStorage.setItem(
       "docalign.workspace.v1",

@@ -898,6 +898,8 @@ export interface components {
             content_integrity_passed?: boolean | null;
             /** Changed Mutations */
             changed_mutations?: number | null;
+            /** Source Review Features */
+            source_review_features?: number | null;
             /** Output Document Url */
             output_document_url?: string | null;
             /** Audit Json Url */
@@ -1138,9 +1140,60 @@ export interface components {
             /** Architecture */
             architecture: string;
         };
+        /** DocumentBoundaryItem */
+        DocumentBoundaryItem: {
+            /** Code */
+            code: string;
+            /** Count */
+            count: number;
+            handling: components["schemas"]["DocumentFeatureHandling"];
+            /**
+             * Review Required
+             * @default false
+             */
+            review_required: boolean;
+            /** Locators */
+            locators?: string[];
+            /**
+             * Locators Truncated
+             * @default false
+             */
+            locators_truncated: boolean;
+        };
+        /**
+         * DocumentFeatureHandling
+         * @enum {string}
+         */
+        DocumentFeatureHandling: "format_and_validate" | "preserve_and_validate" | "preserve_only";
         /** DocumentFormattingSpec */
         DocumentFormattingSpec: {
             page?: components["schemas"]["PageFormattingSpec"];
+        };
+        /** DocumentProcessingBoundary */
+        DocumentProcessingBoundary: {
+            /**
+             * Status
+             * @default standard
+             * @enum {string}
+             */
+            status: "standard" | "review_required";
+            /**
+             * Detected Feature Count
+             * @default 0
+             */
+            detected_feature_count: number;
+            /**
+             * Review Feature Count
+             * @default 0
+             */
+            review_feature_count: number;
+            /**
+             * Acknowledgment Required
+             * @default false
+             */
+            acknowledgment_required: boolean;
+            /** Items */
+            items?: components["schemas"]["DocumentBoundaryItem"][];
         };
         /** FigureFormattingSpec */
         FigureFormattingSpec: {
@@ -1404,6 +1457,11 @@ export interface components {
              * @default 0
              */
             delivery_review_items: number;
+            /**
+             * Source Review Features
+             * @default 0
+             */
+            source_review_features: number;
             /** Paragraphs Before */
             paragraphs_before: number | null;
             /** Paragraphs After */
@@ -1411,6 +1469,7 @@ export interface components {
             /** Auto Layout Splits */
             auto_layout_splits: number;
             execution_evidence?: components["schemas"]["AuditExecutionEvidence"] | null;
+            source_processing_boundary?: components["schemas"]["DocumentProcessingBoundary"] | null;
         };
         /**
          * JobStatus

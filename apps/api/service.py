@@ -322,7 +322,7 @@ class ApiService:
         overrides = [RoleOverride(node_id=row.node_id, role=row.role) for row in rows]
         if overrides:
             result.document_ir = apply_role_overrides(result.document_ir, overrides)
-            result.summary = _summary(result)
+        result.summary = _summary(result)
         return result
 
     def set_role_overrides(self, analysis_id: str, overrides: list[RoleOverride]) -> AnalysisResult:

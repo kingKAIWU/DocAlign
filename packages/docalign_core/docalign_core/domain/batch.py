@@ -58,6 +58,7 @@ class BatchAuditItem(StrictModel):
     validation_passed: bool | None = None
     content_integrity_passed: bool | None = None
     changed_mutations: int | None = Field(default=None, ge=0)
+    source_review_features: int | None = Field(default=None, ge=0)
     output_document_url: str | None = None
     audit_json_url: str | None = None
 

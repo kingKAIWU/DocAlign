@@ -229,6 +229,96 @@
       "title": "AuditSummary",
       "type": "object"
     },
+    "DocumentBoundaryItem": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "title": "Code",
+          "type": "string"
+        },
+        "count": {
+          "minimum": 1,
+          "title": "Count",
+          "type": "integer"
+        },
+        "handling": {
+          "$ref": "#/$defs/DocumentFeatureHandling"
+        },
+        "review_required": {
+          "default": false,
+          "title": "Review Required",
+          "type": "boolean"
+        },
+        "locators": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Locators",
+          "type": "array"
+        },
+        "locators_truncated": {
+          "default": false,
+          "title": "Locators Truncated",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "code",
+        "count",
+        "handling"
+      ],
+      "title": "DocumentBoundaryItem",
+      "type": "object"
+    },
+    "DocumentFeatureHandling": {
+      "enum": [
+        "format_and_validate",
+        "preserve_and_validate",
+        "preserve_only"
+      ],
+      "title": "DocumentFeatureHandling",
+      "type": "string"
+    },
+    "DocumentProcessingBoundary": {
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "default": "standard",
+          "enum": [
+            "standard",
+            "review_required"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "detected_feature_count": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Detected Feature Count",
+          "type": "integer"
+        },
+        "review_feature_count": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Review Feature Count",
+          "type": "integer"
+        },
+        "acknowledgment_required": {
+          "default": false,
+          "title": "Acknowledgment Required",
+          "type": "boolean"
+        },
+        "items": {
+          "items": {
+            "$ref": "#/$defs/DocumentBoundaryItem"
+          },
+          "title": "Items",
+          "type": "array"
+        }
+      },
+      "title": "DocumentProcessingBoundary",
+      "type": "object"
+    },
     "MutationRecord": {
       "additionalProperties": false,
       "properties": {
@@ -744,6 +834,17 @@
       "anyOf": [
         {
           "$ref": "#/$defs/AuditExecutionEvidence"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "source_processing_boundary": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DocumentProcessingBoundary"
         },
         {
           "type": "null"

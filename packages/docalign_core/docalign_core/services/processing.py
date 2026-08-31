@@ -5,6 +5,7 @@ from pathlib import Path
 
 from docalign_core import __version__
 from docalign_core.analysis.classifier import count_reviewable_unknowns
+from docalign_core.analysis.processing_boundary import build_processing_boundary
 from docalign_core.docx.parser import parse_docx
 from docalign_core.docx.safety import sha256_file
 from docalign_core.domain.audit import (
@@ -168,6 +169,7 @@ def process_document(
         assumptions=spec.source.assumptions,
         spec_source=spec.source,
         execution_evidence=_execution_evidence(spec),
+        source_processing_boundary=build_processing_boundary(original_ir),
     )
     audit_json_path = artifact_dir / "audit.json"
     audit_markdown_path = artifact_dir / "audit.md"

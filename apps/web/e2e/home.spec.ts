@@ -63,6 +63,11 @@ test("requires an explicit scope acknowledgment before applying an official refe
   await page.getByLabel("上传待处理 Word 文档").setInputFiles(fixture);
   await page.getByRole("button", { name: "分析结构" }).click();
   await expect(page.getByText(/分析完成：确定性分析；19 个段落/)).toBeVisible();
+  const sourceBoundaryAcknowledgment = page.getByRole("checkbox", {
+    name: /我已了解这些复杂内容需要在 Word\/WPS 中逐项核对/,
+  });
+  await expect(page.getByText("7 类复杂内容需人工核对")).toBeVisible();
+  await sourceBoundaryAcknowledgment.check();
 
   await page.getByRole("radio", { name: /南开大学论文 2026 参考/ }).click();
   await expect(page.getByText("参考规则包 · 部分覆盖")).toBeVisible();
@@ -178,6 +183,12 @@ test("completes the local structured formatting workflow and restores it", async
 
   await page.getByRole("button", { name: "分析结构" }).click();
   await expect(page.getByText(/分析完成：确定性分析；19 个段落/)).toBeVisible();
+  const processingBoundary = page.getByLabel("文档处理范围预检");
+  await expect(processingBoundary.getByText("7 类复杂内容需人工核对")).toBeVisible();
+  await expect(page.getByRole("button", { name: "自动排版并验证" })).toBeDisabled();
+  await processingBoundary.getByRole("checkbox", {
+    name: /我已了解这些复杂内容需要在 Word\/WPS 中逐项核对/,
+  }).check();
   await page
     .getByLabel("修改段落角色：外部资料：ECMA-376")
     .selectOption("blockquote");
@@ -193,6 +204,9 @@ test("completes the local structured formatting workflow and restores it", async
   await expect(resultSummary.getByText("格式验证通过")).toBeVisible();
   await expect(resultSummary.getByText("原文与受保护结构通过")).toBeVisible();
   await expect(resultSummary.getByText("项实际格式调整")).toBeVisible();
+  await expect(resultSummary.getByLabel("源文档处理边界")).toContainText(
+    "7 类复杂内容需人工核对",
+  );
 
   await resultSummary.getByRole("button", { name: "查看格式前后对照" }).click();
   const comparison = page.getByRole("dialog", { name: "格式前后对照" });
@@ -232,7 +246,9 @@ test("completes the local structured formatting workflow and restores it", async
   expect(auditUrl).toBeTruthy();
   const audit = await page.request.get(auditUrl!);
   expect(audit.ok()).toBeTruthy();
-  expect((await audit.json()).validation.valid).toBe(true);
+  const auditPayload = await audit.json();
+  expect(auditPayload.validation.valid).toBe(true);
+  expect(auditPayload.source_processing_boundary.review_feature_count).toBe(7);
 
   const jobId = auditUrl?.match(/\/jobs\/([^/]+)\/audit\.json$/)?.[1];
   expect(jobId).toBeTruthy();

@@ -4,6 +4,7 @@ import { ChangeEvent, DragEvent, useEffect, useMemo, useRef, useState } from "re
 import Link from "next/link";
 
 import { DocumentComparisonDialog } from "@/components/document-comparison-dialog";
+import { DocumentProcessingBoundaryCard } from "@/components/document-processing-boundary";
 import { JobOutcomeSummary } from "@/components/job-outcome-summary";
 import { RulePackLibrary } from "@/components/rule-pack-library";
 import { api, ApiError, API_BASE, apiUrl } from "@/lib/api";
@@ -93,6 +94,7 @@ export function Workspace() {
   const [presets, setPresets] = useState<CleanupPreset[]>([]);
   const [selectedPresetId, setSelectedPresetId] = useState("default-clean-cn");
   const [referenceCoverageAcknowledged, setReferenceCoverageAcknowledged] = useState(false);
+  const [processingBoundaryAcknowledged, setProcessingBoundaryAcknowledged] = useState(false);
   const [serviceOnline, setServiceOnline] = useState<boolean | null>(null);
   const [connectionAttempt, setConnectionAttempt] = useState(0);
   const [compilationReport, setCompilationReport] = useState<CompilationReport | null>(null);
@@ -315,6 +317,10 @@ export function Workspace() {
     selectedPreset?.metadata.claim_level === "reference" &&
     !referenceCoverageAcknowledged,
   );
+  const processingBoundary = analysis?.summary.processing_boundary;
+  const processingBoundaryNeedsAcknowledgment = Boolean(
+    processingBoundary?.acknowledgment_required && !processingBoundaryAcknowledged,
+  );
   const templateRoleMappings = templateCandidate?.role_mappings ?? [];
   const templateAmbiguities = templateCandidate?.ambiguities ?? [];
   const templateUnsupported = templateCandidate?.unsupported_features ?? [];
@@ -350,6 +356,7 @@ export function Workspace() {
   function acceptDocument(nextDocument: DocumentRecord, notice: string) {
     setDocument(nextDocument);
     setAnalysis(null);
+    setProcessingBoundaryAcknowledged(false);
     setShowOnlyUncertain(false);
     setOverrides({});
     setJob(null);
@@ -373,6 +380,7 @@ export function Workspace() {
     try {
       const result = await api.analyze(document.document_id, mode);
       setAnalysis(result);
+      setProcessingBoundaryAcknowledged(false);
       setShowOnlyUncertain(false);
       setOverrides({});
       setCompliance(null);
@@ -786,7 +794,7 @@ export function Workspace() {
             className="button primary"
             disabled={
               !document || !specText || Boolean(busy) || jobActive ||
-              referencePackNeedsAcknowledgment
+              referencePackNeedsAcknowledgment || processingBoundaryNeedsAcknowledgment
             }
             onClick={startFormatting}
           >
@@ -830,6 +838,13 @@ export function Workspace() {
                   </button>
                 )}
               </div>
+              {processingBoundary && (
+                <DocumentProcessingBoundaryCard
+                  boundary={processingBoundary}
+                  acknowledged={processingBoundaryAcknowledged}
+                  onAcknowledgedChange={setProcessingBoundaryAcknowledged}
+                />
+              )}
               <div className="structure-list">
                 {visibleBlocks.length === 0 && showOnlyUncertain ? (
                   <div className="structure-list-empty">待确认段落已全部处理。</div>

@@ -1,5 +1,7 @@
 import type { Job } from "@/lib/types";
 
+import { DocumentProcessingBoundaryCard } from "@/components/document-processing-boundary";
+
 const changeCategoryLabels: Record<string, string> = {
   structure: "结构重排",
   page_layout: "页面版式",
@@ -88,6 +90,7 @@ export function JobOutcomeSummary({ job, onReview, onLocate, onCompare }: JobOut
     (appliedPreset && !appliedPreset.matches_catalog_spec ? 1 : 0)
   );
   const isReferencePack = appliedPreset?.claim_level === "reference";
+  const sourceBoundary = summary.source_processing_boundary;
   const validationLabel = summary.validation_passed
     ? isReferencePack
       ? "已声明自动条款验证通过"
@@ -128,6 +131,9 @@ export function JobOutcomeSummary({ job, onReview, onLocate, onCompare }: JobOut
           </div>
         )}
       </div>
+      {sourceBoundary && (sourceBoundary.items?.length ?? 0) > 0 && (
+        <DocumentProcessingBoundaryCard boundary={sourceBoundary} mode="result" />
+      )}
       {appliedPreset && (
         <section
           className={`outcome-rule-evidence ${appliedPreset.matches_catalog_spec ? "matched" : "modified"}`}

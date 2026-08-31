@@ -10,6 +10,11 @@ from docalign_core.domain.audit import (
     MutationRecord,
     ValidationReport,
 )
+from docalign_core.domain.document_ir import (
+    DocumentBoundaryItem,
+    DocumentFeatureHandling,
+    DocumentProcessingBoundary,
+)
 from docalign_core.domain.formatting_spec import (
     RulePackClaimLevel,
     RulePackCoverageItem,
@@ -154,6 +159,20 @@ def test_job_result_summary_separates_structure_and_rule_delivery_review() -> No
                 acceptance_manual_checks=["核对封面与目录"],
             ),
         ),
+        source_processing_boundary=DocumentProcessingBoundary(
+            status="review_required",
+            detected_feature_count=1,
+            review_feature_count=1,
+            acknowledgment_required=True,
+            items=[
+                DocumentBoundaryItem(
+                    code="footnote",
+                    count=1,
+                    handling=DocumentFeatureHandling.PRESERVE_ONLY,
+                    review_required=True,
+                )
+            ],
+        ),
     )
 
     summary = build_job_result_summary(audit)
@@ -161,6 +180,9 @@ def test_job_result_summary_separates_structure_and_rule_delivery_review() -> No
     assert summary.remaining_review_items == 1
     assert summary.structure_review_items == 1
     assert summary.delivery_review_items == 4
+    assert summary.source_review_features == 1
+    assert summary.source_processing_boundary is not None
+    assert summary.source_processing_boundary.items[0].code == "footnote"
     assert summary.execution_evidence is not None
     assert summary.execution_evidence.applied_preset is not None
     assert not summary.execution_evidence.applied_preset.matches_catalog_spec

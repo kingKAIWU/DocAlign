@@ -129,6 +129,13 @@
           "default": 0,
           "title": "Source Size Bytes",
           "type": "integer"
+        },
+        "feature_counts": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "title": "Feature Counts",
+          "type": "object"
         }
       },
       "title": "DocumentMetadata",

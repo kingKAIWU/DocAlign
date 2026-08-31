@@ -39,6 +39,7 @@ def build_job_result_summary(audit: AuditReport) -> JobResultSummary:
         if applied_preset
         else 0
     )
+    source_boundary = audit.source_processing_boundary
     return JobResultSummary(
         validation_passed=audit.validation.valid,
         content_integrity_passed=not any(
@@ -54,10 +55,12 @@ def build_job_result_summary(audit: AuditReport) -> JobResultSummary:
         remaining_review_items=audit.summary.unknown_blocks,
         structure_review_items=audit.summary.unknown_blocks,
         delivery_review_items=delivery_review_items,
+        source_review_features=(source_boundary.review_feature_count if source_boundary else 0),
         paragraphs_before=audit.summary.paragraphs_before,
         paragraphs_after=audit.summary.paragraphs_after,
         auto_layout_splits=audit.summary.auto_layout_splits,
         execution_evidence=audit.execution_evidence,
+        source_processing_boundary=source_boundary,
     )
 
 

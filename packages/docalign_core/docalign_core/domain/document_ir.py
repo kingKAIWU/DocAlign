@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from enum import StrEnum
 from typing import Annotated, Literal
 
 from pydantic import Field
@@ -178,6 +179,30 @@ class DocumentMetadata(StrictModel):
     existing_styles: list[str] = Field(default_factory=list)
     package_part_count: int = 0
     source_size_bytes: int = 0
+    feature_counts: dict[str, int] = Field(default_factory=dict)
+
+
+class DocumentFeatureHandling(StrEnum):
+    FORMAT_AND_VALIDATE = "format_and_validate"
+    PRESERVE_AND_VALIDATE = "preserve_and_validate"
+    PRESERVE_ONLY = "preserve_only"
+
+
+class DocumentBoundaryItem(StrictModel):
+    code: str
+    count: int = Field(ge=1)
+    handling: DocumentFeatureHandling
+    review_required: bool = False
+    locators: list[str] = Field(default_factory=list)
+    locators_truncated: bool = False
+
+
+class DocumentProcessingBoundary(StrictModel):
+    status: Literal["standard", "review_required"] = "standard"
+    detected_feature_count: int = Field(default=0, ge=0)
+    review_feature_count: int = Field(default=0, ge=0)
+    acknowledgment_required: bool = False
+    items: list[DocumentBoundaryItem] = Field(default_factory=list)
 
 
 class DocumentIR(StrictModel):
@@ -213,6 +238,9 @@ class AnalysisSummary(StrictModel):
     model_reviewed_paragraphs: int = Field(default=0, ge=0)
     model_provider: str | None = None
     model_name: str | None = None
+    processing_boundary: DocumentProcessingBoundary = Field(
+        default_factory=DocumentProcessingBoundary
+    )
 
 
 class AnalysisResult(StrictModel):

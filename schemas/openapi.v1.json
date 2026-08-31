@@ -2161,6 +2161,18 @@
             ],
             "title": "Changed Mutations"
           },
+          "source_review_features": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Review Features"
+          },
           "output_document_url": {
             "anyOf": [
               {
@@ -2842,6 +2854,56 @@
         ],
         "title": "DiagnosticRuntime"
       },
+      "DocumentBoundaryItem": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Count"
+          },
+          "handling": {
+            "$ref": "#/components/schemas/DocumentFeatureHandling"
+          },
+          "review_required": {
+            "type": "boolean",
+            "title": "Review Required",
+            "default": false
+          },
+          "locators": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Locators"
+          },
+          "locators_truncated": {
+            "type": "boolean",
+            "title": "Locators Truncated",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "count",
+          "handling"
+        ],
+        "title": "DocumentBoundaryItem"
+      },
+      "DocumentFeatureHandling": {
+        "type": "string",
+        "enum": [
+          "format_and_validate",
+          "preserve_and_validate",
+          "preserve_only"
+        ],
+        "title": "DocumentFeatureHandling"
+      },
       "DocumentFormattingSpec": {
         "properties": {
           "page": {
@@ -2851,6 +2913,46 @@
         "additionalProperties": false,
         "type": "object",
         "title": "DocumentFormattingSpec"
+      },
+      "DocumentProcessingBoundary": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "standard",
+              "review_required"
+            ],
+            "title": "Status",
+            "default": "standard"
+          },
+          "detected_feature_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Detected Feature Count",
+            "default": 0
+          },
+          "review_feature_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Review Feature Count",
+            "default": 0
+          },
+          "acknowledgment_required": {
+            "type": "boolean",
+            "title": "Acknowledgment Required",
+            "default": false
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentBoundaryItem"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "DocumentProcessingBoundary"
       },
       "FigureFormattingSpec": {
         "properties": {
@@ -3588,6 +3690,12 @@
             "title": "Delivery Review Items",
             "default": 0
           },
+          "source_review_features": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Source Review Features",
+            "default": 0
+          },
           "paragraphs_before": {
             "anyOf": [
               {
@@ -3621,6 +3729,16 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/AuditExecutionEvidence"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_processing_boundary": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DocumentProcessingBoundary"
               },
               {
                 "type": "null"

@@ -708,6 +708,9 @@ class BatchService:
             changed_mutations=(
                 result_summary.changed_mutations if result_summary is not None else None
             ),
+            source_review_features=(
+                result_summary.source_review_features if result_summary is not None else None
+            ),
             output_document_url=(
                 f"/api/v1/jobs/{job.id}/output"
                 if job is not None and status == BatchItemStatus.COMPLETED

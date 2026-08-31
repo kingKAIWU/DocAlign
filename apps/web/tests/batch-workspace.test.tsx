@@ -55,6 +55,7 @@ const completedBatch: BatchAudit = {
       validation_passed: true,
       content_integrity_passed: true,
       changed_mutations: 12,
+      source_review_features: 2,
       output_document_url: "/api/v1/jobs/job_1/output",
       audit_json_url: "/api/v1/jobs/job_1/audit.json",
     },
@@ -143,6 +144,7 @@ describe("BatchWorkspace", () => {
 
     expect(await screen.findByText("月度材料")).toBeInTheDocument();
     expect(screen.getByText("月报.docx")).toBeInTheDocument();
+    expect(screen.getByText("复杂内容 2 类待核对")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "下载完成文件 ZIP" })).toHaveAttribute(
       "href",
       completedBatch.output_zip_url,

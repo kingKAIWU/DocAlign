@@ -143,6 +143,19 @@
           "default": null,
           "title": "Changed Mutations"
         },
+        "source_review_features": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Review Features"
+        },
         "output_document_url": {
           "anyOf": [
             {

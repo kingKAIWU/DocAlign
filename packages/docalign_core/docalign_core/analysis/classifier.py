@@ -4,6 +4,7 @@ import re
 from collections import Counter
 from statistics import median
 
+from docalign_core.analysis.processing_boundary import build_processing_boundary
 from docalign_core.domain.document_ir import (
     AnalysisResult,
     AnalysisSummary,
@@ -377,6 +378,7 @@ def build_analysis_summary(
         model_reviewed_paragraphs=model_reviewed_paragraphs,
         model_provider=model_provider,
         model_name=model_name,
+        processing_boundary=build_processing_boundary(document_ir),
     )
 
 

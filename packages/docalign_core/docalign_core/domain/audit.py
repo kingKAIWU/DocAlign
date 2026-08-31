@@ -8,6 +8,7 @@ from typing import Literal
 from pydantic import Field
 
 from docalign_core.domain.base import StrictModel
+from docalign_core.domain.document_ir import DocumentProcessingBoundary
 from docalign_core.domain.enums import SemanticRole, Severity
 from docalign_core.domain.formatting_spec import (
     RulePackClaimLevel,
@@ -23,6 +24,33 @@ CONTENT_INTEGRITY_CODES = frozenset(
         "PROTECTED_PACKAGE_PART_CHANGED",
     }
 )
+
+DOCUMENT_FEATURE_LABELS = {
+    "field": "动态字段、目录或交叉引用",
+    "header_footer_field": "页眉页脚动态字段",
+    "equation": "公式",
+    "drawing": "图片或绘图对象",
+    "hyperlink": "超链接",
+    "bookmark": "书签",
+    "content_control": "内容控件",
+    "merged_table": "合并单元格表格",
+    "nested_table": "嵌套表格",
+    "unknown_ooxml": "未识别的顶层 Word 结构",
+    "text_box": "文本框",
+    "footnote": "脚注",
+    "endnote": "尾注",
+    "comment": "批注",
+    "embedded_object": "嵌入对象或 ActiveX",
+    "macro": "宏项目",
+    "external_link": "外部链接关系",
+    "multiple_sections": "多分节版式",
+}
+
+DOCUMENT_HANDLING_LABELS = {
+    "format_and_validate": "参与格式化并验证",
+    "preserve_and_validate": "保留并验证完整性",
+    "preserve_only": "只保留，不做专门格式化",
+}
 
 
 class OperationType(StrEnum):
@@ -154,6 +182,7 @@ class AuditReport(StrictModel):
     assumptions: list[str] = Field(default_factory=list)
     spec_source: SpecSource | None = None
     execution_evidence: AuditExecutionEvidence | None = None
+    source_processing_boundary: DocumentProcessingBoundary | None = None
 
     def to_markdown(self) -> str:
         status = "通过" if self.validation.valid else "需要检查"
@@ -182,10 +211,34 @@ class AuditReport(StrictModel):
                 if self.execution_evidence
                 else []
             ),
-            "",
-            "## 角色统计",
-            "",
         ]
+        boundary = self.source_processing_boundary
+        if boundary:
+            lines.extend(
+                [
+                    "",
+                    "## 源文档处理边界",
+                    "",
+                    f"- 检测到的复杂内容类型：{boundary.detected_feature_count} 类",
+                    f"- 需要人工核对：{boundary.review_feature_count} 类",
+                    "- 说明：保留或验证通过不等同于完成专门格式化；"
+                    "交付前仍应按清单在 Word/WPS 中核对。",
+                ]
+            )
+            for item in boundary.items:
+                review = "需人工核对" if item.review_required else "信息提示"
+                locator_text = f" · 位置：{', '.join(item.locators)}" if item.locators else ""
+                feature_label = DOCUMENT_FEATURE_LABELS.get(item.code, item.code)
+                handling_label = DOCUMENT_HANDLING_LABELS.get(
+                    item.handling.value,
+                    item.handling.value,
+                )
+                lines.append(
+                    f"- {feature_label}（`{item.code}`）· {handling_label} · "
+                    f"{item.count} 处 · {review}"
+                    f"{locator_text}"
+                )
+        lines.extend(["", "## 角色统计", ""])
         lines.extend(f"- {role}: {count}" for role, count in sorted(self.roles.items()))
         preset = self.execution_evidence.applied_preset if self.execution_evidence else None
         if preset:

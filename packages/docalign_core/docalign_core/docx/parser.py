@@ -36,6 +36,7 @@ from docalign_core.domain.document_ir import (
 BlockObject = tuple[Literal["paragraph", "table", "unsupported"], Any]
 PROTECTED_TAGS = {
     qn("w:fldChar"),
+    qn("w:fldSimple"),
     qn("w:instrText"),
     qn("m:oMath"),
     qn("m:oMathPara"),
@@ -133,6 +134,7 @@ def parse_docx(
 
     sections = [_parse_section(section, index) for index, section in enumerate(document.sections)]
     headers_footers, hf_texts, hf_elements = _parse_headers_footers(document)
+    feature_counts = _document_feature_counts(document.element, hf_elements)
     instructions = field_instructions([*main_elements, *hf_elements])
     bookmarks = _bookmark_names([*main_elements, *hf_elements])
     relationships = _parse_relationships(document)
@@ -178,6 +180,7 @@ def parse_docx(
             existing_styles=styles,
             package_part_count=len(inspection.parts),
             source_size_bytes=path.stat().st_size,
+            feature_counts=feature_counts,
         ),
         warnings=warnings,
     )
@@ -192,7 +195,10 @@ def _parse_paragraph(
 ) -> ParagraphIR:
     text = logical_text(paragraph._p)
     node_id = _node_id("p", part, index, text)
-    contains_field = _contains_tag(paragraph._p, {qn("w:fldChar"), qn("w:instrText")})
+    contains_field = _contains_tag(
+        paragraph._p,
+        {qn("w:fldChar"), qn("w:fldSimple"), qn("w:instrText")},
+    )
     contains_equation = _contains_tag(paragraph._p, {qn("m:oMath"), qn("m:oMathPara")})
     contains_drawing = _contains_tag(paragraph._p, {qn("w:drawing"), qn("w:pict")})
     contains_hyperlink = _contains_tag(paragraph._p, {qn("w:hyperlink")})
@@ -338,6 +344,62 @@ def _parse_relationships(document: DocumentObject) -> list[RelationshipIR]:
     return sorted(
         relationships,
         key=lambda item: (item.source_part, item.relationship_id, item.relationship_type),
+    )
+
+
+def _document_feature_counts(
+    main_element: Any,
+    header_footer_elements: list[Any],
+) -> dict[str, int]:
+    header_footer_elements = list(
+        {id(element): element for element in header_footer_elements}.values()
+    )
+    unique_elements = [main_element, *header_footer_elements]
+    counts: dict[str, int] = {}
+    tagged_features = {
+        "equation": {qn("m:oMath")},
+        "drawing": {qn("w:drawing"), qn("w:pict")},
+        "hyperlink": {qn("w:hyperlink")},
+        "bookmark": {qn("w:bookmarkStart")},
+        "content_control": {qn("w:sdt")},
+        "text_box": {qn("w:txbxContent")},
+    }
+    for code, tags in tagged_features.items():
+        count = sum(
+            1
+            for element in unique_elements
+            for node in element.iter()
+            if node.tag in tags
+        )
+        if count:
+            counts[code] = count
+
+    main_field_count = _field_count([main_element])
+    header_footer_field_count = _field_count(header_footer_elements)
+    if main_field_count:
+        counts["field"] = main_field_count
+    if header_footer_field_count:
+        counts["header_footer_field"] = header_footer_field_count
+    return dict(sorted(counts.items()))
+
+
+def _field_count(elements: list[Any]) -> int:
+    count = sum(
+        1
+        for element in elements
+        for node in element.iter()
+        if node.tag == qn("w:fldSimple")
+        or (
+            node.tag == qn("w:fldChar")
+            and node.get(qn("w:fldCharType")) == "begin"
+        )
+    )
+    if count:
+        return count
+    return sum(
+        1
+        for element in elements
+        for node in element.iter(qn("w:instrText"))
     )
 
 

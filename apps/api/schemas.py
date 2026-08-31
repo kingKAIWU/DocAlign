@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any, Literal
 
 from docalign_core.domain.audit import AuditExecutionEvidence
-from docalign_core.domain.document_ir import RoleOverride
+from docalign_core.domain.document_ir import DocumentProcessingBoundary, RoleOverride
 from docalign_core.domain.enums import AnalysisMode, JobStatus
 from docalign_core.domain.formatting_spec import CleanupPresetCatalogItem, FormattingSpec
 from docalign_core.domain.rule_pack import (
@@ -223,10 +223,12 @@ class JobResultSummary(ApiModel):
     remaining_review_items: int = Field(ge=0)
     structure_review_items: int = Field(default=0, ge=0)
     delivery_review_items: int = Field(default=0, ge=0)
+    source_review_features: int = Field(default=0, ge=0)
     paragraphs_before: int | None = Field(ge=0)
     paragraphs_after: int | None = Field(ge=0)
     auto_layout_splits: int = Field(ge=0)
     execution_evidence: AuditExecutionEvidence | None = None
+    source_processing_boundary: DocumentProcessingBoundary | None = None
 
 
 class JobResponse(ApiModel):

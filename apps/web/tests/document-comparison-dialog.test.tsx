@@ -32,6 +32,7 @@ const summary = {
   remaining_review_items: 0,
   structure_review_items: 0,
   delivery_review_items: 0,
+  source_review_features: 0,
   paragraphs_before: 4,
   paragraphs_after: 4,
   auto_layout_splits: 0,

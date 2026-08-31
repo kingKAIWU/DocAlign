@@ -106,6 +106,7 @@ describe("JobPage", () => {
         remaining_review_items: 0,
         structure_review_items: 0,
         delivery_review_items: 4,
+        source_review_features: 1,
         paragraphs_before: 19,
         paragraphs_after: 19,
         auto_layout_splits: 0,
@@ -151,6 +152,22 @@ describe("JobPage", () => {
             limitations: ["未经发布机构审核或背书。"],
           },
         },
+        source_processing_boundary: {
+          status: "review_required",
+          detected_feature_count: 1,
+          review_feature_count: 1,
+          acknowledgment_required: true,
+          items: [
+            {
+              code: "comment",
+              count: 1,
+              handling: "preserve_only",
+              review_required: true,
+              locators: [],
+              locators_truncated: false,
+            },
+          ],
+        },
       },
       output_document_url: "/output",
       audit_json_url: "/audit.json",
@@ -172,6 +189,9 @@ describe("JobPage", () => {
     expect(screen.getByText("人工复核")).toBeInTheDocument();
     expect(screen.getByText("暂不支持")).toBeInTheDocument();
     expect(screen.getByText("核对封面")).toBeInTheDocument();
+    expect(screen.getByLabelText("源文档处理边界")).toHaveTextContent(
+      "批注1 处 · 只保留，不做专门格式化",
+    );
     expect(screen.getByRole("link", { name: "南开大学研究生院" })).toHaveAttribute(
       "href",
       "https://graduate.nankai.edu.cn/example",
