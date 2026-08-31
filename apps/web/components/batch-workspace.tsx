@@ -91,6 +91,7 @@ export function BatchWorkspace() {
   const [error, setError] = useState("");
   const [serviceOnline, setServiceOnline] = useState<boolean | null>(null);
   const [draftAccepted, setDraftAccepted] = useState(false);
+  const [processingBoundaryAccepted, setProcessingBoundaryAccepted] = useState(false);
   const pendingCreateRef = useRef<PendingCreate | null>(null);
   const pendingRetriesRef = useRef<Record<string, PendingRetry>>({});
 
@@ -208,6 +209,7 @@ export function BatchWorkspace() {
     const valid = selected.filter((file) => file.name.toLowerCase().endsWith(".docx"));
     const limit = capabilities?.max_batch_files ?? 20;
     setFiles((current) => [...current, ...valid].slice(0, limit));
+    if (valid.length) setProcessingBoundaryAccepted(false);
     if (valid.length !== selected.length) setError("已忽略非 DOCX 文件。 ");
     if (files.length + valid.length > limit) setError(`每批最多 ${limit} 个文件。`);
     event.target.value = "";
@@ -215,6 +217,10 @@ export function BatchWorkspace() {
 
   async function createBatch() {
     if (!selectedPack || !files.length) return;
+    if (!processingBoundaryAccepted) {
+      setError("请先确认批量任务中的复杂内容需要逐份人工核对。");
+      return;
+    }
     const totalLimit = (capabilities?.max_batch_total_mb ?? 200) * 1024 * 1024;
     if (totalBytes > totalLimit) {
       setError(`本批文件总大小不能超过 ${capabilities?.max_batch_total_mb ?? 200} MB。`);
@@ -243,6 +249,7 @@ export function BatchWorkspace() {
         name: normalizedName,
         rulePackId: selectedPack.pack_id,
         rulePackRevision: selectedRevision,
+        processingBoundaryAcknowledged: processingBoundaryAccepted,
         files,
       });
       pendingCreateRef.current = null;
@@ -330,6 +337,7 @@ export function BatchWorkspace() {
       pendingCreateRef.current = null;
       setBatch(null);
       setFiles([]);
+      setProcessingBoundaryAccepted(false);
       setMessage("本地批次及其文件已全部删除。 ");
     } catch (caught) {
       setError(readableError(caught));
@@ -407,7 +415,7 @@ export function BatchWorkspace() {
               {files.map((file, index) => (
                 <li key={`${file.name}-${file.lastModified}-${index}`}>
                   <span><b>{index + 1}</b><span><strong>{file.name}</strong><small>{(file.size / 1024).toFixed(1)} KB</small></span></span>
-                  <button aria-label={`移除 ${file.name}`} onClick={() => setFiles((current) => current.filter((_, itemIndex) => itemIndex !== index))}>移除</button>
+                  <button aria-label={`移除 ${file.name}`} onClick={() => { setFiles((current) => current.filter((_, itemIndex) => itemIndex !== index)); setProcessingBoundaryAccepted(false); }}>移除</button>
                 </li>
               ))}
               {!files.length && <li className="batch-list-empty">尚未添加文件</li>}
@@ -433,12 +441,22 @@ export function BatchWorkspace() {
               <small>SHA-256 {selectedVersion?.spec_sha256.slice(0, 16)}…</small>
               {isDraft && <label className="batch-draft-confirm"><input type="checkbox" checked={draftAccepted} onChange={(event) => setDraftAccepted(event.target.checked)} />我了解该修订尚未完成本地确认，仍要用于本批次</label>}
             </div>}
+            <label className="batch-boundary-confirm">
+              <input
+                type="checkbox"
+                checked={processingBoundaryAccepted}
+                onChange={(event) => setProcessingBoundaryAccepted(event.target.checked)}
+              />
+              <span>
+                我了解批量任务不会在开始前逐份暂停；复杂内容将在结果中标记，需在 Word/WPS 中逐份核对
+              </span>
+            </label>
             <label>批次名称
               <input aria-label="批次名称" value={batchName} maxLength={160} onChange={(event) => setBatchName(event.target.value)} />
             </label>
             <button
               className="button primary batch-submit"
-              disabled={busy === "create" || !files.length || !selectedPack || (isDraft && !draftAccepted)}
+              disabled={busy === "create" || !files.length || !selectedPack || !processingBoundaryAccepted || (isDraft && !draftAccepted)}
               onClick={() => void createBatch()}
             >{busy === "create" ? "正在建立批次…" : `开始处理 ${files.length || ""} 个文档`}</button>
             <p className="batch-recovery-note">请求中断时直接重试即可；服务端用同一请求标识去重，不会重复建批。</p>
@@ -477,7 +495,7 @@ function BatchProgress({
   return (
     <section className="batch-progress-shell">
       <div className="batch-overview">
-        <div><p>批次</p><h2>{batch.name}</h2><span>{batch.rule_pack_name} · 修订 {batch.rule_pack_revision}</span></div>
+        <div><p>批次</p><h2>{batch.name}</h2><span>{batch.rule_pack_name} · 修订 {batch.rule_pack_revision}</span><small>{batch.processing_boundary_acknowledged ? "已记录批量复杂内容核对确认" : "旧批次未记录复杂内容核对确认"}</small></div>
         <div className="batch-metrics">
           <span><b>{batch.summary.completed}</b>完成</span>
           <span><b>{batch.summary.failed}</b>失败</span>

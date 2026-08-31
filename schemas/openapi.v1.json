@@ -1972,6 +1972,11 @@
             "type": "string",
             "title": "Rule Pack Spec Sha256"
           },
+          "processing_boundary_acknowledged": {
+            "type": "boolean",
+            "title": "Processing Boundary Acknowledged",
+            "default": false
+          },
           "summary": {
             "$ref": "#/components/schemas/BatchAuditSummary"
           },
@@ -2312,6 +2317,10 @@
             "minimum": 1.0,
             "title": "Rule Pack Revision"
           },
+          "processing_boundary_acknowledged": {
+            "type": "boolean",
+            "title": "Processing Boundary Acknowledged"
+          },
           "files": {
             "items": {
               "type": "string",
@@ -2327,6 +2336,7 @@
           "name",
           "rule_pack_id",
           "rule_pack_revision",
+          "processing_boundary_acknowledged",
           "files"
         ],
         "title": "Body_create_batch_api_v1_batches_post"
@@ -3485,6 +3495,11 @@
           "spec_id": {
             "type": "string",
             "title": "Spec Id"
+          },
+          "processing_boundary_acknowledged": {
+            "type": "boolean",
+            "title": "Processing Boundary Acknowledged",
+            "default": false
           }
         },
         "additionalProperties": false,
@@ -3513,6 +3528,28 @@
           "spec_id": {
             "type": "string",
             "title": "Spec Id"
+          },
+          "processing_boundary_acknowledgment": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProcessingBoundaryAcknowledgmentMethod"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "processing_boundary_acknowledged_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Processing Boundary Acknowledged At"
           },
           "status": {
             "$ref": "#/components/schemas/JobStatus"
@@ -3739,6 +3776,16 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/DocumentProcessingBoundary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_processing_boundary_acknowledgment": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProcessingBoundaryAcknowledgment"
               },
               {
                 "type": "null"
@@ -4199,6 +4246,65 @@
         "additionalProperties": false,
         "type": "object",
         "title": "ParagraphSpec"
+      },
+      "ProcessingBoundaryAcknowledgment": {
+        "properties": {
+          "required": {
+            "type": "boolean",
+            "title": "Required"
+          },
+          "acknowledged": {
+            "type": "boolean",
+            "title": "Acknowledged"
+          },
+          "method": {
+            "$ref": "#/components/schemas/ProcessingBoundaryAcknowledgmentMethod"
+          },
+          "boundary_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Boundary Sha256"
+          },
+          "review_feature_codes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Review Feature Codes"
+          },
+          "acknowledged_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acknowledged At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "required",
+          "acknowledged",
+          "method",
+          "boundary_sha256"
+        ],
+        "title": "ProcessingBoundaryAcknowledgment"
+      },
+      "ProcessingBoundaryAcknowledgmentMethod": {
+        "type": "string",
+        "enum": [
+          "not_required",
+          "not_recorded",
+          "explicit_single_job",
+          "explicit_batch",
+          "explicit_cli"
+        ],
+        "title": "ProcessingBoundaryAcknowledgmentMethod"
       },
       "RoleFormattingSpec": {
         "properties": {

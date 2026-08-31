@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from datetime import UTC, datetime
+from typing import overload
 
 from sqlalchemy import (
     Boolean,
@@ -21,6 +22,22 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sess
 
 def utcnow() -> datetime:
     return datetime.now(UTC)
+
+
+@overload
+def as_utc(value: datetime) -> datetime: ...
+
+
+@overload
+def as_utc(value: None) -> None: ...
+
+
+def as_utc(value: datetime | None) -> datetime | None:
+    if value is None:
+        return None
+    if value.tzinfo is None:
+        return value.replace(tzinfo=UTC)
+    return value.astimezone(UTC)
 
 
 class Base(DeclarativeBase):
@@ -132,6 +149,12 @@ class JobRecord(Base):
     status: Mapped[str] = mapped_column(String(32), index=True)
     progress: Mapped[int] = mapped_column(Integer, default=0)
     cancel_requested: Mapped[bool] = mapped_column(Boolean, default=False)
+    processing_boundary_acknowledgment: Mapped[str | None] = mapped_column(
+        String(32), nullable=True
+    )
+    processing_boundary_acknowledged_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     output_path: Mapped[str | None] = mapped_column(Text, nullable=True)
     audit_json_path: Mapped[str | None] = mapped_column(Text, nullable=True)
     audit_markdown_path: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -162,6 +185,7 @@ class BatchRecord(Base):
     rule_pack_spec_sha256: Mapped[str] = mapped_column(String(64))
     item_count: Mapped[int] = mapped_column(Integer)
     file_manifest_json: Mapped[str] = mapped_column(Text)
+    processing_boundary_acknowledged: Mapped[bool] = mapped_column(Boolean, default=False)
     cancel_requested_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )

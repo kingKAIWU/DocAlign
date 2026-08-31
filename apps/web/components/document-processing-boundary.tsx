@@ -1,4 +1,7 @@
-import type { DocumentProcessingBoundary } from "@/lib/types";
+import type {
+  DocumentProcessingBoundary,
+  ProcessingBoundaryAcknowledgment,
+} from "@/lib/types";
 
 const featureLabels: Record<string, string> = {
   field: "动态字段、目录或交叉引用",
@@ -27,10 +30,19 @@ const handlingLabels: Record<string, string> = {
   preserve_only: "只保留，不做专门格式化",
 };
 
+const acknowledgmentLabels: Record<string, string> = {
+  not_required: "无需额外确认",
+  not_recorded: "未记录确认",
+  explicit_single_job: "单文档任务已明确确认",
+  explicit_batch: "批处理策略已明确确认",
+  explicit_cli: "命令行任务已明确确认",
+};
+
 type DocumentProcessingBoundaryProps = {
   boundary: DocumentProcessingBoundary;
   mode?: "preflight" | "result";
   acknowledged?: boolean;
+  acknowledgment?: ProcessingBoundaryAcknowledgment | null;
   onAcknowledgedChange?: (acknowledged: boolean) => void;
 };
 
@@ -38,6 +50,7 @@ export function DocumentProcessingBoundaryCard({
   boundary,
   mode = "preflight",
   acknowledged = false,
+  acknowledgment,
   onAcknowledgedChange,
 }: DocumentProcessingBoundaryProps) {
   const items = boundary.items ?? [];
@@ -103,6 +116,23 @@ export function DocumentProcessingBoundaryCard({
           />
           <span>我已了解这些复杂内容需要在 Word/WPS 中逐项核对</span>
         </label>
+      )}
+      {mode === "result" && acknowledgment && (
+        <div
+          className={`processing-boundary-evidence ${
+            acknowledgment.required && !acknowledgment.acknowledged ? "missing" : "recorded"
+          }`}
+        >
+          <strong>{acknowledgmentLabels[acknowledgment.method] ?? acknowledgment.method}</strong>
+          <span>
+            {acknowledgment.acknowledged_at
+              ? `确认时间 ${new Date(acknowledgment.acknowledged_at).toLocaleString("zh-CN")}`
+              : acknowledgment.required
+                ? "旧任务或非服务端流程没有留下确认记录"
+                : "本文件未发现需要额外确认的复杂内容"}
+          </span>
+          <small>边界快照 {acknowledgment.boundary_sha256}</small>
+        </div>
       )}
     </section>
   );

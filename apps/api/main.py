@@ -383,7 +383,12 @@ def create_app(
 
     @application.post("/api/v1/jobs", status_code=202)
     async def create_job(request: JobCreateRequest) -> JobResponse:
-        record = service.create_job(request.document_id, request.analysis_id, request.spec_id)
+        record = service.create_job(
+            request.document_id,
+            request.analysis_id,
+            request.spec_id,
+            processing_boundary_acknowledged=request.processing_boundary_acknowledged,
+        )
         await runner.enqueue(record.id)
         return service.job_payload(record)
 
@@ -393,6 +398,7 @@ def create_app(
         name: Annotated[str, Form()],
         rule_pack_id: Annotated[str, Form()],
         rule_pack_revision: Annotated[int, Form(ge=1)],
+        processing_boundary_acknowledged: Annotated[bool, Form()],
         files: Annotated[list[UploadFile], File()],
     ) -> BatchAudit:
         audit, job_ids = await batch_service.create_batch(
@@ -400,6 +406,7 @@ def create_app(
             name=name,
             rule_pack_id=rule_pack_id,
             rule_pack_revision=rule_pack_revision,
+            processing_boundary_acknowledged=processing_boundary_acknowledged,
             files=files,
         )
         for job_id in job_ids:

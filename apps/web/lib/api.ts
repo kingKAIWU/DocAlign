@@ -183,10 +183,20 @@ export const api = {
         apply_preset: applyPreset,
       }),
     }),
-  createJob: (documentId: string, analysisId: string, specId: string) =>
+  createJob: (
+    documentId: string,
+    analysisId: string,
+    specId: string,
+    processingBoundaryAcknowledged: boolean,
+  ) =>
     request<Job>("/jobs", {
       method: "POST",
-      body: JSON.stringify({ document_id: documentId, analysis_id: analysisId, spec_id: specId }),
+      body: JSON.stringify({
+        document_id: documentId,
+        analysis_id: analysisId,
+        spec_id: specId,
+        processing_boundary_acknowledged: processingBoundaryAcknowledged,
+      }),
     }),
   compliance: (documentId: string, analysisId: string, specId: string) =>
     request<ComplianceReport>(`/documents/${documentId}/compliance`, {
@@ -200,6 +210,7 @@ export const api = {
     name: string;
     rulePackId: string;
     rulePackRevision: number;
+    processingBoundaryAcknowledged: boolean;
     files: File[];
   }) => {
     const body = new FormData();
@@ -207,6 +218,10 @@ export const api = {
     body.append("name", payload.name);
     body.append("rule_pack_id", payload.rulePackId);
     body.append("rule_pack_revision", String(payload.rulePackRevision));
+    body.append(
+      "processing_boundary_acknowledged",
+      String(payload.processingBoundaryAcknowledged),
+    );
     for (const file of payload.files) body.append("files", file);
     return request<BatchAudit>("/batches", { method: "POST", body });
   },

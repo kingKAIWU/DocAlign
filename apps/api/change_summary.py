@@ -61,6 +61,9 @@ def build_job_result_summary(audit: AuditReport) -> JobResultSummary:
         auto_layout_splits=audit.summary.auto_layout_splits,
         execution_evidence=audit.execution_evidence,
         source_processing_boundary=source_boundary,
+        source_processing_boundary_acknowledgment=(
+            audit.source_processing_boundary_acknowledgment
+        ),
     )
 
 

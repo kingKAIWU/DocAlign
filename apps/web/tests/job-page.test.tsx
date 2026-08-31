@@ -168,6 +168,14 @@ describe("JobPage", () => {
             },
           ],
         },
+        source_processing_boundary_acknowledgment: {
+          required: true,
+          acknowledged: true,
+          method: "explicit_single_job",
+          boundary_sha256: "c".repeat(64),
+          review_feature_codes: ["comment"],
+          acknowledged_at: "2026-08-31T00:00:00Z",
+        },
       },
       output_document_url: "/output",
       audit_json_url: "/audit.json",
@@ -191,6 +199,9 @@ describe("JobPage", () => {
     expect(screen.getByText("核对封面")).toBeInTheDocument();
     expect(screen.getByLabelText("源文档处理边界")).toHaveTextContent(
       "批注1 处 · 只保留，不做专门格式化",
+    );
+    expect(screen.getByLabelText("源文档处理边界")).toHaveTextContent(
+      "单文档任务已明确确认",
     );
     expect(screen.getByRole("link", { name: "南开大学研究生院" })).toHaveAttribute(
       "href",

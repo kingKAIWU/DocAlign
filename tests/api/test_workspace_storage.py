@@ -84,6 +84,7 @@ def test_storage_report_protects_active_documents_and_lists_cleanup_candidates(
                     "name": "可清理终态批次",
                     "rule_pack_id": pack.json()["pack_id"],
                     "rule_pack_revision": "1",
+                    "processing_boundary_acknowledged": "true",
                 },
                 files=[("files", ("批次文档.docx", source, DOCX_MEDIA_TYPE))],
             )
@@ -176,6 +177,7 @@ def _create_document_job(client: TestClient, source_path: Path) -> tuple[str, st
             "document_id": document_id,
             "analysis_id": analysis.json()["analysis_id"],
             "spec_id": spec.json()["spec_id"],
+            "processing_boundary_acknowledged": True,
         },
     )
     assert job.status_code == 202, job.text

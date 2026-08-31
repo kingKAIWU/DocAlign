@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from docalign_core import cli
@@ -21,7 +22,7 @@ def test_cli_analyze_format_and_validate(academic_docx: Path, tmp_path: Path) ->
     spec_path = tmp_path / "spec.json"
     spec_path.write_text(default_academic_spec().model_dump_json(), encoding="utf-8")
     output_path = tmp_path / "formatted.docx"
-    formatted = runner.invoke(
+    blocked = runner.invoke(
         cli.app,
         [
             "format",
@@ -32,9 +33,32 @@ def test_cli_analyze_format_and_validate(academic_docx: Path, tmp_path: Path) ->
             str(output_path),
         ],
     )
+    assert blocked.exit_code == 2
+    assert "PROCESSING_BOUNDARY_ACKNOWLEDGMENT_REQUIRED" in blocked.output
+    assert not output_path.exists()
+
+    formatted = runner.invoke(
+        cli.app,
+        [
+            "format",
+            str(academic_docx),
+            "--spec",
+            str(spec_path),
+            "--out",
+            str(output_path),
+            "--acknowledge-processing-boundary",
+        ],
+    )
     assert formatted.exit_code == 0, formatted.output
     assert output_path.exists()
-    assert (tmp_path / "formatted.docalign" / "audit.json").exists()
+    audit_path = tmp_path / "formatted.docalign" / "audit.json"
+    assert audit_path.exists()
+    acknowledgment = json.loads(audit_path.read_text(encoding="utf-8"))[
+        "source_processing_boundary_acknowledgment"
+    ]
+    assert acknowledgment["method"] == "explicit_cli"
+    assert acknowledgment["acknowledged"] is True
+    assert acknowledgment["acknowledged_at"] is not None
 
     report_path = tmp_path / "validation.json"
     validated = runner.invoke(

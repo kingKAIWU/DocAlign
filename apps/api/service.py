@@ -29,7 +29,10 @@ from docalign_core.docx.safety import (
 )
 from docalign_core.docx.template_candidate import compile_template_rule_candidate
 from docalign_core.docx.text_import import PlainTextImportError, create_docx_from_text
-from docalign_core.domain.audit import AuditReport
+from docalign_core.domain.audit import (
+    AuditReport,
+    ProcessingBoundaryAcknowledgmentMethod,
+)
 from docalign_core.domain.compliance import ComplianceReport, build_compliance_report
 from docalign_core.domain.document_ir import (
     AnalysisResult,
@@ -79,6 +82,7 @@ from apps.api.db import (
     RulePackRecord,
     RulePackVersionRecord,
     SpecRecord,
+    as_utc,
     utcnow,
 )
 from apps.api.errors import ApiError
@@ -1117,7 +1121,18 @@ class ApiService:
         spec_id, _ = self.create_spec(compilation.spec, document_id)
         return spec_id, compilation
 
-    def create_job(self, document_id: str, analysis_id: str, spec_id: str) -> JobRecord:
+    def create_job(
+        self,
+        document_id: str,
+        analysis_id: str,
+        spec_id: str,
+        *,
+        processing_boundary_acknowledged: bool = False,
+        acknowledgment_method: ProcessingBoundaryAcknowledgmentMethod = (
+            ProcessingBoundaryAcknowledgmentMethod.EXPLICIT_SINGLE_JOB
+        ),
+        processing_boundary_acknowledged_at: datetime | None = None,
+    ) -> JobRecord:
         document = self.get_document(document_id)
         analysis = self.get_analysis_record(analysis_id)
         spec = self.get_spec_record(spec_id)
@@ -1134,6 +1149,34 @@ class ApiService:
             )
         if spec.document_id not in {None, document_id}:
             raise ApiError(409, "SPEC_DOCUMENT_MISMATCH", "The spec belongs to another document.")
+        boundary = self.get_analysis(analysis_id).summary.processing_boundary
+        if boundary.acknowledgment_required and not processing_boundary_acknowledged:
+            raise ApiError(
+                409,
+                "PROCESSING_BOUNDARY_ACKNOWLEDGMENT_REQUIRED",
+                "Confirm the source document processing boundary before formatting.",
+                {
+                    "review_feature_count": boundary.review_feature_count,
+                    "review_feature_codes": [
+                        item.code for item in boundary.items if item.review_required
+                    ],
+                },
+            )
+        if boundary.acknowledgment_required:
+            if acknowledgment_method not in {
+                ProcessingBoundaryAcknowledgmentMethod.EXPLICIT_SINGLE_JOB,
+                ProcessingBoundaryAcknowledgmentMethod.EXPLICIT_BATCH,
+            }:
+                raise ApiError(
+                    500,
+                    "PROCESSING_BOUNDARY_ACKNOWLEDGMENT_INVALID",
+                    "The processing-boundary acknowledgment method is invalid.",
+                )
+            stored_acknowledgment = acknowledgment_method.value
+            stored_acknowledged_at = as_utc(processing_boundary_acknowledged_at) or utcnow()
+        else:
+            stored_acknowledgment = ProcessingBoundaryAcknowledgmentMethod.NOT_REQUIRED.value
+            stored_acknowledged_at = None
         record = JobRecord(
             id=f"job_{uuid.uuid4().hex}",
             document_id=document_id,
@@ -1141,6 +1184,8 @@ class ApiService:
             spec_id=spec_id,
             status=JobStatus.QUEUED.value,
             progress=0,
+            processing_boundary_acknowledgment=stored_acknowledgment,
+            processing_boundary_acknowledged_at=stored_acknowledged_at,
         )
         with self.database.session_factory.begin() as session:
             session.add(record)
@@ -1227,6 +1272,16 @@ class ApiService:
             document_id=record.document_id,
             analysis_id=record.analysis_id,
             spec_id=record.spec_id,
+            processing_boundary_acknowledgment=(
+                ProcessingBoundaryAcknowledgmentMethod(
+                    record.processing_boundary_acknowledgment
+                )
+                if record.processing_boundary_acknowledgment
+                else None
+            ),
+            processing_boundary_acknowledged_at=(
+                as_utc(record.processing_boundary_acknowledged_at)
+            ),
             status=JobStatus(record.status),
             progress=record.progress,
             auto_layout_splits=auto_layout_splits,
@@ -1240,8 +1295,8 @@ class ApiService:
             ),
             error_code=record.error_code,
             error_message=record.error_message,
-            created_at=record.created_at,
-            updated_at=record.updated_at,
+            created_at=as_utc(record.created_at),
+            updated_at=as_utc(record.updated_at),
         )
 
     def run_job(self, job_id: str) -> None:
@@ -1275,6 +1330,16 @@ class ApiService:
                 output,
                 job_id=job_id,
                 artifact_dir=artifacts,
+                processing_boundary_acknowledgment_method=(
+                    ProcessingBoundaryAcknowledgmentMethod(
+                        job.processing_boundary_acknowledgment
+                    )
+                    if job.processing_boundary_acknowledgment
+                    else None
+                ),
+                processing_boundary_acknowledged_at=(
+                    as_utc(job.processing_boundary_acknowledged_at)
+                ),
             )
             self._set_job_state(
                 job_id,

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import json
 from collections.abc import Callable
 from dataclasses import dataclass
 
@@ -129,6 +131,16 @@ def build_processing_boundary(document: DocumentIR) -> DocumentProcessingBoundar
         acknowledgment_required=bool(review_count),
         items=items,
     )
+
+
+def processing_boundary_sha256(boundary: DocumentProcessingBoundary) -> str:
+    payload = json.dumps(
+        boundary.model_dump(mode="json"),
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
 
 
 def _add_located_feature(

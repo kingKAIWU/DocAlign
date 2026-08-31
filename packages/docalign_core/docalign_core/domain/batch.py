@@ -74,6 +74,7 @@ class BatchAudit(StrictModel):
     rule_pack_revision: int = Field(ge=1)
     rule_pack_name: str
     rule_pack_spec_sha256: str
+    processing_boundary_acknowledged: bool = False
     summary: BatchAuditSummary
     items: list[BatchAuditItem]
     output_zip_url: str | None = None

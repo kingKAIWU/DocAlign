@@ -132,7 +132,11 @@ export function JobOutcomeSummary({ job, onReview, onLocate, onCompare }: JobOut
         )}
       </div>
       {sourceBoundary && (sourceBoundary.items?.length ?? 0) > 0 && (
-        <DocumentProcessingBoundaryCard boundary={sourceBoundary} mode="result" />
+        <DocumentProcessingBoundaryCard
+          boundary={sourceBoundary}
+          acknowledgment={summary.source_processing_boundary_acknowledgment}
+          mode="result"
+        />
       )}
       {appliedPreset && (
         <section

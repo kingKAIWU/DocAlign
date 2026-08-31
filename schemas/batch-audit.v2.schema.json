@@ -309,6 +309,11 @@
       "title": "Rule Pack Spec Sha256",
       "type": "string"
     },
+    "processing_boundary_acknowledged": {
+      "default": false,
+      "title": "Processing Boundary Acknowledged",
+      "type": "boolean"
+    },
     "summary": {
       "$ref": "#/$defs/BatchAuditSummary"
     },

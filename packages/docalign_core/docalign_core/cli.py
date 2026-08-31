@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import uuid
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated
 
@@ -13,6 +14,7 @@ from docalign_core.analysis.semantic import SemanticAnalyzerError, merge_semanti
 from docalign_core.config import Settings
 from docalign_core.docx.parser import parse_docx
 from docalign_core.docx.text_import import create_docx_from_text
+from docalign_core.domain.audit import ProcessingBoundaryAcknowledgmentMethod
 from docalign_core.domain.formatting_spec import load_formatting_spec
 from docalign_core.llm.base import DocumentSummary
 from docalign_core.llm.openai_compatible import OpenAICompatibleChatInterpreter
@@ -72,11 +74,27 @@ def format_document(
     spec: Annotated[Path, typer.Option("--spec", exists=True, dir_okay=False)],
     out: Annotated[Path, typer.Option("--out", "-o")],
     audit_dir: Annotated[Path | None, typer.Option("--audit-dir")] = None,
+    acknowledge_processing_boundary: Annotated[
+        bool,
+        typer.Option(
+            "--acknowledge-processing-boundary",
+            help="Confirm that complex source content will be reviewed in Word/WPS.",
+        ),
+    ] = False,
 ) -> None:
     if source.resolve() == out.resolve():
         raise typer.BadParameter("The output path must not overwrite the source DOCX.")
     formatting_spec = load_formatting_spec(spec)
     analysis = analyze_document(parse_docx(source))
+    boundary = analysis.summary.processing_boundary
+    if boundary.acknowledgment_required and not acknowledge_processing_boundary:
+        typer.echo(
+            "PROCESSING_BOUNDARY_ACKNOWLEDGMENT_REQUIRED: "
+            f"{boundary.review_feature_count} complex content types require review; "
+            "rerun with --acknowledge-processing-boundary after inspecting the analysis.",
+            err=True,
+        )
+        raise typer.Exit(2)
     artifacts = audit_dir or out.parent / f"{out.stem}.docalign"
     try:
         result = process_document(
@@ -86,6 +104,14 @@ def format_document(
             out,
             job_id=f"job_{uuid.uuid4().hex}",
             artifact_dir=artifacts,
+            processing_boundary_acknowledgment_method=(
+                ProcessingBoundaryAcknowledgmentMethod.EXPLICIT_CLI
+                if boundary.acknowledgment_required
+                else ProcessingBoundaryAcknowledgmentMethod.NOT_REQUIRED
+            ),
+            processing_boundary_acknowledged_at=(
+                datetime.now(UTC) if boundary.acknowledgment_required else None
+            ),
         )
     except ProcessingFailure as exc:
         typer.echo(f"{exc.code}: {exc.message}", err=True)

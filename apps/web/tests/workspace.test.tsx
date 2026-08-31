@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   job: vi.fn(),
   createFromText: vi.fn(),
   createSpec: vi.fn(),
+  createJob: vi.fn(),
   compileSpec: vi.fn(),
   templateCandidate: vi.fn(),
   compliance: vi.fn(),
@@ -35,7 +36,7 @@ vi.mock("@/lib/api", () => ({
     compileSpec: mocks.compileSpec,
     templateCandidate: mocks.templateCandidate,
     compliance: mocks.compliance,
-    createJob: vi.fn(),
+    createJob: mocks.createJob,
     job: mocks.job,
     deleteDocument: vi.fn(),
   },
@@ -342,6 +343,25 @@ describe("Workspace", () => {
   });
 
   it("requires acknowledgment when source content has manual processing boundaries", async () => {
+    mocks.createSpec.mockResolvedValue({ spec_id: "spec_complex" });
+    mocks.createJob.mockResolvedValue({
+      job_id: "job_complex",
+      document_id: "doc_complex",
+      analysis_id: "analysis_complex",
+      spec_id: "spec_complex",
+      processing_boundary_acknowledgment: "explicit_single_job",
+      status: "completed",
+      progress: 100,
+      auto_layout_splits: 0,
+      result_summary: null,
+      output_document_url: null,
+      audit_json_url: null,
+      audit_markdown_url: null,
+      error_code: null,
+      error_message: null,
+      created_at: "2026-08-31T00:00:00Z",
+      updated_at: "2026-08-31T00:00:00Z",
+    });
     window.localStorage.setItem(
       "docalign.workspace.v1",
       JSON.stringify({ document_id: "doc_complex", analysis_id: "analysis_complex" }),
@@ -427,6 +447,15 @@ describe("Workspace", () => {
     });
     fireEvent.click(acknowledgment);
     expect(formatButton).toBeEnabled();
+    fireEvent.click(formatButton);
+    await waitFor(() =>
+      expect(mocks.createJob).toHaveBeenCalledWith(
+        "doc_complex",
+        "analysis_complex",
+        "spec_complex",
+        true,
+      ),
+    );
   });
 
   it("restores the last local workspace after refresh", async () => {

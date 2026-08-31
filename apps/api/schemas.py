@@ -3,7 +3,11 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Literal
 
-from docalign_core.domain.audit import AuditExecutionEvidence
+from docalign_core.domain.audit import (
+    AuditExecutionEvidence,
+    ProcessingBoundaryAcknowledgment,
+    ProcessingBoundaryAcknowledgmentMethod,
+)
 from docalign_core.domain.document_ir import DocumentProcessingBoundary, RoleOverride
 from docalign_core.domain.enums import AnalysisMode, JobStatus
 from docalign_core.domain.formatting_spec import CleanupPresetCatalogItem, FormattingSpec
@@ -195,6 +199,7 @@ class JobCreateRequest(ApiModel):
     document_id: str
     analysis_id: str
     spec_id: str
+    processing_boundary_acknowledged: bool = False
 
 
 class BatchRetryRequest(ApiModel):
@@ -229,6 +234,7 @@ class JobResultSummary(ApiModel):
     auto_layout_splits: int = Field(ge=0)
     execution_evidence: AuditExecutionEvidence | None = None
     source_processing_boundary: DocumentProcessingBoundary | None = None
+    source_processing_boundary_acknowledgment: ProcessingBoundaryAcknowledgment | None = None
 
 
 class JobResponse(ApiModel):
@@ -236,6 +242,8 @@ class JobResponse(ApiModel):
     document_id: str
     analysis_id: str
     spec_id: str
+    processing_boundary_acknowledgment: ProcessingBoundaryAcknowledgmentMethod | None = None
+    processing_boundary_acknowledged_at: datetime | None = None
     status: JobStatus
     progress: int = Field(ge=0, le=100)
     auto_layout_splits: int = Field(ge=0)

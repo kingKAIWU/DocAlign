@@ -36,6 +36,7 @@ const completedBatch: BatchAudit = {
   rule_pack_revision: 2,
   rule_pack_name: "办公室月报",
   rule_pack_spec_sha256: "a".repeat(64),
+  processing_boundary_acknowledged: true,
   summary: { total: 1, completed: 1, failed: 0, canceled: 0, active: 0 },
   items: [
     {
@@ -145,6 +146,7 @@ describe("BatchWorkspace", () => {
     expect(await screen.findByText("月度材料")).toBeInTheDocument();
     expect(screen.getByText("月报.docx")).toBeInTheDocument();
     expect(screen.getByText("复杂内容 2 类待核对")).toBeInTheDocument();
+    expect(screen.getByText("已记录批量复杂内容核对确认")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "下载完成文件 ZIP" })).toHaveAttribute(
       "href",
       completedBatch.output_zip_url,
@@ -231,9 +233,17 @@ describe("BatchWorkspace", () => {
       },
     });
     const submit = await screen.findByRole("button", { name: "开始处理 1 个文档" });
+    expect(submit).toBeDisabled();
+    fireEvent.click(
+      screen.getByRole("checkbox", {
+        name: /我了解批量任务不会在开始前逐份暂停/,
+      }),
+    );
+    expect(submit).toBeEnabled();
     fireEvent.click(submit);
     expect(await screen.findByText(/同一请求不会重复创建批次/)).toBeInTheDocument();
     const firstRequestId = mocks.createBatch.mock.calls[0][0].requestId;
+    expect(mocks.createBatch.mock.calls[0][0].processingBoundaryAcknowledged).toBe(true);
 
     fireEvent.click(screen.getByRole("button", { name: "开始处理 1 个文档" }));
     expect(await screen.findByText("月度材料")).toBeInTheDocument();

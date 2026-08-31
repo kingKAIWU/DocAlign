@@ -56,6 +56,7 @@ def test_batch_is_idempotent_isolates_bad_files_and_packages_outputs(
             "active": 0,
         }
         assert batch["progress"] == 100
+        assert batch["processing_boundary_acknowledged"] is True
         completed = next(item for item in batch["items"] if item["status"] == "completed")
         failed = next(item for item in batch["items"] if item["status"] == "failed")
         assert completed["validation_passed"] is True
@@ -69,7 +70,17 @@ def test_batch_is_idempotent_isolates_bad_files_and_packages_outputs(
         audit = client.get(batch["audit_json_url"])
         assert audit.status_code == 200
         assert audit.json()["schema_version"] == "batch-audit.v2"
+        assert audit.json()["processing_boundary_acknowledged"] is True
         assert "attachment" in audit.headers["content-disposition"]
+
+        item_audit = client.get(completed["audit_json_url"])
+        assert item_audit.status_code == 200
+        acknowledgment = item_audit.json()[
+            "source_processing_boundary_acknowledgment"
+        ]
+        assert acknowledgment["acknowledged"] is True
+        assert acknowledgment["method"] == "explicit_batch"
+        assert acknowledgment["acknowledged_at"] == batch["created_at"]
 
         packaged = client.get(batch["output_zip_url"])
         assert packaged.status_code == 200
@@ -103,6 +114,36 @@ def test_batch_is_idempotent_isolates_bad_files_and_packages_outputs(
         assert not_retryable.json()["error"]["code"] == "BATCH_ITEM_NOT_RETRYABLE"
 
 
+def test_batch_requires_explicit_complex_content_review_policy(
+    academic_docx: Path, tmp_path: Path
+) -> None:
+    data_dir = tmp_path / "batch-acknowledgment"
+    app = create_app(
+        Settings(data_dir=data_dir, database_url=f"sqlite:///{data_dir / 'state.db'}")
+    )
+    with TestClient(app) as client:
+        pack = _create_rule_pack(client, request_id="batch-acknowledgment-pack")
+        response = client.post(
+            "/api/v1/batches",
+            data={
+                "request_id": "batch-acknowledgment-missing",
+                "name": "未确认批次",
+                "rule_pack_id": str(pack["pack_id"]),
+                "rule_pack_revision": "1",
+                "processing_boundary_acknowledged": "false",
+            },
+            files=[
+                ("files", ("待处理.docx", academic_docx.read_bytes(), DOCX_MEDIA_TYPE))
+            ],
+        )
+        assert response.status_code == 409
+        assert response.json()["error"]["code"] == (
+            "BATCH_PROCESSING_BOUNDARY_ACKNOWLEDGMENT_REQUIRED"
+        )
+        with app.state.database.session_factory() as session:
+            assert session.scalar(select(func.count()).select_from(BatchRecord)) == 0
+
+
 def test_failed_batch_item_retries_with_attempt_history(
     academic_docx: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -118,6 +159,7 @@ def test_failed_batch_item_retries_with_attempt_history(
                     "name": "重试验证",
                     "rule_pack_id": pack["pack_id"],
                     "rule_pack_revision": "1",
+                    "processing_boundary_acknowledged": "true",
                 },
                 files=[("files", ("待重试.docx", source, DOCX_MEDIA_TYPE))],
             )
@@ -142,12 +184,12 @@ def test_failed_batch_item_retries_with_attempt_history(
         original_create_job = app.state.service.create_job
         create_calls = 0
 
-        def fail_once(document_id: str, analysis_id: str, spec_id: str):
+        def fail_once(document_id: str, analysis_id: str, spec_id: str, **kwargs: object):
             nonlocal create_calls
             create_calls += 1
             if create_calls == 1:
                 raise ApiError(503, "TEMPORARY_PREPARATION_FAILURE", "Try again.")
-            return original_create_job(document_id, analysis_id, spec_id)
+            return original_create_job(document_id, analysis_id, spec_id, **kwargs)
 
         monkeypatch.setattr(app.state.service, "create_job", fail_once)
         preparation_failure = client.post(
@@ -225,6 +267,7 @@ def test_batch_cancel_is_cooperative_idempotent_and_delete_cleans_local_data(
                 "name": "待取消批次",
                 "rule_pack_id": str(pack["pack_id"]),
                 "rule_pack_revision": "1",
+                "processing_boundary_acknowledged": "true",
             },
             files=[
                 ("files", ("运行中.docx", academic_docx.read_bytes(), DOCX_MEDIA_TYPE)),
@@ -321,6 +364,7 @@ def test_batch_cancel_closes_a_retry_preparation_reservation(
                     "name": "取消重试准备",
                     "rule_pack_id": str(pack["pack_id"]),
                     "rule_pack_revision": "1",
+                    "processing_boundary_acknowledged": "true",
                 },
                 files=[("files", ("待重试.docx", source, DOCX_MEDIA_TYPE))],
             )
@@ -378,6 +422,7 @@ def _post_batch(
             "name": batch_name,
             "rule_pack_id": str(pack_id),
             "rule_pack_revision": "1",
+            "processing_boundary_acknowledged": "true",
         },
         files=[
             ("files", ("合格文档.docx", source_path.read_bytes(), DOCX_MEDIA_TYPE)),

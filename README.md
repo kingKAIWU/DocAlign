@@ -59,8 +59,10 @@ DocAlign 是一个本地优先、确定性执行的 DOCX 自动排版与格式�
   嵌入对象、外部关系、未知 OOXML 和多分节版式。
 - 每类内容明确标记为“参与格式化并验证”“保留并验证完整性”或“只保留，不做专门格式化”；只有
   确实需要人工复核的复杂文档才要求确认，普通文档不会增加一步操作。
-- 预检结果随任务写入 JSON/Markdown 审计并在完成页恢复；批量结果会逐文件提示仍需核对的复杂内容
-  类型数量，避免把“格式验证通过”误解为文本框、脚注或嵌入对象已经完成专门排版。
+- 确认门槛由服务端强制执行，不能通过直接调用任务 API 绕过；确认方式、时间、需复核类型和边界
+  快照 SHA-256 会写入 JSON/Markdown 审计并在完成页恢复。
+- 批处理开始前必须确认“任务不会逐份暂停、复杂内容需在结果后逐份核对”的策略；批量结果会逐文件
+  提示仍需核对的复杂内容类型数量，避免把“格式验证通过”误解为复杂对象已经完成专门排版。
 
 ### 常用 Word 格式整理
 
@@ -231,9 +233,11 @@ uv run docalign analyze input.docx --smart --out smart-analysis.json
 uv run docalign import-text input.txt --out draft.docx
 
 # 确定性格式化；源文件与输出文件必须不同
+# 分析结果如包含需人工核对的复杂内容，还必须显式确认处理边界
 uv run docalign format input.docx \
   --spec presets/generic-academic-cn.yaml \
   --out output.docx \
+  --acknowledge-processing-boundary \
   --audit-dir output.docalign
 
 # 检查现有 DOCX，并可写出 JSON 报告
@@ -266,8 +270,8 @@ uv run docalign spec compile \
 | `POST /api/v1/rule-packs/imports` | 幂等导入已检查的单个规则修订并重置为草稿 |
 | `POST /api/v1/documents/{id}/compliance` | 只读格式体检 |
 | `GET /api/v1/documents/{id}/format-manifest` | 导出格式画像 JSON |
-| `POST /api/v1/jobs` | 创建格式化任务 |
-| `POST /api/v1/batches` | 幂等创建使用固定规则修订的批次 |
+| `POST /api/v1/jobs` | 创建格式化任务；复杂源文档必须提交处理边界确认 |
+| `POST /api/v1/batches` | 明确批量核对策略后，幂等创建使用固定规则修订的批次 |
 | `GET /api/v1/batches/{id}` | 获取可恢复的批次与逐文件进度 |
 | `POST /api/v1/batches/{id}/cancel` | 幂等请求活动批次安全停止 |
 | `DELETE /api/v1/batches/{id}` | 删除终态批次及其本地数据 |

@@ -11,6 +11,7 @@ from pathlib import Path
 
 from docalign_core.config import Settings
 from docalign_core.docx.safety import DocxSafetyError
+from docalign_core.domain.audit import ProcessingBoundaryAcknowledgmentMethod
 from docalign_core.domain.batch import (
     BatchAudit,
     BatchAuditItem,
@@ -32,6 +33,7 @@ from apps.api.db import (
     Database,
     DocumentRecord,
     JobRecord,
+    as_utc,
     utcnow,
 )
 from apps.api.errors import ApiError
@@ -64,9 +66,16 @@ class BatchService:
         name: str,
         rule_pack_id: str,
         rule_pack_revision: int,
+        processing_boundary_acknowledged: bool,
         files: list[UploadFile],
     ) -> tuple[BatchAudit, list[str]]:
         self._validate_request_id(request_id)
+        if not processing_boundary_acknowledged:
+            raise ApiError(
+                409,
+                "BATCH_PROCESSING_BOUNDARY_ACKNOWLEDGMENT_REQUIRED",
+                "Confirm the batch complex-content review policy before processing.",
+            )
         display_name = " ".join(name.split())
         if not display_name:
             raise ApiError(422, "BATCH_NAME_REQUIRED", "Batch name is required.")
@@ -114,6 +123,7 @@ class BatchService:
                             rule_pack_spec_sha256=artifact.spec_sha256,
                             item_count=len(files),
                             file_manifest_json=manifest,
+                            processing_boundary_acknowledged=True,
                             created_at=now,
                             updated_at=now,
                         )
@@ -225,6 +235,7 @@ class BatchService:
             rule_pack_revision=batch.rule_pack_revision,
             rule_pack_name=batch.rule_pack_name,
             rule_pack_spec_sha256=batch.rule_pack_spec_sha256,
+            processing_boundary_acknowledged=batch.processing_boundary_acknowledged,
             summary=BatchAuditSummary(
                 total=len(payload_items),
                 completed=completed,
@@ -235,8 +246,8 @@ class BatchService:
             items=payload_items,
             output_zip_url=(f"/api/v1/batches/{batch.id}/outputs.zip" if completed else None),
             audit_json_url=f"/api/v1/batches/{batch.id}/audit.json",
-            created_at=batch.created_at,
-            updated_at=updated_at,
+            created_at=as_utc(batch.created_at),
+            updated_at=as_utc(updated_at),
         )
 
     async def retry_item(
@@ -293,6 +304,8 @@ class BatchService:
             reserve_attempt = existing_attempt is None
             pack_id = batch.rule_pack_id
             revision = batch.rule_pack_revision
+            processing_boundary_acknowledged = batch.processing_boundary_acknowledged
+            processing_boundary_acknowledged_at = batch.created_at
 
         if reserve_attempt:
             try:
@@ -336,7 +349,14 @@ class BatchService:
             if analysis_id is None:
                 analysis_id, _ = await self.core.analyze(document_id, AnalysisMode.DETERMINISTIC)
             spec_id, _ = self.core.create_spec(artifact.spec, document_id)
-            job_record = self.core.create_job(document_id, analysis_id, spec_id)
+            job_record = self.core.create_job(
+                document_id,
+                analysis_id,
+                spec_id,
+                processing_boundary_acknowledged=processing_boundary_acknowledged,
+                acknowledgment_method=ProcessingBoundaryAcknowledgmentMethod.EXPLICIT_BATCH,
+                processing_boundary_acknowledged_at=processing_boundary_acknowledged_at,
+            )
             with self.database.session_factory.begin() as session:
                 current = session.get(BatchItemRecord, item_id)
                 if current is None:
@@ -572,8 +592,13 @@ class BatchService:
                 item = session.get(BatchItemRecord, item_id)
                 if item is None:
                     raise ApiError(404, "BATCH_ITEM_NOT_FOUND", "Batch item not found.")
+                batch = session.get(BatchRecord, item.batch_id)
+                if batch is None:
+                    raise ApiError(404, "BATCH_NOT_FOUND", "Batch not found.")
                 document_id = item.document_id
                 analysis_id = item.analysis_id
+                processing_boundary_acknowledged = batch.processing_boundary_acknowledged
+                processing_boundary_acknowledged_at = batch.created_at
 
             if document_id is None:
                 document = await self.core.create_document(upload)
@@ -590,7 +615,14 @@ class BatchService:
             if analysis_id is None:
                 analysis_id, _ = await self.core.analyze(document_id, AnalysisMode.DETERMINISTIC)
             spec_id, _ = self.core.create_spec(spec, document_id)
-            job = self.core.create_job(document_id, analysis_id, spec_id)
+            job = self.core.create_job(
+                document_id,
+                analysis_id,
+                spec_id,
+                processing_boundary_acknowledged=processing_boundary_acknowledged,
+                acknowledgment_method=ProcessingBoundaryAcknowledgmentMethod.EXPLICIT_BATCH,
+                processing_boundary_acknowledged_at=processing_boundary_acknowledged_at,
+            )
             with self.database.session_factory.begin() as session:
                 current = session.get(BatchItemRecord, item_id)
                 if current is None:

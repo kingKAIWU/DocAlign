@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime
 from pathlib import Path
 
 from docalign_core import __version__
 from docalign_core.analysis.classifier import count_reviewable_unknowns
-from docalign_core.analysis.processing_boundary import build_processing_boundary
+from docalign_core.analysis.processing_boundary import (
+    build_processing_boundary,
+    processing_boundary_sha256,
+)
 from docalign_core.docx.parser import parse_docx
 from docalign_core.docx.safety import sha256_file
 from docalign_core.domain.audit import (
@@ -17,6 +21,8 @@ from docalign_core.domain.audit import (
     FormattingPlan,
     MutationRecord,
     OperationType,
+    ProcessingBoundaryAcknowledgment,
+    ProcessingBoundaryAcknowledgmentMethod,
 )
 from docalign_core.domain.base import StrictModel
 from docalign_core.domain.document_ir import DocumentIR, ParagraphIR
@@ -62,6 +68,8 @@ def process_document(
     *,
     job_id: str,
     artifact_dir: Path | None = None,
+    processing_boundary_acknowledgment_method: ProcessingBoundaryAcknowledgmentMethod | None = None,
+    processing_boundary_acknowledged_at: datetime | None = None,
 ) -> ProcessResult:
     artifact_dir = artifact_dir or output_path.parent
     artifact_dir.mkdir(parents=True, exist_ok=True)
@@ -141,6 +149,19 @@ def process_document(
 
     roles = role_counts(document_ir)
     classified = sum(count for role, count in roles.items() if role != "unknown")
+    source_processing_boundary = build_processing_boundary(original_ir)
+    acknowledgment_method = processing_boundary_acknowledgment_method
+    if acknowledgment_method is None:
+        acknowledgment_method = (
+            ProcessingBoundaryAcknowledgmentMethod.NOT_RECORDED
+            if source_processing_boundary.acknowledgment_required
+            else ProcessingBoundaryAcknowledgmentMethod.NOT_REQUIRED
+        )
+    acknowledged = acknowledgment_method in {
+        ProcessingBoundaryAcknowledgmentMethod.EXPLICIT_SINGLE_JOB,
+        ProcessingBoundaryAcknowledgmentMethod.EXPLICIT_BATCH,
+        ProcessingBoundaryAcknowledgmentMethod.EXPLICIT_CLI,
+    }
     audit = AuditReport(
         job_id=job_id,
         source_file=original_ir.source_filename,
@@ -169,7 +190,17 @@ def process_document(
         assumptions=spec.source.assumptions,
         spec_source=spec.source,
         execution_evidence=_execution_evidence(spec),
-        source_processing_boundary=build_processing_boundary(original_ir),
+        source_processing_boundary=source_processing_boundary,
+        source_processing_boundary_acknowledgment=ProcessingBoundaryAcknowledgment(
+            required=source_processing_boundary.acknowledgment_required,
+            acknowledged=acknowledged,
+            method=acknowledgment_method,
+            boundary_sha256=processing_boundary_sha256(source_processing_boundary),
+            review_feature_codes=[
+                item.code for item in source_processing_boundary.items if item.review_required
+            ],
+            acknowledged_at=processing_boundary_acknowledged_at if acknowledged else None,
+        ),
     )
     audit_json_path = artifact_dir / "audit.json"
     audit_markdown_path = artifact_dir / "audit.md"

@@ -107,8 +107,15 @@ def test_comprehensive_golden_preserves_protected_structures(
     assert result.audit.validation.valid
     assert result.audit.source_processing_boundary is not None
     assert result.audit.source_processing_boundary.review_feature_count >= 1
+    acknowledgment = result.audit.source_processing_boundary_acknowledgment
+    assert acknowledgment is not None
+    assert acknowledgment.required is True
+    assert acknowledgment.acknowledged is False
+    assert acknowledgment.method == "not_recorded"
+    assert len(acknowledgment.boundary_sha256) == 64
     audit_markdown = Path(result.audit_markdown_path).read_text(encoding="utf-8")
     assert "源文档处理边界" in audit_markdown
+    assert "确认记录：未记录" in audit_markdown
     assert "公式（`equation`）· 保留并验证完整性" in audit_markdown
     output_ir = parse_docx(output)
     assert output_ir.content_fingerprint.bookmark_names == (

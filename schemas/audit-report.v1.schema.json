@@ -436,6 +436,66 @@
       "title": "PlanWarning",
       "type": "object"
     },
+    "ProcessingBoundaryAcknowledgment": {
+      "additionalProperties": false,
+      "properties": {
+        "required": {
+          "title": "Required",
+          "type": "boolean"
+        },
+        "acknowledged": {
+          "title": "Acknowledged",
+          "type": "boolean"
+        },
+        "method": {
+          "$ref": "#/$defs/ProcessingBoundaryAcknowledgmentMethod"
+        },
+        "boundary_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Boundary Sha256",
+          "type": "string"
+        },
+        "review_feature_codes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Review Feature Codes",
+          "type": "array"
+        },
+        "acknowledged_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Acknowledged At"
+        }
+      },
+      "required": [
+        "required",
+        "acknowledged",
+        "method",
+        "boundary_sha256"
+      ],
+      "title": "ProcessingBoundaryAcknowledgment",
+      "type": "object"
+    },
+    "ProcessingBoundaryAcknowledgmentMethod": {
+      "enum": [
+        "not_required",
+        "not_recorded",
+        "explicit_single_job",
+        "explicit_batch",
+        "explicit_cli"
+      ],
+      "title": "ProcessingBoundaryAcknowledgmentMethod",
+      "type": "string"
+    },
     "RulePackClaimLevel": {
       "enum": [
         "generic",
@@ -845,6 +905,17 @@
       "anyOf": [
         {
           "$ref": "#/$defs/DocumentProcessingBoundary"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "source_processing_boundary_acknowledgment": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ProcessingBoundaryAcknowledgment"
         },
         {
           "type": "null"

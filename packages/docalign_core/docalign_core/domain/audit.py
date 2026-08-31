@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import json
-from datetime import date
+from datetime import date, datetime
 from enum import StrEnum
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from docalign_core.domain.base import StrictModel
 from docalign_core.domain.document_ir import DocumentProcessingBoundary
@@ -167,6 +167,42 @@ class AuditExecutionEvidence(StrictModel):
     applied_preset: AppliedPresetEvidence | None = None
 
 
+class ProcessingBoundaryAcknowledgmentMethod(StrEnum):
+    NOT_REQUIRED = "not_required"
+    NOT_RECORDED = "not_recorded"
+    EXPLICIT_SINGLE_JOB = "explicit_single_job"
+    EXPLICIT_BATCH = "explicit_batch"
+    EXPLICIT_CLI = "explicit_cli"
+
+
+class ProcessingBoundaryAcknowledgment(StrictModel):
+    required: bool
+    acknowledged: bool
+    method: ProcessingBoundaryAcknowledgmentMethod
+    boundary_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    review_feature_codes: list[str] = Field(default_factory=list)
+    acknowledged_at: datetime | None = None
+
+    @model_validator(mode="after")
+    def validate_evidence(self) -> ProcessingBoundaryAcknowledgment:
+        explicit_methods = {
+            ProcessingBoundaryAcknowledgmentMethod.EXPLICIT_SINGLE_JOB,
+            ProcessingBoundaryAcknowledgmentMethod.EXPLICIT_BATCH,
+            ProcessingBoundaryAcknowledgmentMethod.EXPLICIT_CLI,
+        }
+        if self.acknowledged != (self.method in explicit_methods):
+            raise ValueError("Acknowledgment state does not match its evidence method.")
+        if self.acknowledged and self.acknowledged_at is None:
+            raise ValueError("Explicit processing-boundary acknowledgment requires a timestamp.")
+        if self.required and not self.review_feature_codes:
+            raise ValueError("Required processing-boundary review must identify feature codes.")
+        if self.method == ProcessingBoundaryAcknowledgmentMethod.NOT_REQUIRED and self.required:
+            raise ValueError("A required processing boundary cannot be marked not required.")
+        if self.method == ProcessingBoundaryAcknowledgmentMethod.NOT_RECORDED and not self.required:
+            raise ValueError("Unrecorded acknowledgment only applies to a required boundary.")
+        return self
+
+
 class AuditReport(StrictModel):
     schema_version: Literal["audit-report.v1"] = "audit-report.v1"
     job_id: str
@@ -183,6 +219,7 @@ class AuditReport(StrictModel):
     spec_source: SpecSource | None = None
     execution_evidence: AuditExecutionEvidence | None = None
     source_processing_boundary: DocumentProcessingBoundary | None = None
+    source_processing_boundary_acknowledgment: ProcessingBoundaryAcknowledgment | None = None
 
     def to_markdown(self) -> str:
         status = "通过" if self.validation.valid else "需要检查"
@@ -225,6 +262,28 @@ class AuditReport(StrictModel):
                     "交付前仍应按清单在 Word/WPS 中核对。",
                 ]
             )
+            acknowledgment = self.source_processing_boundary_acknowledgment
+            if acknowledgment:
+                acknowledgment_labels = {
+                    ProcessingBoundaryAcknowledgmentMethod.NOT_REQUIRED: "无需确认",
+                    ProcessingBoundaryAcknowledgmentMethod.NOT_RECORDED: "未记录",
+                    ProcessingBoundaryAcknowledgmentMethod.EXPLICIT_SINGLE_JOB: (
+                        "单文档任务明确确认"
+                    ),
+                    ProcessingBoundaryAcknowledgmentMethod.EXPLICIT_BATCH: "批处理策略明确确认",
+                    ProcessingBoundaryAcknowledgmentMethod.EXPLICIT_CLI: "命令行任务明确确认",
+                }
+                lines.extend(
+                    [
+                        f"- 确认记录：{acknowledgment_labels[acknowledgment.method]}",
+                        f"- 边界快照 SHA-256：`{acknowledgment.boundary_sha256}`",
+                    ]
+                )
+                if acknowledgment.acknowledged_at:
+                    lines.append(
+                        "- 确认时间："
+                        f"{acknowledgment.acknowledged_at.isoformat()}"
+                    )
             for item in boundary.items:
                 review = "需人工核对" if item.review_required else "信息提示"
                 locator_text = f" · 位置：{', '.join(item.locators)}" if item.locators else ""

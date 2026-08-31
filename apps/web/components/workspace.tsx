@@ -569,7 +569,12 @@ export function Workspace() {
         setOverrides({});
       }
       const specId = await saveCurrentSpec();
-      const created = await api.createJob(document.document_id, currentAnalysis.analysis_id, specId);
+      const created = await api.createJob(
+        document.document_id,
+        currentAnalysis.analysis_id,
+        specId,
+        processingBoundaryAcknowledged,
+      );
       setJob(created);
       storeWorkspace({
         document_id: document.document_id,

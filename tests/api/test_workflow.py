@@ -184,7 +184,7 @@ def test_complete_structured_api_workflow(academic_docx: Path, tmp_path: Path) -
         assert llm_disabled.status_code == 503
         assert llm_disabled.json()["error"]["code"] == "LLM_NOT_CONFIGURED"
 
-        job_response = client.post(
+        missing_acknowledgment = client.post(
             "/api/v1/jobs",
             json={
                 "document_id": document_id,
@@ -192,7 +192,26 @@ def test_complete_structured_api_workflow(academic_docx: Path, tmp_path: Path) -
                 "spec_id": spec_id,
             },
         )
+        assert missing_acknowledgment.status_code == 409
+        missing_payload = missing_acknowledgment.json()["error"]
+        assert missing_payload["code"] == "PROCESSING_BOUNDARY_ACKNOWLEDGMENT_REQUIRED"
+        assert "merged_table" in missing_payload["details"]["review_feature_codes"]
+
+        job_response = client.post(
+            "/api/v1/jobs",
+            json={
+                "document_id": document_id,
+                "analysis_id": analysis_id,
+                "spec_id": spec_id,
+                "processing_boundary_acknowledged": True,
+            },
+        )
         assert job_response.status_code == 202, job_response.text
+        assert (
+            job_response.json()["processing_boundary_acknowledgment"]
+            == "explicit_single_job"
+        )
+        assert job_response.json()["processing_boundary_acknowledged_at"] is not None
         job_id = job_response.json()["job_id"]
         job = _wait_for_job(client, job_id)
         assert job["status"] == "completed", job
@@ -202,6 +221,17 @@ def test_complete_structured_api_workflow(academic_docx: Path, tmp_path: Path) -
         assert result_summary["content_integrity_passed"] is True
         assert result_summary["structure_review_items"] == result_summary["remaining_review_items"]
         assert result_summary["delivery_review_items"] == 0
+        boundary_acknowledgment = result_summary[
+            "source_processing_boundary_acknowledgment"
+        ]
+        assert boundary_acknowledgment["acknowledged"] is True
+        assert boundary_acknowledgment["method"] == "explicit_single_job"
+        assert boundary_acknowledgment["review_feature_codes"] == ["merged_table"]
+        assert len(boundary_acknowledgment["boundary_sha256"]) == 64
+        assert boundary_acknowledgment["acknowledged_at"] is not None
+        assert boundary_acknowledgment["acknowledged_at"] == (
+            job_response.json()["processing_boundary_acknowledged_at"]
+        )
         execution_evidence = result_summary["execution_evidence"]
         assert execution_evidence["engine_version"] == "0.1.0"
         assert len(execution_evidence["spec_sha256"]) == 64
@@ -233,6 +263,9 @@ def test_complete_structured_api_workflow(academic_docx: Path, tmp_path: Path) -
         assert audit.status_code == 200
         audit_payload = audit.json()
         assert audit_payload["validation"]["valid"] is True
+        assert audit_payload["source_processing_boundary_acknowledgment"] == (
+            boundary_acknowledgment
+        )
         assert (
             result_summary["remaining_review_items"] == audit_payload["summary"]["unknown_blocks"]
         )
@@ -240,6 +273,8 @@ def test_complete_structured_api_workflow(academic_docx: Path, tmp_path: Path) -
         assert audit_markdown.status_code == 200
         assert "DocAlign 格式化审计" in audit_markdown.text
         assert "## 实际格式变更" in audit_markdown.text
+        assert "单文档任务明确确认" in audit_markdown.text
+        assert "边界快照 SHA-256" in audit_markdown.text
         assert "paragraph.style" in audit_markdown.text
 
         deleted = client.delete(f"/api/v1/documents/{document_id}")

@@ -53,6 +53,8 @@ export const errorLabels: Record<string, string> = {
   TEXT_TOO_LARGE: "纯文本超过当前大小限制。",
   REQUIREMENT_PARSE_FAILED: "模型未能生成有效的格式规则。",
   ANALYSIS_SOURCE_MISMATCH: "分析结果与当前源文档不匹配，请重新分析。",
+  PROCESSING_BOUNDARY_ACKNOWLEDGMENT_REQUIRED:
+    "请先查看并确认源文档复杂内容的处理边界。",
   DOCUMENT_JOB_ACTIVE: "文档仍在处理中，请等待任务结束后再删除。",
   OUTPUT_VALIDATION_FAILED: "输出未通过格式验证，请查看审计报告。",
   CONTENT_INTEGRITY_FAILED: "检测到未授权内容变化，输出已阻止。",
@@ -62,6 +64,8 @@ export const errorLabels: Record<string, string> = {
   BATCH_RETRY_PREPARATION_FAILED: "重试准备失败，可以安全地再次重试。",
   BATCH_JOB_MISSING: "处理任务记录缺失，请检查本地数据或重新建立批次。",
   BATCH_TOTAL_TOO_LARGE: "本批文件总大小超过当前限制。",
+  BATCH_PROCESSING_BOUNDARY_ACKNOWLEDGMENT_REQUIRED:
+    "请先确认批量任务的复杂内容人工核对责任。",
   BATCH_OUTPUT_MISSING: "已完成的输出文件在本地存储中缺失。",
   BATCH_CANCELED: "该批次已取消，不能再提交重试。",
   BATCH_NOT_ACTIVE: "该批次已结束，无需取消。",

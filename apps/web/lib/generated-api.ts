@@ -847,6 +847,11 @@ export interface components {
             rule_pack_name: string;
             /** Rule Pack Spec Sha256 */
             rule_pack_spec_sha256: string;
+            /**
+             * Processing Boundary Acknowledged
+             * @default false
+             */
+            processing_boundary_acknowledged: boolean;
             summary: components["schemas"]["BatchAuditSummary"];
             /** Items */
             items: components["schemas"]["BatchAuditItem"][];
@@ -943,6 +948,8 @@ export interface components {
             rule_pack_id: string;
             /** Rule Pack Revision */
             rule_pack_revision: number;
+            /** Processing Boundary Acknowledged */
+            processing_boundary_acknowledged: boolean;
             /** Files */
             files: string[];
         };
@@ -1385,6 +1392,11 @@ export interface components {
             analysis_id: string;
             /** Spec Id */
             spec_id: string;
+            /**
+             * Processing Boundary Acknowledged
+             * @default false
+             */
+            processing_boundary_acknowledged: boolean;
         };
         /** JobResponse */
         JobResponse: {
@@ -1396,6 +1408,9 @@ export interface components {
             analysis_id: string;
             /** Spec Id */
             spec_id: string;
+            processing_boundary_acknowledgment?: components["schemas"]["ProcessingBoundaryAcknowledgmentMethod"] | null;
+            /** Processing Boundary Acknowledged At */
+            processing_boundary_acknowledged_at?: string | null;
             status: components["schemas"]["JobStatus"];
             /** Progress */
             progress: number;
@@ -1470,6 +1485,7 @@ export interface components {
             auto_layout_splits: number;
             execution_evidence?: components["schemas"]["AuditExecutionEvidence"] | null;
             source_processing_boundary?: components["schemas"]["DocumentProcessingBoundary"] | null;
+            source_processing_boundary_acknowledgment?: components["schemas"]["ProcessingBoundaryAcknowledgment"] | null;
         };
         /**
          * JobStatus
@@ -1602,6 +1618,25 @@ export interface components {
             /** Widow Orphan Control */
             widow_orphan_control?: boolean | null;
         };
+        /** ProcessingBoundaryAcknowledgment */
+        ProcessingBoundaryAcknowledgment: {
+            /** Required */
+            required: boolean;
+            /** Acknowledged */
+            acknowledged: boolean;
+            method: components["schemas"]["ProcessingBoundaryAcknowledgmentMethod"];
+            /** Boundary Sha256 */
+            boundary_sha256: string;
+            /** Review Feature Codes */
+            review_feature_codes?: string[];
+            /** Acknowledged At */
+            acknowledged_at?: string | null;
+        };
+        /**
+         * ProcessingBoundaryAcknowledgmentMethod
+         * @enum {string}
+         */
+        ProcessingBoundaryAcknowledgmentMethod: "not_required" | "not_recorded" | "explicit_single_job" | "explicit_batch" | "explicit_cli";
         /** RoleFormattingSpec */
         RoleFormattingSpec: {
             font?: components["schemas"]["FontSpec"] | null;

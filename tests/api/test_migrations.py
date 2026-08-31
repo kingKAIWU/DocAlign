@@ -72,12 +72,21 @@ def test_rule_pack_migration_upgrades_an_existing_initial_database(tmp_path: Pat
     assert "cancel_requested" in {
         item["name"] for item in inspector.get_columns("jobs")
     }
+    assert "processing_boundary_acknowledgment" in {
+        item["name"] for item in inspector.get_columns("jobs")
+    }
+    assert "processing_boundary_acknowledged_at" in {
+        item["name"] for item in inspector.get_columns("jobs")
+    }
     assert "cancel_requested_at" in {
+        item["name"] for item in inspector.get_columns("batches")
+    }
+    assert "processing_boundary_acknowledged" in {
         item["name"] for item in inspector.get_columns("batches")
     }
     with database.engine.connect() as connection:
         assert connection.scalar(text("SELECT version_num FROM alembic_version")) == (
-            "0006_rule_pack_import_provenance"
+            "0007_processing_boundary_acknowledgment"
         )
 
 

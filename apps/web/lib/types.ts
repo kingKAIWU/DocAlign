@@ -5,6 +5,9 @@ export type SemanticRole = components["schemas"]["SemanticRole"];
 export type DocumentProcessingBoundary =
   components["schemas"]["DocumentProcessingBoundary"];
 
+export type ProcessingBoundaryAcknowledgment =
+  components["schemas"]["ProcessingBoundaryAcknowledgment"];
+
 export type ParagraphBlock = {
   kind: "paragraph";
   node_id: string;

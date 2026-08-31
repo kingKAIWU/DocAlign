@@ -122,6 +122,12 @@ a { color: inherit; }
 .processing-boundary li small { grid-column: 1 / -1; overflow-wrap: anywhere; }
 .processing-boundary-acknowledgment { margin: 0; padding: 7px; display: flex; align-items: flex-start; gap: 6px; border: 1px solid #d5a858; border-radius: 4px; color: #725119; background: white; font-size: 8px; font-weight: 700; line-height: 1.45; }
 .processing-boundary-acknowledgment input { margin: 1px 0 0; flex: 0 0 auto; accent-color: var(--green); }
+.processing-boundary-evidence { padding: 7px; display: grid; gap: 2px; border: 1px solid #b9d0c5; border-radius: 4px; background: white; }
+.processing-boundary-evidence.missing { border-color: #d5a858; background: #fffaf1; }
+.processing-boundary-evidence strong { color: var(--green-2); font-size: 8px; }
+.processing-boundary-evidence.missing strong { color: #725119; }
+.processing-boundary-evidence span { color: var(--muted); font-size: 7px; }
+.processing-boundary-evidence small { color: var(--muted); font: 7px/1.4 ui-monospace, monospace; overflow-wrap: anywhere; }
 .structure-list { min-height: 0; flex: 1; overflow: auto; padding: 8px; }
 .structure-list-empty { padding: 30px 12px; color: var(--muted); text-align: center; font-size: 10px; }
 .structure-item { margin-bottom: 5px; padding: 9px 8px 9px 10px; display: grid; grid-template-columns: minmax(0,1fr) 94px; align-items: center; gap: 8px; border-left: 2px solid transparent; background: var(--surface-2); }
@@ -534,6 +540,8 @@ a { color: inherit; }
 .batch-rule-trust small { color: var(--muted); font: 7px/1.4 ui-monospace, monospace; overflow-wrap: anywhere; }
 .batch-draft-confirm { margin-top: 9px; display: flex !important; grid-template-columns: auto 1fr; align-items: flex-start; gap: 7px !important; color: #725119 !important; font-size: 8px !important; line-height: 1.45; cursor: pointer; }
 .batch-draft-confirm input { margin: 1px 0 0; accent-color: var(--green); }
+.batch-boundary-confirm { padding: 9px !important; display: flex !important; align-items: flex-start; gap: 7px !important; border: 1px solid #d5a858; border-radius: 4px; color: #725119 !important; background: #fff8ed; font-size: 8px !important; font-weight: 700; line-height: 1.45; cursor: pointer; }
+.batch-boundary-confirm input { margin: 1px 0 0; flex: 0 0 auto; accent-color: var(--green); }
 .batch-submit { width: 100%; margin-top: 3px; }
 .batch-recovery-note { margin: -2px 0 0; color: var(--muted); font-size: 8px; line-height: 1.55; }
 .batch-progress-shell { max-width: 1240px; margin: 0 auto; border: 1px solid var(--line); background: var(--surface); box-shadow: var(--shadow); }
@@ -541,6 +549,7 @@ a { color: inherit; }
 .batch-overview p { margin: 0 0 4px; color: var(--green); font-size: 8px; font-weight: 800; letter-spacing: .12em; }
 .batch-overview h2 { margin: 0; font: 600 21px/1.2 var(--font-serif); }
 .batch-overview > div:first-child > span { display: block; margin-top: 5px; color: var(--muted); font-size: 8px; }
+.batch-overview > div:first-child > small { display: block; margin-top: 4px; color: var(--green-2); font-size: 7px; }
 .batch-metrics { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 7px; }
 .batch-metrics span { padding: 9px; display: grid; gap: 3px; border: 1px solid var(--line); color: var(--muted); font-size: 7px; }
 .batch-metrics b { color: var(--green-2); font: 650 19px/1 var(--font-serif); }
