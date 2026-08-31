@@ -83,10 +83,12 @@ export function JobPageClient() {
                   <JobOutcomeSummary job={job} onCompare={() => setComparisonOpen(true)} />
                 </div>
                 <div className="download-row standalone">
-                  <a className="button primary" href={apiUrl(job.output_document_url)}>下载格式化 DOCX</a>
-                  <a className="button secondary" href={apiUrl(job.audit_json_url)}>下载审计 JSON</a>
+                  <a className="button primary" href={apiUrl(job.delivery_package_url)}>下载完整交付包</a>
+                  <a className="button secondary" href={apiUrl(job.output_document_url)}>仅下载 DOCX</a>
+                  <a className="text-link" href={apiUrl(job.audit_json_url)}>下载审计 JSON</a>
                   <a className="text-link" href={apiUrl(job.audit_markdown_url)}>下载审计 Markdown</a>
                 </div>
+                <p className="delivery-package-note">完整交付包可在设置页重新校验；当前仅提供完整性摘要，不含发布者数字签名。</p>
               </>
             )}
           </>

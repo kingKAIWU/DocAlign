@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from collections import Counter
 
+from docalign_core.delivery import audit_delivery_review_items
 from docalign_core.domain.audit import CONTENT_INTEGRITY_CODES, AuditReport, MutationRecord
 
 from apps.api.schemas import JobChangeDetail, JobResultSummary
@@ -29,16 +30,7 @@ def build_job_result_summary(audit: AuditReport) -> JobResultSummary:
         )
         for mutation in unique_changes[:CHANGE_DETAIL_LIMIT]
     ]
-    applied_preset = (
-        audit.execution_evidence.applied_preset if audit.execution_evidence else None
-    )
-    delivery_review_items = (
-        len(applied_preset.review_requirements)
-        + len(applied_preset.acceptance_manual_checks)
-        + (0 if applied_preset.matches_catalog_spec else 1)
-        if applied_preset
-        else 0
-    )
+    delivery_review_items = audit_delivery_review_items(audit)
     source_boundary = audit.source_processing_boundary
     return JobResultSummary(
         validation_passed=audit.validation.valid,

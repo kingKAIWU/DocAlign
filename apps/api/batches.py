@@ -245,6 +245,11 @@ class BatchService:
             ),
             items=payload_items,
             output_zip_url=(f"/api/v1/batches/{batch.id}/outputs.zip" if completed else None),
+            delivery_package_url=(
+                f"/api/v1/batches/{batch.id}/delivery-package.zip"
+                if completed and not active
+                else None
+            ),
             audit_json_url=f"/api/v1/batches/{batch.id}/audit.json",
             created_at=as_utc(batch.created_at),
             updated_at=as_utc(updated_at),

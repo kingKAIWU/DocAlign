@@ -104,6 +104,44 @@
         }
       }
     },
+    "/api/v1/deliveries/verify": {
+      "post": {
+        "summary": "Verify Delivery",
+        "operationId": "verify_delivery_api_v1_deliveries_verify_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_verify_delivery_api_v1_deliveries_verify_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryPackageVerification"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspace/storage": {
       "get": {
         "summary": "Workspace Storage",
@@ -1510,6 +1548,43 @@
         }
       }
     },
+    "/api/v1/batches/{batch_id}/delivery-package.zip": {
+      "get": {
+        "summary": "Get Batch Delivery Package",
+        "operationId": "get_batch_delivery_package_api_v1_batches__batch_id__delivery_package_zip_get",
+        "parameters": [
+          {
+            "name": "batch_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Batch Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/documents/{document_id}/compliance": {
       "post": {
         "summary": "Audit Document Compliance",
@@ -1602,6 +1677,43 @@
       "get": {
         "summary": "Get Job Output",
         "operationId": "get_job_output_api_v1_jobs__job_id__output_get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/jobs/{job_id}/delivery-package.zip": {
+      "get": {
+        "summary": "Get Job Delivery Package",
+        "operationId": "get_job_delivery_package_api_v1_jobs__job_id__delivery_package_zip_get",
         "parameters": [
           {
             "name": "job_id",
@@ -1997,6 +2109,17 @@
               }
             ],
             "title": "Output Zip Url"
+          },
+          "delivery_package_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delivery Package Url"
           },
           "audit_json_url": {
             "type": "string",
@@ -2410,6 +2533,20 @@
         ],
         "title": "Body_upload_document_api_v1_documents_post"
       },
+      "Body_verify_delivery_api_v1_deliveries_verify_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_verify_delivery_api_v1_deliveries_verify_post"
+      },
       "CleanupPresetCatalogItem": {
         "properties": {
           "preset_id": {
@@ -2628,6 +2765,158 @@
           "affected_locators"
         ],
         "title": "ComplianceSummary"
+      },
+      "DeliveryPackageKind": {
+        "type": "string",
+        "enum": [
+          "job",
+          "batch"
+        ],
+        "title": "DeliveryPackageKind"
+      },
+      "DeliveryPackageVerification": {
+        "properties": {
+          "schema_version": {
+            "type": "string",
+            "const": "delivery-package-verification.v1",
+            "title": "Schema Version",
+            "default": "delivery-package-verification.v1"
+          },
+          "valid": {
+            "type": "boolean",
+            "const": true,
+            "title": "Valid",
+            "default": true
+          },
+          "package_kind": {
+            "$ref": "#/components/schemas/DeliveryPackageKind"
+          },
+          "package_id": {
+            "type": "string",
+            "title": "Package Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "application_version": {
+            "type": "string",
+            "title": "Application Version"
+          },
+          "checksum_algorithm": {
+            "type": "string",
+            "const": "sha256",
+            "title": "Checksum Algorithm",
+            "default": "sha256"
+          },
+          "signature_status": {
+            "$ref": "#/components/schemas/DeliverySignatureStatus"
+          },
+          "payload_file_count": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Payload File Count"
+          },
+          "payload_bytes": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Payload Bytes"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DeliveryVerifiedItem"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "package_kind",
+          "package_id",
+          "created_at",
+          "application_version",
+          "signature_status",
+          "payload_file_count",
+          "payload_bytes",
+          "items"
+        ],
+        "title": "DeliveryPackageVerification"
+      },
+      "DeliverySignatureStatus": {
+        "type": "string",
+        "enum": [
+          "not_signed"
+        ],
+        "title": "DeliverySignatureStatus"
+      },
+      "DeliveryVerifiedItem": {
+        "properties": {
+          "position": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Position"
+          },
+          "job_id": {
+            "type": "string",
+            "title": "Job Id"
+          },
+          "source_filename": {
+            "type": "string",
+            "title": "Source Filename"
+          },
+          "output_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Output Sha256"
+          },
+          "validation_passed": {
+            "type": "boolean",
+            "title": "Validation Passed"
+          },
+          "content_integrity_passed": {
+            "type": "boolean",
+            "title": "Content Integrity Passed"
+          },
+          "structure_review_items": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Structure Review Items"
+          },
+          "delivery_review_items": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Delivery Review Items"
+          },
+          "source_review_features": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Source Review Features"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "position",
+          "job_id",
+          "source_filename",
+          "output_sha256",
+          "validation_passed",
+          "content_integrity_passed",
+          "structure_review_items",
+          "delivery_review_items",
+          "source_review_features"
+        ],
+        "title": "DeliveryVerifiedItem"
       },
       "DiagnosticCheck": {
         "properties": {
@@ -3586,6 +3875,17 @@
             ],
             "title": "Output Document Url"
           },
+          "delivery_package_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delivery Package Url"
+          },
           "audit_json_url": {
             "anyOf": [
               {
@@ -3653,6 +3953,7 @@
           "auto_layout_splits",
           "result_summary",
           "output_document_url",
+          "delivery_package_url",
           "audit_json_url",
           "audit_markdown_url",
           "error_code",

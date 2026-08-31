@@ -1,0 +1,252 @@
+{
+  "$defs": {
+    "DeliveryPackageItem": {
+      "additionalProperties": false,
+      "properties": {
+        "position": {
+          "minimum": 1,
+          "title": "Position",
+          "type": "integer"
+        },
+        "item_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Item Id"
+        },
+        "job_id": {
+          "title": "Job Id",
+          "type": "string"
+        },
+        "source_filename": {
+          "title": "Source Filename",
+          "type": "string"
+        },
+        "source_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Source Sha256",
+          "type": "string"
+        },
+        "output_path": {
+          "title": "Output Path",
+          "type": "string"
+        },
+        "output_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Output Sha256",
+          "type": "string"
+        },
+        "audit_json_path": {
+          "title": "Audit Json Path",
+          "type": "string"
+        },
+        "audit_json_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Audit Json Sha256",
+          "type": "string"
+        },
+        "audit_markdown_path": {
+          "title": "Audit Markdown Path",
+          "type": "string"
+        },
+        "audit_markdown_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Audit Markdown Sha256",
+          "type": "string"
+        },
+        "validation_passed": {
+          "title": "Validation Passed",
+          "type": "boolean"
+        },
+        "content_integrity_passed": {
+          "title": "Content Integrity Passed",
+          "type": "boolean"
+        },
+        "structure_review_items": {
+          "minimum": 0,
+          "title": "Structure Review Items",
+          "type": "integer"
+        },
+        "delivery_review_items": {
+          "minimum": 0,
+          "title": "Delivery Review Items",
+          "type": "integer"
+        },
+        "source_review_features": {
+          "minimum": 0,
+          "title": "Source Review Features",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "position",
+        "job_id",
+        "source_filename",
+        "source_sha256",
+        "output_path",
+        "output_sha256",
+        "audit_json_path",
+        "audit_json_sha256",
+        "audit_markdown_path",
+        "audit_markdown_sha256",
+        "validation_passed",
+        "content_integrity_passed",
+        "structure_review_items",
+        "delivery_review_items",
+        "source_review_features"
+      ],
+      "title": "DeliveryPackageItem",
+      "type": "object"
+    },
+    "DeliveryPackageKind": {
+      "enum": [
+        "job",
+        "batch"
+      ],
+      "title": "DeliveryPackageKind",
+      "type": "string"
+    },
+    "DeliveryPayloadFile": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "title": "Path",
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/$defs/DeliveryPayloadRole"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "size_bytes": {
+          "minimum": 0,
+          "title": "Size Bytes",
+          "type": "integer"
+        },
+        "job_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Job Id"
+        }
+      },
+      "required": [
+        "path",
+        "role",
+        "sha256",
+        "size_bytes"
+      ],
+      "title": "DeliveryPayloadFile",
+      "type": "object"
+    },
+    "DeliveryPayloadRole": {
+      "enum": [
+        "output_document",
+        "audit_json",
+        "audit_markdown",
+        "batch_audit"
+      ],
+      "title": "DeliveryPayloadRole",
+      "type": "string"
+    },
+    "DeliverySignatureStatus": {
+      "enum": [
+        "not_signed"
+      ],
+      "title": "DeliverySignatureStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "delivery-package.v1",
+      "default": "delivery-package.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "package_kind": {
+      "$ref": "#/$defs/DeliveryPackageKind"
+    },
+    "package_id": {
+      "title": "Package Id",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "application_version": {
+      "title": "Application Version",
+      "type": "string"
+    },
+    "checksum_algorithm": {
+      "const": "sha256",
+      "default": "sha256",
+      "title": "Checksum Algorithm",
+      "type": "string"
+    },
+    "signature_status": {
+      "$ref": "#/$defs/DeliverySignatureStatus",
+      "default": "not_signed"
+    },
+    "integrity_scope": {
+      "const": "payload_and_tags",
+      "default": "payload_and_tags",
+      "title": "Integrity Scope",
+      "type": "string"
+    },
+    "payload_files": {
+      "items": {
+        "$ref": "#/$defs/DeliveryPayloadFile"
+      },
+      "title": "Payload Files",
+      "type": "array"
+    },
+    "items": {
+      "items": {
+        "$ref": "#/$defs/DeliveryPackageItem"
+      },
+      "title": "Items",
+      "type": "array"
+    },
+    "batch_audit_path": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Batch Audit Path"
+    }
+  },
+  "required": [
+    "package_kind",
+    "package_id",
+    "created_at",
+    "application_version",
+    "payload_files",
+    "items"
+  ],
+  "title": "DeliveryPackageManifest",
+  "type": "object"
+}

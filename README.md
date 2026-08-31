@@ -40,7 +40,8 @@ DocAlign 是一个本地优先、确定性执行的 DOCX 自动排版与格式�
 - 每个文件独立上传、分析、排版和验证；损坏或失败文件不会阻断其余文件。
 - 批次、文件状态和每次尝试持久化到 SQLite；刷新、短暂断连或 API 重启后可恢复查看。
 - 创建批次和重试失败项均使用幂等请求标识；响应丢失后直接重试不会重复建批或覆盖尝试历史。
-- 可分别下载完成的 DOCX 和审计，也可下载包含全部成功输出与 `batch-audit.json` 的 ZIP。
+- 默认下载可独立核验的完整交付包：包含全部成功输出、逐文件 JSON/Markdown 审计、批次审计、
+  SHA-256 载荷与标签清单；仍保留仅下载输出 DOCX 的兼容入口。
 - 可取消活动批次：排队项立即停止，运行项完成当前安全阶段后丢弃未完成输出；终态批次可一键清理
   该批次的源文件、分析、作业、输出与审计，规则包不受影响。
 
@@ -214,8 +215,8 @@ macOS 的完整安装、启动和恢复说明见 [docs/MACOS.md](docs/MACOS.md)�
 5. 选择通用整理方案或有来源的规范参考包，也可以使用自然语言编译、从确认合格的 Word 样例提取
    候选规则，或载入本地版本化规则包。
 6. 先运行“只做格式体检”，查看带位置编号的问题；也可以直接开始自动排版。
-7. 阅读验证、源文档处理边界与改动摘要，处理剩余待确认段落，再下载 DOCX、JSON/Markdown 审计
-   或格式画像。
+7. 阅读验证、源文档处理边界与改动摘要，处理剩余待确认段落，再下载包含 DOCX、JSON/Markdown
+   审计与 SHA-256 清单的完整交付包；需要时仍可单独下载 DOCX、审计或格式画像。
 
 同一规则需要处理多份文档时，先在单文档工作台保存并核对规则包，再进入
 <http://127.0.0.1:3000/batches>，选择规则修订、添加文件并创建可恢复批次。
@@ -244,6 +245,10 @@ uv run docalign format input.docx \
 uv run docalign validate output.docx \
   --spec presets/generic-academic-cn.yaml \
   --report validation.json
+
+# 在另一台电脑或归档后离线核验完整交付包
+uv run docalign verify-delivery delivery-package.zip \
+  --report delivery-verification.json
 
 # 将自然语言要求编译成 FormattingSpec
 uv run docalign spec compile \
@@ -277,11 +282,14 @@ uv run docalign spec compile \
 | `DELETE /api/v1/batches/{id}` | 删除终态批次及其本地数据 |
 | `POST /api/v1/batches/{id}/items/{item_id}/retry` | 追加一次失败文件重试 |
 | `GET /api/v1/batches/{id}/outputs.zip` | 打包下载成功输出与批次审计 |
+| `GET /api/v1/batches/{id}/delivery-package.zip` | 下载含逐文件审计与 SHA-256 清单的完整批次交付包 |
 | `GET /api/v1/presets` | 获取带来源、版本、覆盖与限制的规则包目录 |
 | `GET /api/v1/jobs/{id}` | 查询任务状态、验证结论、改动分类和剩余复核项 |
 | `GET /api/v1/jobs/{id}/output` | 下载验证通过的 DOCX |
+| `GET /api/v1/jobs/{id}/delivery-package.zip` | 下载含输出、双格式审计与 SHA-256 清单的完整交付包 |
 | `GET /api/v1/jobs/{id}/audit.json` | 下载机器可读审计 |
 | `GET /api/v1/jobs/{id}/audit.md` | 下载人工审计报告 |
+| `POST /api/v1/deliveries/verify` | 不落库校验本地 DocAlign 交付包 |
 | `GET /api/v1/diagnostics` | 运行隐私安全的本机诊断 |
 | `GET /api/v1/diagnostics/export` | 下载可先审阅的支持诊断 JSON |
 | `POST /api/v1/system/quit` | 仅桌面分发版可用；同源确认后安全退出应用 |
@@ -298,6 +306,8 @@ uv run docalign spec compile \
 - `rule-pack.v1.schema.json`
 - `support-diagnostic.v1.schema.json`
 - `workspace-storage.v1.schema.json`
+- `delivery-package.v1.schema.json`
+- `delivery-package-verification.v1.schema.json`
 
 ## 质量门与回归
 

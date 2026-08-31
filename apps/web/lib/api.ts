@@ -5,6 +5,7 @@ import type {
   CleanupPreset,
   ComplianceReport,
   DocumentRecord,
+  DeliveryPackageVerification,
   FormattingSpec,
   Job,
   RulePackApprovalStatus,
@@ -205,6 +206,14 @@ export const api = {
     }),
   job: (jobId: string, signal?: AbortSignal) =>
     request<Job>(`/jobs/${jobId}`, { signal, cache: "no-store" }),
+  verifyDelivery: (file: File) => {
+    const body = new FormData();
+    body.append("file", file);
+    return request<DeliveryPackageVerification>("/deliveries/verify", {
+      method: "POST",
+      body,
+    });
+  },
   createBatch: (payload: {
     requestId: string;
     name: string;

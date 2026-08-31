@@ -62,6 +62,7 @@ const completedBatch: BatchAudit = {
     },
   ],
   output_zip_url: "/api/v1/batches/batch_saved/outputs.zip",
+  delivery_package_url: "/api/v1/batches/batch_saved/delivery-package.zip",
   audit_json_url: "/api/v1/batches/batch_saved/audit.json",
   created_at: "2026-08-29T00:00:00Z",
   updated_at: "2026-08-29T00:01:00Z",
@@ -72,6 +73,7 @@ const failedBatch: BatchAudit = {
   status: "failed",
   summary: { total: 1, completed: 0, failed: 1, canceled: 0, active: 0 },
   output_zip_url: null,
+  delivery_package_url: null,
   items: [
     {
       ...completedBatch.items[0],
@@ -95,6 +97,7 @@ const activeBatch: BatchAudit = {
   progress: 45,
   summary: { total: 1, completed: 0, failed: 0, canceled: 0, active: 1 },
   output_zip_url: null,
+  delivery_package_url: null,
   items: [
     {
       ...completedBatch.items[0],
@@ -147,7 +150,11 @@ describe("BatchWorkspace", () => {
     expect(screen.getByText("月报.docx")).toBeInTheDocument();
     expect(screen.getByText("复杂内容 2 类待核对")).toBeInTheDocument();
     expect(screen.getByText("已记录批量复杂内容核对确认")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "下载完成文件 ZIP" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "下载完整交付包" })).toHaveAttribute(
+      "href",
+      completedBatch.delivery_package_url,
+    );
+    expect(screen.getByRole("link", { name: "仅下载 DOCX ZIP" })).toHaveAttribute(
       "href",
       completedBatch.output_zip_url,
     );

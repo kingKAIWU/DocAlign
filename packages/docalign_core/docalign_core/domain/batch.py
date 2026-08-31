@@ -78,6 +78,7 @@ class BatchAudit(StrictModel):
     summary: BatchAuditSummary
     items: list[BatchAuditItem]
     output_zip_url: str | None = None
+    delivery_package_url: str | None = None
     audit_json_url: str
     created_at: datetime
     updated_at: datetime

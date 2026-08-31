@@ -175,7 +175,7 @@ test("saves reusable rule revisions and restores history without duplicate write
   await expect(page.getByText(`已载入“${externalName}”修订 1；尚未修改源文档。`)).toBeVisible();
 });
 
-test("completes the local structured formatting workflow and restores it", async ({ page }) => {
+test("completes the local structured formatting workflow and restores it", async ({ page }, testInfo) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "先理解文档，再智能排版" })).toBeVisible();
   await page.getByLabel("上传待处理 Word 文档").setInputFiles(fixture);
@@ -198,7 +198,7 @@ test("completes the local structured formatting workflow and restores it", async
   await expect(page.getByText("自动排版与格式验证完成；当前文档无需额外拆分正文。")).toBeVisible({
     timeout: 30_000,
   });
-  await expect(page.getByRole("link", { name: "下载格式化 DOCX" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "下载完整交付包" })).toBeVisible();
   await expect(page.getByText("格式化结果 · 最佳努力预览")).toBeVisible();
   const resultSummary = page.getByLabel("排版结果摘要");
   await expect(resultSummary.getByText("格式验证通过")).toBeVisible();
@@ -242,7 +242,7 @@ test("completes the local structured formatting workflow and restores it", async
   await expect(firstChangeLocator).toBeVisible();
   await firstChangeLocator.click();
   await expect(page.locator(".structure-item.change-focus, .structure-table.change-focus")).toBeVisible();
-  const auditUrl = await page.getByRole("link", { name: "查看审计" }).getAttribute("href");
+  const auditUrl = await page.getByRole("link", { name: "单独查看审计" }).getAttribute("href");
   expect(auditUrl).toBeTruthy();
   const audit = await page.request.get(auditUrl!);
   expect(audit.ok()).toBeTruthy();
@@ -256,6 +256,18 @@ test("completes the local structured formatting workflow and restores it", async
   await expect(page.getByRole("heading", { name: "任务状态" })).toBeVisible();
   await expect(page.getByText("已完成", { exact: true })).toBeVisible();
   await expect(page.getByLabel("排版结果摘要").getByText("格式验证通过")).toBeVisible();
+
+  const downloadPromise = page.waitForEvent("download");
+  await page.getByRole("link", { name: "下载完整交付包" }).click();
+  const deliveryDownload = await downloadPromise;
+  const deliveryPath = testInfo.outputPath(deliveryDownload.suggestedFilename());
+  await deliveryDownload.saveAs(deliveryPath);
+  await page.goto("/settings");
+  await page.getByLabel("选择交付包 ZIP").setInputFiles(deliveryPath);
+  await page.getByRole("button", { name: "开始校验" }).click();
+  await expect(page.getByText("校验通过")).toBeVisible();
+  await expect(page.getByText("单文档交付包")).toBeVisible();
+  await expect(page.getByText(/发布者身份未验证/)).toBeVisible();
 
   await page.goto("/");
   await expect(page.getByText("已恢复上次本地工作区。")).toBeVisible();
@@ -283,5 +295,5 @@ test("turns plain text into a structured and validated Word document", async ({ 
   await expect(page.getByText("自动排版与格式验证完成；当前文档无需额外拆分正文。")).toBeVisible({
     timeout: 30_000,
   });
-  await expect(page.getByRole("link", { name: "下载格式化 DOCX" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "下载完整交付包" })).toBeVisible();
 });

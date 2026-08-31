@@ -505,11 +505,13 @@ function BatchProgress({
         </div>
         <div className="batch-actions">
           <button className="button secondary" disabled={busy === "refresh"} onClick={onRefresh}>刷新状态</button>
-          <a className={`button primary ${batch.output_zip_url ? "" : "disabled"}`} href={apiUrl(batch.output_zip_url)}>下载完成文件 ZIP</a>
+          <a className={`button primary ${batch.delivery_package_url ? "" : "disabled"}`} href={apiUrl(batch.delivery_package_url)}>下载完整交付包</a>
+          <a className={`button secondary ${batch.output_zip_url ? "" : "disabled"}`} href={apiUrl(batch.output_zip_url)}>仅下载 DOCX ZIP</a>
           <a className="text-link" href={apiUrl(batch.audit_json_url)}>下载批次审计 JSON</a>
           {!terminal && <button className="button danger" disabled={busy === "cancel" || batch.status === "canceling"} onClick={onCancel}>{batch.status === "canceling" ? "正在安全停止…" : "取消批次"}</button>}
           {terminal && <button className="button danger" disabled={busy === "delete"} onClick={onDelete}>{busy === "delete" ? "正在删除…" : "删除本地批次"}</button>}
         </div>
+        <p className="delivery-package-note">完整交付包包含每份输出的独立审计和 SHA-256 清单；批次仍在运行时需等待终态后生成。</p>
       </div>
       <div className="batch-total-progress"><i style={{ width: `${batch.progress}%` }} /></div>
       <div className="batch-results" role="table" aria-label="批处理文件进度">

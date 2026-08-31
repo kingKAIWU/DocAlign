@@ -89,6 +89,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/deliveries/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Verify Delivery */
+        post: operations["verify_delivery_api_v1_deliveries_verify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspace/storage": {
         parameters: {
             query?: never;
@@ -637,6 +654,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/batches/{batch_id}/delivery-package.zip": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Batch Delivery Package */
+        get: operations["get_batch_delivery_package_api_v1_batches__batch_id__delivery_package_zip_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/documents/{document_id}/compliance": {
         parameters: {
             query?: never;
@@ -680,6 +714,23 @@ export interface paths {
         };
         /** Get Job Output */
         get: operations["get_job_output_api_v1_jobs__job_id__output_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/jobs/{job_id}/delivery-package.zip": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Job Delivery Package */
+        get: operations["get_job_delivery_package_api_v1_jobs__job_id__delivery_package_zip_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -857,6 +908,8 @@ export interface components {
             items: components["schemas"]["BatchAuditItem"][];
             /** Output Zip Url */
             output_zip_url?: string | null;
+            /** Delivery Package Url */
+            delivery_package_url?: string | null;
             /** Audit Json Url */
             audit_json_url: string;
             /**
@@ -977,6 +1030,11 @@ export interface components {
             /** File */
             file: string;
         };
+        /** Body_verify_delivery_api_v1_deliveries_verify_post */
+        Body_verify_delivery_api_v1_deliveries_verify_post: {
+            /** File */
+            file: string;
+        };
         /** CleanupPresetCatalogItem */
         CleanupPresetCatalogItem: {
             /** Preset Id */
@@ -1059,6 +1117,77 @@ export interface components {
              * @default false
              */
             truncated: boolean;
+        };
+        /**
+         * DeliveryPackageKind
+         * @enum {string}
+         */
+        DeliveryPackageKind: "job" | "batch";
+        /** DeliveryPackageVerification */
+        DeliveryPackageVerification: {
+            /**
+             * Schema Version
+             * @default delivery-package-verification.v1
+             * @constant
+             */
+            schema_version: "delivery-package-verification.v1";
+            /**
+             * Valid
+             * @default true
+             * @constant
+             */
+            valid: true;
+            package_kind: components["schemas"]["DeliveryPackageKind"];
+            /** Package Id */
+            package_id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Application Version */
+            application_version: string;
+            /**
+             * Checksum Algorithm
+             * @default sha256
+             * @constant
+             */
+            checksum_algorithm: "sha256";
+            signature_status: components["schemas"]["DeliverySignatureStatus"];
+            /** Payload File Count */
+            payload_file_count: number;
+            /** Payload Bytes */
+            payload_bytes: number;
+            /** Items */
+            items: components["schemas"]["DeliveryVerifiedItem"][];
+            /** Warnings */
+            warnings?: string[];
+        };
+        /**
+         * DeliverySignatureStatus
+         * @enum {string}
+         */
+        DeliverySignatureStatus: "not_signed";
+        /** DeliveryVerifiedItem */
+        DeliveryVerifiedItem: {
+            /** Position */
+            position: number;
+            /** Job Id */
+            job_id: string;
+            /** Source Filename */
+            source_filename: string;
+            /** Output Sha256 */
+            output_sha256: string;
+            /** Validation Passed */
+            validation_passed: boolean;
+            /** Content Integrity Passed */
+            content_integrity_passed: boolean;
+            /** Structure Review Items */
+            structure_review_items: number;
+            /** Delivery Review Items */
+            delivery_review_items: number;
+            /** Source Review Features */
+            source_review_features: number;
         };
         /** DiagnosticCheck */
         DiagnosticCheck: {
@@ -1419,6 +1548,8 @@ export interface components {
             result_summary: components["schemas"]["JobResultSummary"] | null;
             /** Output Document Url */
             output_document_url: string | null;
+            /** Delivery Package Url */
+            delivery_package_url: string | null;
             /** Audit Json Url */
             audit_json_url: string | null;
             /** Audit Markdown Url */
@@ -2437,6 +2568,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SupportDiagnosticReport"];
+                };
+            };
+        };
+    };
+    verify_delivery_api_v1_deliveries_verify_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_verify_delivery_api_v1_deliveries_verify_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeliveryPackageVerification"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -3584,6 +3748,37 @@ export interface operations {
             };
         };
     };
+    get_batch_delivery_package_api_v1_batches__batch_id__delivery_package_zip_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                batch_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     audit_document_compliance_api_v1_documents__document_id__compliance_post: {
         parameters: {
             query?: never;
@@ -3651,6 +3846,37 @@ export interface operations {
         };
     };
     get_job_output_api_v1_jobs__job_id__output_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_job_delivery_package_api_v1_jobs__job_id__delivery_package_zip_get: {
         parameters: {
             query?: never;
             header?: never;

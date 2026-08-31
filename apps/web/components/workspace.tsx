@@ -946,9 +946,11 @@ export function Workspace() {
                       : undefined}
                   />
                   <div className="download-row">
-                    <a className="button primary" href={apiUrl(job.output_document_url)} download>下载格式化 DOCX</a>
-                    <a className="text-link" href={apiUrl(job.audit_json_url)}>查看审计</a>
+                    <a className="button primary" href={apiUrl(job.delivery_package_url)} download>下载完整交付包</a>
+                    <a className="button secondary" href={apiUrl(job.output_document_url)} download>仅下载 DOCX</a>
+                    <a className="text-link" href={apiUrl(job.audit_json_url)}>单独查看审计</a>
                   </div>
+                  <p className="delivery-package-note">交付包包含 DOCX、JSON/Markdown 审计和 SHA-256 清单，可在设置页重新校验。</p>
                 </>
               )}
             </div>

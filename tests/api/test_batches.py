@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import json
 import threading
 import time
 import zipfile
@@ -89,6 +90,28 @@ def test_batch_is_idempotent_isolates_bad_files_and_packages_outputs(
             assert "batch-audit.json" in names
             assert any(name.endswith("_formatted.docx") for name in names)
             assert all("损坏文档" not in name for name in names)
+
+        assert batch["delivery_package_url"]
+        delivery = client.get(batch["delivery_package_url"])
+        assert delivery.status_code == 200
+        with zipfile.ZipFile(io.BytesIO(delivery.content)) as archive:
+            names = set(archive.namelist())
+            assert "data/batch-audit.json" in names
+            assert "data/outputs/001_formatted.docx" in names
+            assert "data/audits/001_audit.json" in names
+            assert "data/audits/001_audit.md" in names
+            assert all("损坏文档" not in name for name in names)
+            manifest = json.loads(archive.read("delivery-manifest.json"))
+            assert manifest["package_kind"] == "batch"
+            assert manifest["package_id"] == batch_id
+            assert len(manifest["items"]) == 1
+        verified_delivery = client.post(
+            "/api/v1/deliveries/verify",
+            files={"file": ("batch-delivery.zip", delivery.content, "application/zip")},
+        )
+        assert verified_delivery.status_code == 200, verified_delivery.text
+        assert verified_delivery.json()["package_kind"] == "batch"
+        assert len(verified_delivery.json()["items"]) == 1
 
         repeated = _post_batch(client, academic_docx, pack["pack_id"])
         assert repeated.status_code == 202

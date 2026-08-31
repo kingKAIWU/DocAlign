@@ -6,9 +6,11 @@ from pathlib import Path
 from typing import Annotated
 
 from docalign_core.config import Settings
+from docalign_core.delivery import DeliveryPackageError
 from docalign_core.docx.safety import DocxSafetyError
 from docalign_core.domain.batch import BatchAudit
 from docalign_core.domain.compliance import ComplianceReport
+from docalign_core.domain.delivery import DeliveryPackageVerification
 from docalign_core.domain.diagnostics import SupportDiagnosticReport
 from docalign_core.domain.formatting_spec import (
     FormattingSpec,
@@ -29,6 +31,7 @@ from fastapi.staticfiles import StaticFiles
 
 from apps.api.batches import BatchService
 from apps.api.db import Database
+from apps.api.deliveries import DeliveryService
 from apps.api.diagnostics import DiagnosticService
 from apps.api.errors import ApiError
 from apps.api.migrations import upgrade_database
@@ -69,6 +72,7 @@ def create_app(
     storage = LocalStorage(settings.data_dir)
     service = ApiService(settings, database, storage)
     batch_service = BatchService(service, settings, database, storage)
+    delivery_service = DeliveryService(service, batch_service, settings, storage)
     workspace_service = WorkspaceService(database, storage, batch_service)
     diagnostic_service = DiagnosticService(settings, database, storage)
     runner = JobRunner(service, settings.job_concurrency)
@@ -93,6 +97,7 @@ def create_app(
     application.state.storage = storage
     application.state.service = service
     application.state.batch_service = batch_service
+    application.state.delivery_service = delivery_service
     application.state.workspace_service = workspace_service
     application.state.diagnostic_service = diagnostic_service
     application.state.runner = runner
@@ -111,6 +116,11 @@ def create_app(
     @application.exception_handler(DocxSafetyError)
     async def handle_docx_error(_: Request, exc: DocxSafetyError) -> JSONResponse:
         status = 413 if exc.code in {"FILE_TOO_LARGE", "DOCX_ZIP_BOMB"} else 422
+        return _error_response(status, exc.code, exc.message, exc.details)
+
+    @application.exception_handler(DeliveryPackageError)
+    async def handle_delivery_error(_: Request, exc: DeliveryPackageError) -> JSONResponse:
+        status = 413 if exc.code == "DELIVERY_PACKAGE_TOO_LARGE" else 422
         return _error_response(status, exc.code, exc.message, exc.details)
 
     @application.exception_handler(RequestValidationError)
@@ -143,8 +153,10 @@ def create_app(
             "rule_pack_library": True,
             "rule_pack_import": True,
             "batch_processing": True,
+            "verifiable_delivery_packages": True,
             "max_batch_files": settings.max_batch_files,
             "max_batch_total_mb": settings.max_batch_total_mb,
+            "max_delivery_package_mb": settings.max_batch_total_mb + 20,
             "max_upload_mb": settings.max_upload_mb,
             "max_rule_pack_import_kb": settings.max_rule_pack_import_kb,
             "local_only": True,
@@ -193,6 +205,10 @@ def create_app(
             'attachment; filename="docalign-support-diagnostic.json"'
         )
         return diagnostic_service.report()
+
+    @application.post("/api/v1/deliveries/verify")
+    async def verify_delivery(file: UploadFile) -> DeliveryPackageVerification:
+        return await delivery_service.verify_upload(file)
 
     @application.get("/api/v1/workspace/storage")
     def workspace_storage(
@@ -452,6 +468,14 @@ def create_app(
             filename=f"{batch_id}-outputs.zip",
         )
 
+    @application.get("/api/v1/batches/{batch_id}/delivery-package.zip")
+    def get_batch_delivery_package(batch_id: str) -> FileResponse:
+        return FileResponse(
+            delivery_service.build_batch_package(batch_id),
+            media_type="application/zip",
+            filename=f"{batch_id}-delivery-package.zip",
+        )
+
     @application.post("/api/v1/documents/{document_id}/compliance")
     def audit_document_compliance(document_id: str, request: ComplianceRequest) -> ComplianceReport:
         return service.audit_compliance(
@@ -475,6 +499,14 @@ def create_app(
             job.output_path,
             media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             filename=filename,
+        )
+
+    @application.get("/api/v1/jobs/{job_id}/delivery-package.zip")
+    def get_job_delivery_package(job_id: str) -> FileResponse:
+        return FileResponse(
+            delivery_service.build_job_package(job_id),
+            media_type="application/zip",
+            filename=f"{job_id}-delivery-package.zip",
         )
 
     @application.get("/api/v1/jobs/{job_id}/audit.json")

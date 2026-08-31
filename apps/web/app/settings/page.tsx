@@ -4,8 +4,10 @@ import Link from "next/link";
 import { type ReactNode, useEffect, useState } from "react";
 
 import { api, API_BASE, ApiError } from "@/lib/api";
+import { errorLabels } from "@/lib/messages";
 import type {
   Capabilities,
+  DeliveryPackageVerification,
   StorageBatchItem,
   StorageDocumentItem,
   SupportDiagnosticReport,
@@ -43,6 +45,9 @@ export default function SettingsPage() {
   const [capabilities, setCapabilities] = useState<Capabilities | null>(null);
   const [storage, setStorage] = useState<WorkspaceStorageReport | null>(null);
   const [diagnostic, setDiagnostic] = useState<SupportDiagnosticReport | null>(null);
+  const [deliveryFile, setDeliveryFile] = useState<File | null>(null);
+  const [deliveryVerification, setDeliveryVerification] =
+    useState<DeliveryPackageVerification | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -80,6 +85,21 @@ export default function SettingsPage() {
     setMessage("");
     try {
       setDiagnostic(await api.diagnostics());
+    } catch (caught) {
+      setError(readableError(caught));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function verifyDelivery() {
+    if (!deliveryFile) return;
+    setBusy("delivery-verify");
+    setError("");
+    setMessage("");
+    setDeliveryVerification(null);
+    try {
+      setDeliveryVerification(await api.verifyDelivery(deliveryFile));
     } catch (caught) {
       setError(readableError(caught));
     } finally {
@@ -188,6 +208,57 @@ export default function SettingsPage() {
             <span>{storage.records.documents} 份文档</span><span>{storage.records.batches} 个批次</span><span>{storage.records.jobs} 个作业</span><span>{storage.records.rule_packs} 个规则包</span>
           </div>
         </>}
+      </section>
+
+      <section className="settings-card delivery-verifier-card">
+        <div className="storage-heading">
+          <div>
+            <p className="eyebrow">DELIVERY VERIFICATION</p>
+            <h2>校验 DocAlign 交付包</h2>
+            <p>在本机检查 BagIt 文件清单、全部 SHA-256、输出与任务审计是否一致；文件不会保存或上传到外部。</p>
+          </div>
+        </div>
+        <div className="delivery-verifier-form">
+          <label htmlFor="delivery-package-file">选择交付包 ZIP</label>
+          <input
+            id="delivery-package-file"
+            type="file"
+            accept=".zip,application/zip"
+            disabled={Boolean(busy)}
+            onChange={(event) => {
+              setDeliveryFile(event.target.files?.[0] ?? null);
+              setDeliveryVerification(null);
+              setError("");
+            }}
+          />
+          <button
+            className="button secondary"
+            disabled={!deliveryFile || Boolean(busy)}
+            onClick={() => void verifyDelivery()}
+          >
+            {busy === "delivery-verify" ? "正在逐项校验…" : "开始校验"}
+          </button>
+          <small>最大 {capabilities?.max_delivery_package_mb ?? 220} MB；校验过程不解压到工作区。</small>
+        </div>
+        {deliveryVerification && <div className="delivery-verification-result" role="status">
+          <div>
+            <span>校验通过</span>
+            <strong>{deliveryVerification.package_kind === "job" ? "单文档交付包" : "批量交付包"}</strong>
+            <code>{deliveryVerification.package_id}</code>
+          </div>
+          <div className="delivery-verification-metrics">
+            <span><b>{deliveryVerification.items.length}</b>份输出</span>
+            <span><b>{deliveryVerification.payload_file_count}</b>个载荷文件</span>
+            <span><b>{formatBytes(deliveryVerification.payload_bytes)}</b>载荷大小</span>
+          </div>
+          <ul>
+            {deliveryVerification.items.map((item) => <li key={item.job_id}>
+              <span>{item.position}. {item.source_filename}</span>
+              <small>格式{item.validation_passed ? "通过" : "异常"} · 内容{item.content_integrity_passed ? "安全" : "异常"} · SHA-256 {item.output_sha256.slice(0, 16)}…</small>
+            </li>)}
+          </ul>
+          <p>完整性已验证，但发布者身份未验证：当前交付包没有数字签名。</p>
+        </div>}
       </section>
 
       <section className="settings-card diagnostic-card">
@@ -299,7 +370,7 @@ function formatDate(value: string): string {
 }
 
 function readableError(caught: unknown): string {
-  if (caught instanceof ApiError) return caught.message;
+  if (caught instanceof ApiError) return errorLabels[caught.code] ?? caught.message;
   if (caught instanceof Error) return caught.message;
   return "读取本地服务信息失败。";
 }

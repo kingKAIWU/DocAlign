@@ -1,9 +1,13 @@
 from __future__ import annotations
 
+import io
+import json
 import time
+import zipfile
 from pathlib import Path
 
 import pytest
+from docalign_core import cli
 from docalign_core.analysis.semantic import SemanticAnalysisDraft, SemanticRoleAssignment
 from docalign_core.config import Settings
 from docalign_core.domain.document_ir import AnalysisResult, DocumentIR, ParagraphIR
@@ -21,6 +25,7 @@ from docalign_core.llm.base import (
     RequirementCompilationResult,
 )
 from fastapi.testclient import TestClient
+from typer.testing import CliRunner
 
 from apps.api import service as service_module
 from apps.api.main import create_app
@@ -43,6 +48,8 @@ def test_complete_structured_api_workflow(academic_docx: Path, tmp_path: Path) -
         assert capabilities["audit_only"] is True
         assert capabilities["format_manifest"] is True
         assert capabilities["template_rule_candidate"] is True
+        assert capabilities["verifiable_delivery_packages"] is True
+        assert capabilities["max_delivery_package_mb"] == 220
 
         with academic_docx.open("rb") as reference:
             template_candidate = client.post(
@@ -276,6 +283,67 @@ def test_complete_structured_api_workflow(academic_docx: Path, tmp_path: Path) -
         assert "单文档任务明确确认" in audit_markdown.text
         assert "边界快照 SHA-256" in audit_markdown.text
         assert "paragraph.style" in audit_markdown.text
+
+        assert job["delivery_package_url"]
+        delivery = client.get(job["delivery_package_url"])
+        assert delivery.status_code == 200
+        assert "delivery-package.zip" in delivery.headers["content-disposition"]
+        repeated_delivery = client.get(job["delivery_package_url"])
+        assert repeated_delivery.content == delivery.content
+        with zipfile.ZipFile(io.BytesIO(delivery.content)) as archive:
+            names = set(archive.namelist())
+            assert {
+                "bagit.txt",
+                "bag-info.txt",
+                "README.txt",
+                "delivery-manifest.json",
+                "manifest-sha256.txt",
+                "tagmanifest-sha256.txt",
+                "data/outputs/001_formatted.docx",
+                "data/audits/001_audit.json",
+                "data/audits/001_audit.md",
+            } == names
+            delivery_manifest = json.loads(archive.read("delivery-manifest.json"))
+            assert delivery_manifest["package_id"] == job_id
+            assert delivery_manifest["signature_status"] == "not_signed"
+            assert delivery_manifest["items"][0]["source_filename"] == "academic.docx"
+            assert all("source.docx" not in name for name in names)
+
+        verified = client.post(
+            "/api/v1/deliveries/verify",
+            files={"file": ("job-delivery.zip", delivery.content, "application/zip")},
+        )
+        assert verified.status_code == 200, verified.text
+        verification = verified.json()
+        assert verification["valid"] is True
+        assert verification["package_kind"] == "job"
+        assert verification["package_id"] == job_id
+        assert verification["signature_status"] == "not_signed"
+        assert verification["items"][0]["validation_passed"] is True
+        assert verification["items"][0]["content_integrity_passed"] is True
+
+        package_path = tmp_path / "job-delivery.zip"
+        package_path.write_bytes(delivery.content)
+        cli_result = CliRunner().invoke(cli.app, ["verify-delivery", str(package_path)])
+        assert cli_result.exit_code == 0, cli_result.output
+        assert "Delivery package verified" in cli_result.output
+
+        tampered_stream = io.BytesIO()
+        with (
+            zipfile.ZipFile(io.BytesIO(delivery.content)) as source_archive,
+            zipfile.ZipFile(tampered_stream, "w") as target_archive,
+        ):
+            for info in source_archive.infolist():
+                content = source_archive.read(info.filename)
+                if info.filename == "data/outputs/001_formatted.docx":
+                    content += b"tampered"
+                target_archive.writestr(info, content)
+        tampered = client.post(
+            "/api/v1/deliveries/verify",
+            files={"file": ("tampered.zip", tampered_stream.getvalue(), "application/zip")},
+        )
+        assert tampered.status_code == 422
+        assert tampered.json()["error"]["code"] == "DELIVERY_PACKAGE_INTEGRITY_FAILED"
 
         deleted = client.delete(f"/api/v1/documents/{document_id}")
         assert deleted.status_code == 204

@@ -71,6 +71,7 @@ def parse_docx(
     path: Path,
     *,
     document_id: str | None = None,
+    source_filename: str | None = None,
     safety_limits: SafetyLimits | None = None,
 ) -> DocumentIR:
     inspection = validate_docx_package(path, safety_limits)
@@ -165,7 +166,7 @@ def parse_docx(
     styles = sorted({style.name for style in document.styles if style.name})
     return DocumentIR(
         document_id=document_id,
-        source_filename=path.name,
+        source_filename=source_filename or path.name,
         source_sha256=source_sha,
         sections=sections,
         blocks=blocks,

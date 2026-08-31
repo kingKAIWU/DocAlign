@@ -2,12 +2,17 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import SettingsPage from "@/app/settings/page";
-import type { SupportDiagnosticReport, WorkspaceStorageReport } from "@/lib/types";
+import type {
+  DeliveryPackageVerification,
+  SupportDiagnosticReport,
+  WorkspaceStorageReport,
+} from "@/lib/types";
 
 const mocks = vi.hoisted(() => ({
   capabilities: vi.fn(),
   workspaceStorage: vi.fn(),
   diagnostics: vi.fn(),
+  verifyDelivery: vi.fn(),
   quitDesktop: vi.fn(),
   deleteBatch: vi.fn(),
   deleteDocument: vi.fn(),
@@ -149,6 +154,33 @@ const diagnosticReport: SupportDiagnosticReport = {
   ],
 };
 
+const deliveryVerification: DeliveryPackageVerification = {
+  schema_version: "delivery-package-verification.v1",
+  valid: true,
+  package_kind: "job",
+  package_id: "job_delivery",
+  created_at: "2026-08-31T08:00:00Z",
+  application_version: "0.1.0",
+  checksum_algorithm: "sha256",
+  signature_status: "not_signed",
+  payload_file_count: 3,
+  payload_bytes: 3 * 1024 * 1024,
+  items: [
+    {
+      position: 1,
+      job_id: "job_delivery",
+      source_filename: "合同终稿.docx",
+      output_sha256: "a".repeat(64),
+      validation_passed: true,
+      content_integrity_passed: true,
+      structure_review_items: 0,
+      delivery_review_items: 2,
+      source_review_features: 1,
+    },
+  ],
+  warnings: ["unsigned"],
+};
+
 describe("SettingsPage storage center", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -160,11 +192,13 @@ describe("SettingsPage storage center", () => {
       max_upload_mb: 20,
       max_batch_files: 20,
       max_batch_total_mb: 200,
+      max_delivery_package_mb: 220,
     });
     mocks.deleteBatch.mockResolvedValue(undefined);
     mocks.deleteDocument.mockResolvedValue(undefined);
     mocks.workspaceStorage.mockResolvedValue(report);
     mocks.diagnostics.mockResolvedValue(diagnosticReport);
+    mocks.verifyDelivery.mockResolvedValue(deliveryVerification);
     mocks.quitDesktop.mockResolvedValue({ status: "shutting_down" });
   });
 
@@ -231,6 +265,21 @@ describe("SettingsPage storage center", () => {
     expect(mocks.diagnostics).toHaveBeenCalledTimes(1);
   });
 
+  it("verifies a delivery package locally and explains the unsigned boundary", async () => {
+    render(<SettingsPage />);
+
+    const file = new File(["package"], "job-delivery.zip", { type: "application/zip" });
+    fireEvent.change(screen.getByLabelText("选择交付包 ZIP"), {
+      target: { files: [file] },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "开始校验" }));
+
+    expect(await screen.findByText("校验通过")).toBeInTheDocument();
+    expect(screen.getByText(/合同终稿\.docx/)).toBeInTheDocument();
+    expect(screen.getByText(/发布者身份未验证/)).toBeInTheDocument();
+    expect(mocks.verifyDelivery).toHaveBeenCalledWith(file);
+  });
+
   it("shows an explicit desktop-only safe exit action", async () => {
     mocks.capabilities.mockResolvedValueOnce({
       local_only: true,
@@ -239,6 +288,7 @@ describe("SettingsPage storage center", () => {
       max_upload_mb: 20,
       max_batch_files: 20,
       max_batch_total_mb: 200,
+      max_delivery_package_mb: 220,
     });
     vi.spyOn(window, "confirm").mockReturnValue(true);
 

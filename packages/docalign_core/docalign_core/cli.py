@@ -12,6 +12,7 @@ import typer
 from docalign_core.analysis.classifier import analyze_document
 from docalign_core.analysis.semantic import SemanticAnalyzerError, merge_semantic_analysis
 from docalign_core.config import Settings
+from docalign_core.delivery import DeliveryPackageError, verify_delivery_package
 from docalign_core.docx.parser import parse_docx
 from docalign_core.docx.text_import import create_docx_from_text
 from docalign_core.domain.audit import ProcessingBoundaryAcknowledgmentMethod
@@ -66,6 +67,28 @@ def import_text(
         raise typer.BadParameter("The output path must differ from the source text file.")
     create_docx_from_text(source.read_text(encoding="utf-8"), out)
     typer.echo(f"Plain text DOCX skeleton: {out}")
+
+
+@app.command("verify-delivery")
+def verify_delivery(
+    package: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+    report: Annotated[Path | None, typer.Option("--report")] = None,
+) -> None:
+    if report is not None and report.resolve() == package.resolve():
+        raise typer.BadParameter("The verification report must not overwrite the package.")
+    try:
+        verification = verify_delivery_package(package)
+    except DeliveryPackageError as exc:
+        typer.echo(f"{exc.code}: {exc.message}", err=True)
+        raise typer.Exit(2) from exc
+    if report is not None:
+        report.write_text(verification.model_dump_json(indent=2) + "\n", encoding="utf-8")
+        typer.echo(f"Verification report: {report}")
+    typer.echo(
+        "Delivery package verified: "
+        f"{verification.package_kind.value} {verification.package_id} · "
+        f"{len(verification.items)} item(s) · unsigned"
+    )
 
 
 @app.command("format")

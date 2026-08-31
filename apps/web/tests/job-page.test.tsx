@@ -64,6 +64,7 @@ describe("JobPage", () => {
         auto_layout_splits: 0,
       },
       output_document_url: "/output",
+      delivery_package_url: "/delivery-package.zip",
       audit_json_url: "/audit.json",
       audit_markdown_url: "/audit.md",
       error_code: null,
@@ -82,6 +83,10 @@ describe("JobPage", () => {
     expect(screen.getByText("格式验证通过")).toBeInTheDocument();
     expect(screen.getByText("查看具体改动（1）")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "查看格式前后对照" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "下载完整交付包" })).toHaveAttribute(
+      "href",
+      "/delivery-package.zip",
+    );
   });
 
   it("restores rule provenance and separates delivery checks from structure review", async () => {
@@ -178,6 +183,7 @@ describe("JobPage", () => {
         },
       },
       output_document_url: "/output",
+      delivery_package_url: "/delivery-package.zip",
       audit_json_url: "/audit.json",
       audit_markdown_url: "/audit.md",
       error_code: null,

@@ -249,6 +249,7 @@ class JobResponse(ApiModel):
     auto_layout_splits: int = Field(ge=0)
     result_summary: JobResultSummary | None
     output_document_url: str | None
+    delivery_package_url: str | None
     audit_json_url: str | None
     audit_markdown_url: str | None
     error_code: str | None

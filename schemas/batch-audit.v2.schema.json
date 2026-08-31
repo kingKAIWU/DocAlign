@@ -336,6 +336,18 @@
       "default": null,
       "title": "Output Zip Url"
     },
+    "delivery_package_url": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Delivery Package Url"
+    },
     "audit_json_url": {
       "title": "Audit Json Url",
       "type": "string"

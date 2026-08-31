@@ -39,6 +39,11 @@ class LocalStorage:
         path.parent.mkdir(parents=True, exist_ok=True)
         return path
 
+    def job_delivery_package_path(self, job_id: str) -> Path:
+        path = self.root / "outputs" / job_id / "delivery-package.zip"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        return path
+
     def batch_dir(self, batch_id: str) -> Path:
         path = self.root / "batches" / batch_id
         path.mkdir(parents=True, exist_ok=True)
@@ -46,6 +51,9 @@ class LocalStorage:
 
     def batch_output_zip_path(self, batch_id: str) -> Path:
         return self.batch_dir(batch_id) / "outputs.zip"
+
+    def batch_delivery_package_path(self, batch_id: str) -> Path:
+        return self.batch_dir(batch_id) / "delivery-package.zip"
 
     def delete_document_artifacts(
         self, document_id: str, analysis_ids: list[str], job_ids: list[str]

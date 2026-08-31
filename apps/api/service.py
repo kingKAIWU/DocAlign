@@ -272,6 +272,7 @@ class ApiService:
         document_ir = parse_docx(
             Path(document.stored_path),
             document_id=document_id,
+            source_filename=document.original_filename,
             safety_limits=self.safety_limits,
         )
         result = analyze_document(document_ir)
@@ -1287,6 +1288,9 @@ class ApiService:
             auto_layout_splits=auto_layout_splits,
             result_summary=result_summary,
             output_document_url=f"/api/v1/jobs/{record.id}/output" if completed else None,
+            delivery_package_url=(
+                f"/api/v1/jobs/{record.id}/delivery-package.zip" if completed else None
+            ),
             audit_json_url=(
                 f"/api/v1/jobs/{record.id}/audit.json" if record.audit_json_path else None
             ),

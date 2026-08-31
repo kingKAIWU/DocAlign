@@ -375,6 +375,7 @@ a { color: inherit; }
 .progress { height: 3px; margin: 9px 0; background: var(--line); overflow: hidden; }
 .progress i { height: 100%; display: block; background: var(--green); transition: width .3s; }
 .download-row { display: flex; align-items: center; gap: 12px; margin-top: 11px; }
+.delivery-package-note { margin: 8px 0 0; color: var(--muted); font-size: 8px; line-height: 1.55; }
 .text-link { color: var(--green); font-size: 10px; font-weight: 700; }
 .app-footer { max-width: 1500px; margin: 12px auto 0; display: flex; justify-content: space-between; color: #8b918e; font-size: 8px; letter-spacing: .05em; }
 
@@ -476,6 +477,24 @@ a { color: inherit; }
 .storage-item .button { min-width: 58px; padding: 6px 9px; font-size: 8px; }
 .storage-empty { padding: 30px 12px; color: var(--muted); background: var(--surface-2); text-align: center; font-size: 10px; }
 .storage-truncated { margin: 10px 0 0; color: var(--muted); font-size: 8px; }
+.delivery-verifier-card { padding: 22px; }
+.delivery-verifier-form { margin-top: 18px; padding: 14px; display: grid; grid-template-columns: minmax(170px,1fr) auto; align-items: center; gap: 8px 12px; border: 1px solid var(--line); background: var(--surface-2); }
+.delivery-verifier-form label { grid-column: 1 / -1; color: var(--ink); font-size: 9px; font-weight: 750; }
+.delivery-verifier-form input { min-width: 0; padding: 8px; border: 1px solid var(--line); background: white; font-size: 9px; }
+.delivery-verifier-form small { grid-column: 1 / -1; color: var(--muted); font-size: 8px; }
+.delivery-verification-result { margin-top: 12px; padding: 14px; border-left: 3px solid var(--green); background: var(--green-pale); }
+.delivery-verification-result > div:first-child { display: flex; align-items: center; flex-wrap: wrap; gap: 7px 12px; }
+.delivery-verification-result > div:first-child > span { padding: 3px 6px; color: var(--green-2); background: white; font-size: 7px; font-weight: 800; }
+.delivery-verification-result > div:first-child > strong { font-size: 11px; }
+.delivery-verification-result code { color: var(--green-2); font: 7px/1.4 ui-monospace, monospace; overflow-wrap: anywhere; }
+.delivery-verification-metrics { margin-top: 10px; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 6px; }
+.delivery-verification-metrics span { padding: 8px; display: grid; gap: 3px; border: 1px solid #bad2c5; background: white; color: var(--muted); font-size: 7px; }
+.delivery-verification-metrics b { color: var(--green-2); font-size: 11px; }
+.delivery-verification-result ul { margin: 10px 0 0; padding: 0; display: grid; gap: 5px; list-style: none; }
+.delivery-verification-result li { padding: 8px; display: grid; gap: 3px; border: 1px solid #bad2c5; background: white; }
+.delivery-verification-result li span { font-size: 9px; font-weight: 750; overflow-wrap: anywhere; }
+.delivery-verification-result li small { color: var(--muted); font-size: 7px; line-height: 1.45; overflow-wrap: anywhere; }
+.delivery-verification-result > p { margin: 10px 0 0; color: #725119; font-size: 8px; line-height: 1.55; }
 .diagnostic-card { padding: 22px; }
 .diagnostic-empty { margin-top: 18px; padding: 16px; color: var(--muted); background: var(--surface-2); font-size: 10px; line-height: 1.7; }
 .diagnostic-empty code { color: var(--green); font: 8px/1.5 ui-monospace, monospace; overflow-wrap: anywhere; }
@@ -555,6 +574,7 @@ a { color: inherit; }
 .batch-metrics b { color: var(--green-2); font: 650 19px/1 var(--font-serif); }
 .batch-actions { display: grid; justify-items: stretch; gap: 6px; }
 .batch-actions .text-link { text-align: center; }
+.batch-overview > .delivery-package-note { grid-column: 1 / -1; margin: -12px 0 0; padding-top: 9px; border-top: 1px solid var(--line); }
 .batch-total-progress { height: 5px; background: var(--line); overflow: hidden; }
 .batch-total-progress i, .batch-item-progress i { height: 100%; display: block; background: var(--green); transition: width .25s ease; }
 .batch-results { min-width: 0; }
@@ -627,6 +647,9 @@ a { color: inherit; }
   .storage-categories > div > span { align-items: flex-start; flex-direction: column; gap: 2px; }
   .storage-cleanup-grid { grid-template-columns: 1fr; }
   .storage-list { max-height: none; }
+  .delivery-verifier-form { grid-template-columns: 1fr; }
+  .delivery-verifier-form .button { width: 100%; }
+  .delivery-verification-metrics { grid-template-columns: 1fr; }
   .diagnostic-summary { grid-template-columns: 1fr 1fr; }
   .diagnostic-summary .button { grid-column: 1 / -1; }
   .diagnostic-checks { grid-template-columns: 1fr; }

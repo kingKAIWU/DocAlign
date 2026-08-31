@@ -8,6 +8,9 @@ export type DocumentProcessingBoundary =
 export type ProcessingBoundaryAcknowledgment =
   components["schemas"]["ProcessingBoundaryAcknowledgment"];
 
+export type DeliveryPackageVerification =
+  components["schemas"]["DeliveryPackageVerification"];
+
 export type ParagraphBlock = {
   kind: "paragraph";
   node_id: string;
@@ -87,8 +90,10 @@ export type Capabilities = {
   rule_pack_library: boolean;
   rule_pack_import: boolean;
   batch_processing: boolean;
+  verifiable_delivery_packages: boolean;
   max_batch_files: number;
   max_batch_total_mb: number;
+  max_delivery_package_mb: number;
   max_upload_mb: number;
   max_rule_pack_import_kb: number;
   local_only: boolean;
