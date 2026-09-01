@@ -33,6 +33,7 @@ from apps.api.capacity import (
     is_capacity_error,
 )
 from apps.api.db import BatchItemRecord, Database, JobRecord
+from apps.api.deletions import DeletionManager
 from apps.api.errors import ApiError
 from apps.api.storage import LocalStorage
 
@@ -71,10 +72,12 @@ class WorkspaceBackupService:
         database: Database,
         storage: LocalStorage,
         capacity: WorkspaceCapacityGuard,
+        deletions: DeletionManager,
     ) -> None:
         self.database = database
         self.storage = storage
         self.capacity = capacity
+        self.deletions = deletions
 
     def create(self) -> WorkspaceBackupArtifact:
         self._assert_quiescent()
@@ -175,6 +178,17 @@ class WorkspaceBackupService:
         return int(active_jobs or 0), int(active_items or 0)
 
     def _assert_quiescent(self) -> None:
+        cleanup = self.deletions.status()
+        if cleanup.pending_operations:
+            raise ApiError(
+                409,
+                "WORKSPACE_BACKUP_DELETE_RECOVERY_REQUIRED",
+                "Retry pending workspace cleanup before creating a backup.",
+                {
+                    "pending_operations": cleanup.pending_operations,
+                    "blocked_operations": cleanup.blocked_operations,
+                },
+            )
         active_jobs, active_items = self.active_counts()
         if active_jobs or active_items:
             raise ApiError(

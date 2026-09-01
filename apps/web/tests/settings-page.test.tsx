@@ -11,6 +11,7 @@ import type {
 const mocks = vi.hoisted(() => ({
   capabilities: vi.fn(),
   workspaceStorage: vi.fn(),
+  retryWorkspaceCleanup: vi.fn(),
   diagnostics: vi.fn(),
   verifyDelivery: vi.fn(),
   quitDesktop: vi.fn(),
@@ -39,6 +40,9 @@ const report: WorkspaceStorageReport = {
   write_headroom_bytes: 199 * 1024 * 1024 * 1024,
   estimated_backup_working_bytes: 88 * 1024 * 1024,
   can_create_backup: true,
+  pending_cleanup_bytes: 0,
+  pending_cleanup_operations: 0,
+  blocked_cleanup_operations: 0,
   pressure: "normal",
   categories: [
     { category: "source_documents", bytes: 4 * 1024 * 1024, file_count: 2 },
@@ -46,6 +50,7 @@ const report: WorkspaceStorageReport = {
     { category: "job_audits", bytes: 1024 * 1024, file_count: 4 },
     { category: "outputs", bytes: 4 * 1024 * 1024, file_count: 2 },
     { category: "batch_packages", bytes: 1024 * 1024, file_count: 1 },
+    { category: "pending_cleanup", bytes: 0, file_count: 0 },
     { category: "database", bytes: 1024 * 1024, file_count: 1 },
     { category: "other", bytes: 0, file_count: 0 },
   ],
@@ -206,6 +211,15 @@ describe("SettingsPage storage center", () => {
     mocks.deleteBatch.mockResolvedValue(undefined);
     mocks.deleteDocument.mockResolvedValue(undefined);
     mocks.workspaceStorage.mockResolvedValue(report);
+    mocks.retryWorkspaceCleanup.mockResolvedValue({
+      schema_version: "cleanup-recovery.v1",
+      resolved_operations: 0,
+      restored_operations: 0,
+      purged_operations: 0,
+      pending_operations: 0,
+      blocked_operations: 0,
+      pending_bytes: 0,
+    });
     mocks.diagnostics.mockResolvedValue(diagnosticReport);
     mocks.verifyDelivery.mockResolvedValue(deliveryVerification);
     mocks.quitDesktop.mockResolvedValue({ status: "shutting_down" });
@@ -306,6 +320,40 @@ describe("SettingsPage storage center", () => {
     const backup = screen.getByRole("link", { name: "下载完整备份" });
     expect(backup).toHaveAttribute("aria-disabled", "true");
     expect(fireEvent.click(backup)).toBe(false);
+  });
+
+  it("explains pending deletion recovery and safely retries it", async () => {
+    const pending = {
+      ...report,
+      can_create_backup: false,
+      pending_cleanup_bytes: 3 * 1024 * 1024,
+      pending_cleanup_operations: 1,
+      categories: report.categories.map((category) => category.category === "pending_cleanup"
+        ? { ...category, bytes: 3 * 1024 * 1024, file_count: 2 }
+        : category),
+    };
+    mocks.workspaceStorage.mockResolvedValueOnce(pending).mockResolvedValueOnce(report);
+    mocks.retryWorkspaceCleanup.mockResolvedValueOnce({
+      schema_version: "cleanup-recovery.v1",
+      resolved_operations: 1,
+      restored_operations: 0,
+      purged_operations: 1,
+      pending_operations: 0,
+      blocked_operations: 0,
+      pending_bytes: 0,
+    });
+    render(<SettingsPage />);
+
+    expect(await screen.findByText(/1 项删除尚待安全收尾，占用 3 MB/)).toBeInTheDocument();
+    expect(screen.getByText(/不会猜测处理/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "下载完整备份" })).toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "重试安全清理" }));
+
+    await waitFor(() => expect(mocks.retryWorkspaceCleanup).toHaveBeenCalledTimes(1));
+    expect(await screen.findByText(/继续清理 1 项/)).toBeInTheDocument();
   });
 
   it("verifies a delivery package locally and explains the unsigned boundary", async () => {

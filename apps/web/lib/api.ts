@@ -2,6 +2,7 @@ import type {
   Analysis,
   BatchAudit,
   Capabilities,
+  CleanupRecoveryReport,
   CleanupPreset,
   ComplianceReport,
   DocumentRecord,
@@ -243,6 +244,11 @@ export const api = {
     request<WorkspaceStorageReport>("/workspace/storage", {
       signal,
       cache: "no-store",
+    }),
+  retryWorkspaceCleanup: () =>
+    request<CleanupRecoveryReport>("/workspace/cleanup/retry", {
+      method: "POST",
+      body: "{}",
     }),
   diagnostics: (signal?: AbortSignal) =>
     request<SupportDiagnosticReport>("/diagnostics", {

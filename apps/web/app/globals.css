@@ -455,6 +455,9 @@ a { color: inherit; }
 .storage-pressure { margin-top: 10px; padding: 10px 12px; border-left: 3px solid; font-size: 10px; line-height: 1.6; }
 .storage-pressure.warning { border-color: var(--amber); color: #725119; background: #fff8ed; }
 .storage-pressure.critical { border-color: var(--red); color: var(--red); background: #fff4f2; }
+.cleanup-recovery { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.cleanup-recovery p { margin: 3px 0 0; }
+.cleanup-recovery .button { flex: 0 0 auto; }
 .workspace-capacity-boundary { margin-top: 10px; padding: 10px 12px; display: grid; gap: 3px; border: 1px solid var(--line); background: var(--surface-2); }
 .workspace-capacity-boundary strong { color: var(--ink); font-size: 9px; }
 .workspace-capacity-boundary p { margin: 0; color: var(--muted); font-size: 9px; line-height: 1.6; }
@@ -655,6 +658,8 @@ a { color: inherit; }
   .app-lifecycle-card .button { width: 100%; }
   .storage-heading { align-items: stretch; flex-direction: column; gap: 14px; }
   .storage-overview { grid-template-columns: 1fr 1fr; }
+  .cleanup-recovery { align-items: stretch; flex-direction: column; }
+  .cleanup-recovery .button { width: 100%; }
   .storage-categories > div { grid-template-columns: minmax(105px, 1fr) minmax(90px, 1.4fr) 62px; gap: 8px; }
   .storage-categories > div > span { align-items: flex-start; flex-direction: column; gap: 2px; }
   .storage-cleanup-grid { grid-template-columns: 1fr; }

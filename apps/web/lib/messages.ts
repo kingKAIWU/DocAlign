@@ -84,6 +84,7 @@ export const errorLabels: Record<string, string> = {
   DELIVERY_PACKAGE_ARTIFACT_MISSING: "生成交付包所需的本地产物缺失。",
   DELIVERY_PACKAGE_EVIDENCE_MISMATCH: "本地产物与任务审计证据不一致，已停止交付。",
   WORKSPACE_BACKUP_ACTIVE_TASKS: "请等待所有任务和批次结束后再创建完整备份。",
+  WORKSPACE_BACKUP_DELETE_RECOVERY_REQUIRED: "请先在本地存储中心重试待完成清理，再创建完整备份。",
   WORKSPACE_BACKUP_SOURCE_CHANGED: "备份期间本地文件发生变化，未发布不完整备份，请重试。",
   WORKSPACE_BACKUP_UNSAFE_SOURCE: "托管数据中发现符号链接或非常规文件，已停止备份。",
   WORKSPACE_BACKUP_SENSITIVE_SOURCE: "托管产物目录中发现环境或凭据文件，请先移出再备份。",
@@ -91,6 +92,8 @@ export const errorLabels: Record<string, string> = {
   WORKSPACE_CAPACITY_INSUFFICIENT:
     "本地磁盘没有足够的安全工作空间。请到“设置与隐私边界”清理已完成任务，或释放磁盘空间后重试。",
   LOCAL_IO_FAILED: "本地文件读写失败，请运行本机诊断后重试。",
+  LOCAL_DELETE_STAGING_FAILED: "删除准备失败，文档记录和文件均已保留。请关闭占用文件的程序后重试。",
+  LOCAL_DELETE_RECOVERY_REQUIRED: "删除尚待安全恢复，请到本地存储中心重试清理。",
   DATABASE_OPERATION_FAILED: "本地数据库操作失败，请运行本机诊断并保留数据目录。",
   FORMATTING_SPEC_CONFLICT: "排版规则中存在互斥的段落设置，请重新编译规则后再试。",
   TABLE_FORMAT_VALIDATION_FAILED: "表格整体属性不符合当前规则。",

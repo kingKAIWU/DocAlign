@@ -20,6 +20,7 @@ const categoryLabels: Record<WorkspaceStorageReport["categories"][number]["categ
   job_audits: "作业与审计",
   outputs: "排版输出",
   batch_packages: "批次压缩包",
+  pending_cleanup: "待完成清理",
   database: "本地数据库",
   other: "其他本地数据",
 };
@@ -92,6 +93,27 @@ export default function SettingsPage() {
     }
   }
 
+  async function retryWorkspaceCleanup() {
+    setBusy("cleanup-retry");
+    setError("");
+    setMessage("");
+    try {
+      const result = await api.retryWorkspaceCleanup();
+      setStorage(await api.workspaceStorage());
+      if (result.pending_operations === 0) {
+        setMessage(`安全清理已完成：恢复 ${result.restored_operations} 项，继续清理 ${result.purged_operations} 项。`);
+      } else if (result.blocked_operations > 0) {
+        setError(`仍有 ${result.blocked_operations} 项清理记录无法自动核对。DocAlign 已保留原状，请先下载诊断报告。`);
+      } else {
+        setError(`仍有 ${result.pending_operations} 项清理未完成。请关闭占用相关文件的程序后重试。`);
+      }
+    } catch (caught) {
+      setError(readableError(caught));
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function verifyDelivery() {
     if (!deliveryFile) return;
     setBusy("delivery-verify");
@@ -128,8 +150,11 @@ export default function SettingsPage() {
     try {
       await api.deleteBatch(item.batch_id);
       clearMatchingLocalRecord("docalign.batch.v1", "batch_id", item.batch_id);
-      setStorage(await api.workspaceStorage());
-      setMessage(`已删除批次“${item.name}”，释放约 ${formatBytes(item.bytes)}。`);
+      const refreshed = await api.workspaceStorage();
+      setStorage(refreshed);
+      setMessage(refreshed.pending_cleanup_operations > 0
+        ? `已删除批次“${item.name}”的记录；部分文件正在受保护的待清理区中，可在下方安全重试。`
+        : `已删除批次“${item.name}”，释放约 ${formatBytes(item.bytes)}。`);
     } catch (caught) {
       setError(readableError(caught));
     } finally {
@@ -145,8 +170,11 @@ export default function SettingsPage() {
     try {
       await api.deleteDocument(item.document_id);
       clearMatchingLocalRecord("docalign.workspace.v1", "document_id", item.document_id);
-      setStorage(await api.workspaceStorage());
-      setMessage(`已删除独立文档“${item.filename}”，释放约 ${formatBytes(item.bytes)}。`);
+      const refreshed = await api.workspaceStorage();
+      setStorage(refreshed);
+      setMessage(refreshed.pending_cleanup_operations > 0
+        ? `已删除独立文档“${item.filename}”的记录；部分文件正在受保护的待清理区中，可在下方安全重试。`
+        : `已删除独立文档“${item.filename}”，释放约 ${formatBytes(item.bytes)}。`);
     } catch (caught) {
       setError(readableError(caught));
     } finally {
@@ -220,6 +248,15 @@ export default function SettingsPage() {
             <strong>实际可用 {formatBytes(storage.disk_free_bytes)}，保留 {formatBytes(storage.minimum_free_reserve_bytes)} 安全余量</strong>
             <p>安全余量用于数据库提交和临时文件，不是磁盘锁定；其他程序仍可能占用空间。DocAlign 不会为了腾出空间自动删除文档。</p>
           </div>
+          {storage.pending_cleanup_operations > 0 && <div className={`storage-pressure cleanup-recovery ${storage.blocked_cleanup_operations > 0 ? "critical" : "warning"}`} role="status">
+            <div>
+              <strong>{storage.pending_cleanup_operations} 项删除尚待安全收尾，占用 {formatBytes(storage.pending_cleanup_bytes)}</strong>
+              <p>{storage.blocked_cleanup_operations > 0
+                ? `其中 ${storage.blocked_cleanup_operations} 项记录无法自动核对，系统已保持原状。请先下载诊断报告，不要手动删除数据目录。`
+                : "重试会按数据库状态恢复尚未提交的文件，或继续清理已提交删除的文件；不会猜测处理。"}</p>
+            </div>
+            <button className="button secondary" disabled={Boolean(busy)} onClick={() => void retryWorkspaceCleanup()}>{busy === "cleanup-retry" ? "正在安全核对…" : "重试安全清理"}</button>
+          </div>}
           {(storage.pressure !== "normal" || storage.write_headroom_bytes === 0) && <div className={`storage-pressure ${storage.pressure}`}>{storage.write_headroom_bytes === 0 || storage.pressure === "critical" ? "磁盘空间已接近不足。新上传或排版会在开始前停止，请先备份需要留存的成果，再清理下方终态批次或独立文档。" : "磁盘可用空间偏低，建议检查下方占用较大的数据。"}</div>}
           <div className="storage-categories">
             {storage.categories.map((category) => <div key={category.category}>
@@ -253,7 +290,9 @@ export default function SettingsPage() {
           <strong>敏感且未加密</strong>
           <p>SHA-256 可以发现包内文件损坏或不一致，但不能证明备份由谁创建。请按原始文档的保密等级保存。</p>
         </div>
-        {storage && (storage.records.active_jobs > 0 || storage.records.active_batches > 0)
+        {storage && storage.pending_cleanup_operations > 0
+          ? <p className="workspace-backup-wait">当前有 {storage.pending_cleanup_operations} 项删除尚待安全收尾。请先在存储中心重试清理，确认数据与记录一致后再备份。</p>
+          : storage && (storage.records.active_jobs > 0 || storage.records.active_batches > 0)
           ? <p className="workspace-backup-wait">当前有 {storage.records.active_jobs} 个活动任务、{storage.records.active_batches} 个活动批次。全部结束后刷新占用，再下载备份。</p>
           : storage && !storage.can_create_backup
             ? <p className="workspace-backup-wait">预计需要约 {formatBytes(storage.estimated_backup_working_bytes)} 临时空间，当前安全可写余量不足。请先清理终态数据或释放磁盘空间。</p>

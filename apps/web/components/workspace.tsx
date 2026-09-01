@@ -730,6 +730,7 @@ export function Workspace() {
     clearNotices();
     try {
       await api.deleteDocument(document.document_id);
+      const cleanup = await api.workspaceStorage().catch(() => null);
       window.localStorage.removeItem(WORKSPACE_STORAGE_KEY);
       setDocument(null);
       setAnalysis(null);
@@ -737,7 +738,11 @@ export function Workspace() {
       setJob(null);
       setCompliance(null);
       setPlainText("");
-      setMessage("本地文档及其关联产物已删除。 ");
+      setMessage(cleanup === null
+        ? "文档记录已删除；请到设置页确认本地文件清理状态。"
+        : cleanup.pending_cleanup_operations > 0
+          ? `文档记录已删除；存储中心仍有 ${cleanup.pending_cleanup_operations} 项删除待安全收尾。`
+          : "本地文档及其关联产物已删除。");
     } catch (caught) {
       setError(readableError(caught));
     } finally {

@@ -21,7 +21,7 @@ from docalign_core.domain.formatting_spec import (
 from docalign_core.domain.manifest import FormatManifest
 from docalign_core.domain.rule_pack import RulePackArtifact
 from docalign_core.domain.template_candidate import TemplateRuleCandidate
-from docalign_core.domain.workspace import WorkspaceStorageReport
+from docalign_core.domain.workspace import CleanupRecoveryReport, WorkspaceStorageReport
 from fastapi import BackgroundTasks, FastAPI, File, Form, Query, Request, UploadFile
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
@@ -33,6 +33,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from apps.api.batches import BatchService
 from apps.api.capacity import MEBIBYTE, WorkspaceCapacityGuard, is_capacity_error
 from apps.api.db import Database
+from apps.api.deletions import DeletionManager
 from apps.api.deliveries import DeliveryService
 from apps.api.diagnostics import DiagnosticService
 from apps.api.errors import ApiError
@@ -74,18 +75,20 @@ def create_app(
     database = Database(settings.database_url)
     storage = LocalStorage(settings.data_dir)
     capacity = WorkspaceCapacityGuard(storage.root, reserve_bytes=settings.min_free_mb * MEBIBYTE)
-    service = ApiService(settings, database, storage, capacity)
-    batch_service = BatchService(service, settings, database, storage, capacity)
+    deletions = DeletionManager(database, storage)
+    service = ApiService(settings, database, storage, capacity, deletions)
+    batch_service = BatchService(service, settings, database, storage, capacity, deletions)
     delivery_service = DeliveryService(service, batch_service, settings, storage, capacity)
-    workspace_service = WorkspaceService(database, storage, batch_service, capacity)
-    workspace_backup_service = WorkspaceBackupService(database, storage, capacity)
-    diagnostic_service = DiagnosticService(settings, database, storage)
+    workspace_service = WorkspaceService(database, storage, batch_service, capacity, deletions)
+    workspace_backup_service = WorkspaceBackupService(database, storage, capacity, deletions)
+    diagnostic_service = DiagnosticService(settings, database, storage, deletions)
     runner = JobRunner(service, settings.job_concurrency)
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         upgrade_database(database)
         database.create_all()
+        deletions.retry()
         database.mark_interrupted_jobs()
         await runner.start()
         yield
@@ -101,6 +104,7 @@ def create_app(
     application.state.database = database
     application.state.storage = storage
     application.state.capacity = capacity
+    application.state.deletions = deletions
     application.state.service = service
     application.state.batch_service = batch_service
     application.state.delivery_service = delivery_service
@@ -247,6 +251,10 @@ def create_app(
         item_limit: int = Query(default=50, ge=1, le=200),
     ) -> WorkspaceStorageReport:
         return workspace_service.storage_report(item_limit=item_limit)
+
+    @application.post("/api/v1/workspace/cleanup/retry")
+    def retry_workspace_cleanup() -> CleanupRecoveryReport:
+        return workspace_service.retry_cleanup()
 
     @application.get(
         "/api/v1/workspace/backup",

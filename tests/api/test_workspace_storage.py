@@ -114,6 +114,7 @@ def test_storage_report_protects_active_documents_and_lists_cleanup_candidates(
             "job_audits",
             "outputs",
             "batch_packages",
+            "pending_cleanup",
             "database",
             "other",
         }

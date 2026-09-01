@@ -75,6 +75,7 @@ def test_support_diagnostic_is_actionable_and_excludes_private_values(
             "data_directory",
             "disk_capacity",
             "artifact_references",
+            "deletion_recovery",
             "optional_model",
         }
         assert payload["data_summary"]["documents"] == 1

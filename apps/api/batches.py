@@ -42,6 +42,7 @@ from apps.api.db import (
     as_utc,
     utcnow,
 )
+from apps.api.deletions import DeletionManager, DeletionTargetKind, StagedDeletion
 from apps.api.errors import ApiError
 from apps.api.service import ApiService
 from apps.api.storage import LocalStorage
@@ -60,12 +61,14 @@ class BatchService:
         database: Database,
         storage: LocalStorage,
         capacity: WorkspaceCapacityGuard,
+        deletions: DeletionManager,
     ) -> None:
         self.core = core
         self.settings = settings
         self.database = database
         self.storage = storage
         self.capacity = capacity
+        self.deletions = deletions
 
     async def create_batch(
         self,
@@ -517,42 +520,87 @@ class BatchService:
                 "Cancel the active batch and wait for it to stop before deleting it.",
             )
 
-        with self.database.session_factory.begin() as session:
-            batch = session.get(BatchRecord, batch_id)
-            if batch is None:
-                raise ApiError(404, "BATCH_NOT_FOUND", "Batch not found.")
-            document_ids = list(
-                session.scalars(
-                    select(BatchItemRecord.document_id).where(
+        staged: StagedDeletion | None = None
+        try:
+            with self.database.session_factory.begin() as session:
+                batch = session.get(BatchRecord, batch_id)
+                if batch is None:
+                    raise ApiError(404, "BATCH_NOT_FOUND", "Batch not found.")
+                active_job_id = session.scalar(
+                    select(JobRecord.id)
+                    .join(
+                        BatchItemRecord,
+                        BatchItemRecord.current_job_id == JobRecord.id,
+                    )
+                    .where(
                         BatchItemRecord.batch_id == batch_id,
-                        BatchItemRecord.document_id.is_not(None),
+                        JobRecord.status.in_(
+                            {
+                                JobStatus.QUEUED.value,
+                                JobStatus.ANALYZING.value,
+                                JobStatus.PLANNING.value,
+                                JobStatus.FORMATTING.value,
+                                JobStatus.VALIDATING.value,
+                                JobStatus.REPAIRING.value,
+                                JobStatus.CANCELING.value,
+                            }
+                        ),
                     )
                 )
-            )
-            artifacts: list[tuple[str, list[str], list[str]]] = []
-            for document_id in document_ids:
-                if document_id is None:
-                    continue
-                analysis_ids = list(
-                    session.scalars(
-                        select(AnalysisRecord.id).where(AnalysisRecord.document_id == document_id)
+                preparing_item_id = session.scalar(
+                    select(BatchItemRecord.id).where(
+                        BatchItemRecord.batch_id == batch_id,
+                        BatchItemRecord.status == BatchItemStatus.PREPARING.value,
                     )
                 )
-                job_ids = list(
-                    session.scalars(
-                        select(JobRecord.id).where(JobRecord.document_id == document_id)
+                if active_job_id is not None or preparing_item_id is not None:
+                    raise ApiError(
+                        409,
+                        "BATCH_NOT_TERMINAL",
+                        "Cancel the active batch and wait for it to stop before deleting it.",
+                    )
+                document_ids = list(
+                    dict.fromkeys(
+                        session.scalars(
+                            select(BatchItemRecord.document_id).where(
+                                BatchItemRecord.batch_id == batch_id,
+                                BatchItemRecord.document_id.is_not(None),
+                            )
+                        )
                     )
                 )
-                artifacts.append((document_id, analysis_ids, job_ids))
-            session.delete(batch)
-            for document_id, _, _ in artifacts:
-                document = session.get(DocumentRecord, document_id)
-                if document is not None:
-                    session.delete(document)
-            session.flush()
-            for document_id, analysis_ids, job_ids in artifacts:
-                self.storage.delete_document_artifacts(document_id, analysis_ids, job_ids)
-            self.storage.delete_batch_artifacts(batch_id)
+                artifacts: list[tuple[str, list[str], list[str]]] = []
+                for document_id in document_ids:
+                    if document_id is None:
+                        continue
+                    analysis_ids = list(
+                        session.scalars(
+                            select(AnalysisRecord.id).where(
+                                AnalysisRecord.document_id == document_id
+                            )
+                        )
+                    )
+                    job_ids = list(
+                        session.scalars(
+                            select(JobRecord.id).where(JobRecord.document_id == document_id)
+                        )
+                    )
+                    artifacts.append((document_id, analysis_ids, job_ids))
+                staged = self.deletions.stage(
+                    DeletionTargetKind.BATCH,
+                    batch_id,
+                    self.storage.batch_artifact_paths(batch_id, artifacts),
+                )
+                session.delete(batch)
+                for document_id, _, _ in artifacts:
+                    document = session.get(DocumentRecord, document_id)
+                    if document is not None:
+                        session.delete(document)
+        except Exception:
+            if staged is not None:
+                self.deletions.rollback(staged)
+            raise
+        self.deletions.finalize(staged)
 
     def queued_job_ids(self, batch_id: str) -> list[str]:
         with self.database.session_factory() as session:

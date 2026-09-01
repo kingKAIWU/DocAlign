@@ -184,6 +184,24 @@
         }
       }
     },
+    "/api/v1/workspace/cleanup/retry": {
+      "post": {
+        "summary": "Retry Workspace Cleanup",
+        "operationId": "retry_workspace_cleanup_api_v1_workspace_cleanup_retry_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CleanupRecoveryReport"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspace/backup": {
       "get": {
         "summary": "Download Workspace Backup",
@@ -2617,6 +2635,57 @@
           "presets"
         ],
         "title": "CleanupPresetCatalogResponse"
+      },
+      "CleanupRecoveryReport": {
+        "properties": {
+          "schema_version": {
+            "type": "string",
+            "const": "cleanup-recovery.v1",
+            "title": "Schema Version",
+            "default": "cleanup-recovery.v1"
+          },
+          "resolved_operations": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Resolved Operations"
+          },
+          "restored_operations": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Restored Operations"
+          },
+          "purged_operations": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Purged Operations"
+          },
+          "pending_operations": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Pending Operations"
+          },
+          "blocked_operations": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Blocked Operations"
+          },
+          "pending_bytes": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Pending Bytes"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "resolved_operations",
+          "restored_operations",
+          "purged_operations",
+          "pending_operations",
+          "blocked_operations",
+          "pending_bytes"
+        ],
+        "title": "CleanupRecoveryReport"
       },
       "CompileSpecRequest": {
         "properties": {
@@ -5764,6 +5833,7 @@
           "job_audits",
           "outputs",
           "batch_packages",
+          "pending_cleanup",
           "database",
           "other"
         ],
@@ -6469,6 +6539,21 @@
             "type": "boolean",
             "title": "Can Create Backup"
           },
+          "pending_cleanup_bytes": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Pending Cleanup Bytes"
+          },
+          "pending_cleanup_operations": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Pending Cleanup Operations"
+          },
+          "blocked_cleanup_operations": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Blocked Cleanup Operations"
+          },
           "pressure": {
             "$ref": "#/components/schemas/StoragePressure"
           },
@@ -6517,6 +6602,9 @@
           "write_headroom_bytes",
           "estimated_backup_working_bytes",
           "can_create_backup",
+          "pending_cleanup_bytes",
+          "pending_cleanup_operations",
+          "blocked_cleanup_operations",
           "pressure",
           "categories",
           "records",

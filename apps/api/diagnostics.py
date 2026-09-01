@@ -35,6 +35,7 @@ from apps.api.db import (
     RulePackRecord,
     utcnow,
 )
+from apps.api.deletions import DeletionManager
 from apps.api.migrations import database_revisions
 from apps.api.storage import LocalStorage, storage_pressure
 
@@ -68,10 +69,12 @@ class DiagnosticService:
         settings: Settings,
         database: Database | None,
         storage: LocalStorage,
+        deletions: DeletionManager | None = None,
     ) -> None:
         self.settings = settings
         self.database = database
         self.storage = storage
+        self.deletions = deletions
 
     def report(self) -> SupportDiagnosticReport:
         checks: list[DiagnosticCheck] = []
@@ -160,6 +163,8 @@ class DiagnosticService:
         checks.append(self._schema_check(database_available))
         storage_values = self._storage_check(checks)
         checks.append(_artifact_check(artifact_paths, database_available, self.storage.root))
+        if self.deletions is not None:
+            checks.append(self._deletion_recovery_check())
         checks.append(self._model_check())
 
         overall = DiagnosticOverall.READY
@@ -339,6 +344,32 @@ class DiagnosticService:
             DiagnosticCheckStatus.PASS,
             "可选兼容模型",
             "未配置。默认整理、确定性分析、体检和排版仍可正常使用。",
+        )
+
+    def _deletion_recovery_check(self) -> DiagnosticCheck:
+        assert self.deletions is not None
+        cleanup = self.deletions.status()
+        if cleanup.blocked_operations:
+            return _check(
+                "deletion_recovery",
+                DiagnosticCheckStatus.FAIL,
+                "删除事务恢复",
+                f"有 {cleanup.blocked_operations} 项删除记录无法自动核对；未收集记录标识或路径。",
+                "不要手动删除数据目录；保留本诊断 JSON 并寻求支持。",
+            )
+        if cleanup.pending_operations:
+            return _check(
+                "deletion_recovery",
+                DiagnosticCheckStatus.WARNING,
+                "删除事务恢复",
+                f"有 {cleanup.pending_operations} 项删除尚待安全收尾。",
+                "在设置页的本地存储中心选择“重试安全清理”。",
+            )
+        return _check(
+            "deletion_recovery",
+            DiagnosticCheckStatus.PASS,
+            "删除事务恢复",
+            "没有待恢复或待清理的删除事务。",
         )
 
 

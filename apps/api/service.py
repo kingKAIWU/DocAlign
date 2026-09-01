@@ -91,6 +91,7 @@ from apps.api.db import (
     as_utc,
     utcnow,
 )
+from apps.api.deletions import DeletionManager, DeletionTargetKind, StagedDeletion
 from apps.api.errors import ApiError
 from apps.api.schemas import (
     JobResponse,
@@ -114,10 +115,12 @@ class ApiService:
         database: Database,
         storage: LocalStorage,
         capacity: WorkspaceCapacityGuard,
+        deletions: DeletionManager,
     ) -> None:
         self.settings = settings
         self.database = database
         self.storage = storage
+        self.deletions = deletions
         self.capacity = capacity
         self.safety_limits = SafetyLimits(
             max_file_bytes=settings.max_upload_mb * 1024 * 1024,
@@ -287,32 +290,46 @@ class ApiService:
             JobStatus.REPAIRING.value,
             JobStatus.CANCELING.value,
         }
-        with self.database.session_factory.begin() as session:
-            document = session.get(DocumentRecord, document_id)
-            if document is None:
-                raise ApiError(404, "DOCUMENT_NOT_FOUND", "Document not found.")
-            active_job_id = session.scalar(
-                select(JobRecord.id).where(
-                    JobRecord.document_id == document_id,
-                    JobRecord.status.in_(active_statuses),
+        staged: StagedDeletion | None = None
+        try:
+            with self.database.session_factory.begin() as session:
+                document = session.get(DocumentRecord, document_id)
+                if document is None:
+                    raise ApiError(404, "DOCUMENT_NOT_FOUND", "Document not found.")
+                active_job_id = session.scalar(
+                    select(JobRecord.id).where(
+                        JobRecord.document_id == document_id,
+                        JobRecord.status.in_(active_statuses),
+                    )
                 )
-            )
-            if active_job_id is not None:
-                raise ApiError(
-                    409,
-                    "DOCUMENT_JOB_ACTIVE",
-                    "Wait for the active processing job to finish before deleting this document.",
+                if active_job_id is not None:
+                    raise ApiError(
+                        409,
+                        "DOCUMENT_JOB_ACTIVE",
+                        "Wait for the active processing job to finish before deleting this "
+                        "document.",
+                    )
+                analysis_ids = list(
+                    session.scalars(
+                        select(AnalysisRecord.id).where(AnalysisRecord.document_id == document_id)
+                    )
                 )
-            analysis_ids = list(
-                session.scalars(
-                    select(AnalysisRecord.id).where(AnalysisRecord.document_id == document_id)
+                job_ids = list(
+                    session.scalars(
+                        select(JobRecord.id).where(JobRecord.document_id == document_id)
+                    )
                 )
-            )
-            job_ids = list(
-                session.scalars(select(JobRecord.id).where(JobRecord.document_id == document_id))
-            )
-            session.delete(document)
-        self.storage.delete_document_artifacts(document_id, analysis_ids, job_ids)
+                staged = self.deletions.stage(
+                    DeletionTargetKind.DOCUMENT,
+                    document_id,
+                    self.storage.document_artifact_paths(document_id, analysis_ids, job_ids),
+                )
+                session.delete(document)
+        except Exception:
+            if staged is not None:
+                self.deletions.rollback(staged)
+            raise
+        self.deletions.finalize(staged)
 
     async def analyze(
         self, document_id: str, mode: AnalysisMode = AnalysisMode.DETERMINISTIC

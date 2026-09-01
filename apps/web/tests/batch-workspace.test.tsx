@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   retryBatchItem: vi.fn(),
   cancelBatch: vi.fn(),
   deleteBatch: vi.fn(),
+  workspaceStorage: vi.fn(),
 }));
 
 const onlineBatchCapabilities = {
@@ -343,6 +344,7 @@ describe("BatchWorkspace", () => {
     mocks.batch.mockResolvedValue(activeBatch);
     mocks.cancelBatch.mockResolvedValue(canceledBatch);
     mocks.deleteBatch.mockResolvedValue(undefined);
+    mocks.workspaceStorage.mockResolvedValue({ pending_cleanup_operations: 0 });
 
     render(<BatchWorkspace />);
 

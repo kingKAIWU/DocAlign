@@ -5,6 +5,7 @@ from typing import Any
 from docalign_core.domain.batch import BatchStatus
 from docalign_core.domain.enums import JobStatus
 from docalign_core.domain.workspace import (
+    CleanupRecoveryReport,
     StorageBatchItem,
     StorageDocumentItem,
     StorageRecordCounts,
@@ -25,6 +26,7 @@ from apps.api.db import (
     RulePackRecord,
     utcnow,
 )
+from apps.api.deletions import DeletionManager
 from apps.api.errors import ApiError
 from apps.api.storage import LocalStorage, storage_pressure
 
@@ -54,15 +56,21 @@ class WorkspaceService:
         storage: LocalStorage,
         batches: BatchService,
         capacity: WorkspaceCapacityGuard,
+        deletions: DeletionManager,
     ) -> None:
         self.database = database
         self.storage = storage
         self.batches = batches
         self.capacity = capacity
+        self.deletions = deletions
+
+    def retry_cleanup(self) -> CleanupRecoveryReport:
+        return self.deletions.retry()
 
     def storage_report(self, *, item_limit: int = 50) -> WorkspaceStorageReport:
         categories = self.storage.usage_categories()
         capacity = self.capacity.snapshot()
+        cleanup = self.deletions.status()
         disk_total = capacity.total_bytes
         disk_free = capacity.free_bytes
 
@@ -156,7 +164,13 @@ class WorkspaceService:
             minimum_free_reserve_bytes=capacity.reserve_bytes,
             write_headroom_bytes=capacity.write_headroom_bytes,
             estimated_backup_working_bytes=estimated_backup_bytes,
-            can_create_backup=capacity.write_headroom_bytes >= estimated_backup_bytes,
+            can_create_backup=(
+                cleanup.pending_operations == 0
+                and capacity.write_headroom_bytes >= estimated_backup_bytes
+            ),
+            pending_cleanup_bytes=cleanup.pending_bytes,
+            pending_cleanup_operations=cleanup.pending_operations,
+            blocked_cleanup_operations=cleanup.blocked_operations,
             pressure=storage_pressure(
                 disk_total,
                 disk_free,

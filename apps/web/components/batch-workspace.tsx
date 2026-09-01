@@ -403,13 +403,18 @@ export function BatchWorkspace() {
     setError("");
     try {
       await api.deleteBatch(batch.batch_id);
+      const cleanup = await api.workspaceStorage().catch(() => null);
       window.localStorage.removeItem(STORAGE_KEY);
       pendingRetriesRef.current = {};
       pendingCreateRef.current = null;
       setBatch(null);
       setFiles([]);
       setProcessingBoundaryAccepted(false);
-      setMessage("本地批次及其文件已全部删除。 ");
+      setMessage(cleanup === null
+        ? "批次记录已删除；请到设置页确认本地文件清理状态。"
+        : cleanup.pending_cleanup_operations > 0
+          ? `批次记录已删除；存储中心仍有 ${cleanup.pending_cleanup_operations} 项删除待安全收尾。`
+          : "本地批次及其文件已全部删除。");
     } catch (caught) {
       setError(readableError(caught));
     } finally {

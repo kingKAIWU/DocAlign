@@ -123,6 +123,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspace/cleanup/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Retry Workspace Cleanup */
+        post: operations["retry_workspace_cleanup_api_v1_workspace_cleanup_retry_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspace/backup": {
         parameters: {
             query?: never;
@@ -1069,6 +1086,27 @@ export interface components {
         CleanupPresetCatalogResponse: {
             /** Presets */
             presets: components["schemas"]["CleanupPresetCatalogItem"][];
+        };
+        /** CleanupRecoveryReport */
+        CleanupRecoveryReport: {
+            /**
+             * Schema Version
+             * @default cleanup-recovery.v1
+             * @constant
+             */
+            schema_version: "cleanup-recovery.v1";
+            /** Resolved Operations */
+            resolved_operations: number;
+            /** Restored Operations */
+            restored_operations: number;
+            /** Purged Operations */
+            purged_operations: number;
+            /** Pending Operations */
+            pending_operations: number;
+            /** Blocked Operations */
+            blocked_operations: number;
+            /** Pending Bytes */
+            pending_bytes: number;
         };
         /** CompileSpecRequest */
         CompileSpecRequest: {
@@ -2189,7 +2227,7 @@ export interface components {
          * StorageCategoryId
          * @enum {string}
          */
-        StorageCategoryId: "source_documents" | "analyses" | "job_audits" | "outputs" | "batch_packages" | "database" | "other";
+        StorageCategoryId: "source_documents" | "analyses" | "job_audits" | "outputs" | "batch_packages" | "pending_cleanup" | "database" | "other";
         /** StorageDocumentItem */
         StorageDocumentItem: {
             /** Document Id */
@@ -2473,6 +2511,12 @@ export interface components {
             estimated_backup_working_bytes: number;
             /** Can Create Backup */
             can_create_backup: boolean;
+            /** Pending Cleanup Bytes */
+            pending_cleanup_bytes: number;
+            /** Pending Cleanup Operations */
+            pending_cleanup_operations: number;
+            /** Blocked Cleanup Operations */
+            blocked_cleanup_operations: number;
             pressure: components["schemas"]["StoragePressure"];
             /** Categories */
             categories: components["schemas"]["StorageCategory"][];
@@ -2661,6 +2705,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    retry_workspace_cleanup_api_v1_workspace_cleanup_retry_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CleanupRecoveryReport"];
                 };
             };
         };

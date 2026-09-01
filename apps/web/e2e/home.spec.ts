@@ -32,6 +32,56 @@ test("downloads a guarded complete workspace backup from settings", async ({ pag
     .toBe(await page.evaluate(() => document.documentElement.clientWidth));
 });
 
+test("safely retries pending deletion cleanup in the mobile storage layout", async ({ page }) => {
+  let pending = true;
+  await page.route("**/api/v1/workspace/**", async (route) => {
+    const request = route.request();
+    if (request.url().endsWith("/workspace/cleanup/retry") && request.method() === "POST") {
+      pending = false;
+      await route.fulfill({
+        json: {
+          schema_version: "cleanup-recovery.v1",
+          resolved_operations: 1,
+          restored_operations: 0,
+          purged_operations: 1,
+          pending_operations: 0,
+          blocked_operations: 0,
+          pending_bytes: 0,
+        },
+      });
+      return;
+    }
+    const response = await route.fetch();
+    const payload = await response.json();
+    if (pending && request.url().includes("/workspace/storage")) {
+      payload.pending_cleanup_bytes = 3 * 1024 * 1024;
+      payload.pending_cleanup_operations = 1;
+      payload.can_create_backup = false;
+      payload.categories = payload.categories.map((category: { category: string }) => (
+        category.category === "pending_cleanup"
+          ? { ...category, bytes: 3 * 1024 * 1024, file_count: 2 }
+          : category
+      ));
+    }
+    await route.fulfill({ response, json: payload });
+  });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/settings");
+  await expect(page.getByText(/1 项删除尚待安全收尾，占用 3 MB/)).toBeVisible();
+  await expect(page.getByText(/不会猜测处理/)).toBeVisible();
+  await expect(page.getByRole("link", { name: "下载完整备份" })).toHaveAttribute(
+    "aria-disabled",
+    "true",
+  );
+
+  await page.getByRole("button", { name: "重试安全清理" }).click();
+  await expect(page.getByText(/继续清理 1 项/)).toBeVisible();
+  await expect(page.getByText(/1 项删除尚待安全收尾/)).toHaveCount(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth))
+    .toBe(await page.evaluate(() => document.documentElement.clientWidth));
+});
+
 test("keeps advanced rules reachable in short desktop and mobile layouts", async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto("/");

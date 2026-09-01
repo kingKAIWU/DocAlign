@@ -16,6 +16,7 @@ class StorageCategoryId(StrEnum):
     JOB_AUDITS = "job_audits"
     OUTPUTS = "outputs"
     BATCH_PACKAGES = "batch_packages"
+    PENDING_CLEANUP = "pending_cleanup"
     DATABASE = "database"
     OTHER = "other"
 
@@ -76,6 +77,9 @@ class WorkspaceStorageReport(StrictModel):
     write_headroom_bytes: int = Field(ge=0)
     estimated_backup_working_bytes: int = Field(ge=0)
     can_create_backup: bool
+    pending_cleanup_bytes: int = Field(ge=0)
+    pending_cleanup_operations: int = Field(ge=0)
+    blocked_cleanup_operations: int = Field(ge=0)
     pressure: StoragePressure
     categories: list[StorageCategory]
     records: StorageRecordCounts
@@ -83,3 +87,13 @@ class WorkspaceStorageReport(StrictModel):
     terminal_batches_truncated: bool
     unbatched_documents: list[StorageDocumentItem]
     unbatched_documents_truncated: bool
+
+
+class CleanupRecoveryReport(StrictModel):
+    schema_version: Literal["cleanup-recovery.v1"] = "cleanup-recovery.v1"
+    resolved_operations: int = Field(ge=0)
+    restored_operations: int = Field(ge=0)
+    purged_operations: int = Field(ge=0)
+    pending_operations: int = Field(ge=0)
+    blocked_operations: int = Field(ge=0)
+    pending_bytes: int = Field(ge=0)

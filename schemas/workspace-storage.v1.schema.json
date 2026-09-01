@@ -104,6 +104,7 @@
         "job_audits",
         "outputs",
         "batch_packages",
+        "pending_cleanup",
         "database",
         "other"
       ],
@@ -277,6 +278,21 @@
       "title": "Can Create Backup",
       "type": "boolean"
     },
+    "pending_cleanup_bytes": {
+      "minimum": 0,
+      "title": "Pending Cleanup Bytes",
+      "type": "integer"
+    },
+    "pending_cleanup_operations": {
+      "minimum": 0,
+      "title": "Pending Cleanup Operations",
+      "type": "integer"
+    },
+    "blocked_cleanup_operations": {
+      "minimum": 0,
+      "title": "Blocked Cleanup Operations",
+      "type": "integer"
+    },
     "pressure": {
       "$ref": "#/$defs/StoragePressure"
     },
@@ -323,6 +339,9 @@
     "write_headroom_bytes",
     "estimated_backup_working_bytes",
     "can_create_backup",
+    "pending_cleanup_bytes",
+    "pending_cleanup_operations",
+    "blocked_cleanup_operations",
     "pressure",
     "categories",
     "records",

@@ -135,6 +135,8 @@ export type BatchAudit = components["schemas"]["BatchAudit"];
 
 export type WorkspaceStorageReport = components["schemas"]["WorkspaceStorageReport"];
 
+export type CleanupRecoveryReport = components["schemas"]["CleanupRecoveryReport"];
+
 export type StorageBatchItem = components["schemas"]["StorageBatchItem"];
 
 export type StorageDocumentItem = components["schemas"]["StorageDocumentItem"];

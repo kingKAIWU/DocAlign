@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => ({
   compileSpec: vi.fn(),
   templateCandidate: vi.fn(),
   compliance: vi.fn(),
+  workspaceStorage: vi.fn(),
 }));
 
 const onlineCapabilities = {
@@ -65,6 +66,7 @@ vi.mock("@/lib/api", () => ({
     createJob: mocks.createJob,
     job: mocks.job,
     deleteDocument: vi.fn(),
+    workspaceStorage: mocks.workspaceStorage,
   },
 }));
 
@@ -75,6 +77,7 @@ describe("Workspace", () => {
     vi.clearAllMocks();
     window.localStorage.clear();
     mocks.capabilities.mockResolvedValue(onlineCapabilities);
+    mocks.workspaceStorage.mockResolvedValue({ pending_cleanup_operations: 0 });
     mocks.preset.mockResolvedValue({
       preset_id: "default-clean-cn",
       spec: {

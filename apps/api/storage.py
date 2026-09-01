@@ -16,7 +16,7 @@ class LocalStorage:
         self.root = root.resolve()
         if create:
             self.root.mkdir(parents=True, exist_ok=True)
-            for name in ("uploads", "analyses", "jobs", "outputs", "batches"):
+            for name in ("uploads", "analyses", "jobs", "outputs", "batches", ".deletions"):
                 (self.root / name).mkdir(exist_ok=True)
 
     def upload_path(self, document_id: str) -> Path:
@@ -55,18 +55,25 @@ class LocalStorage:
     def batch_delivery_package_path(self, batch_id: str) -> Path:
         return self.batch_dir(batch_id) / "delivery-package.zip"
 
-    def delete_document_artifacts(
+    def document_artifact_paths(
         self, document_id: str, analysis_ids: list[str], job_ids: list[str]
-    ) -> None:
-        self._remove(self.root / "uploads" / document_id)
-        for analysis_id in analysis_ids:
-            self._remove(self.root / "analyses" / analysis_id)
+    ) -> list[Path]:
+        paths = [self.root / "uploads" / document_id]
+        paths.extend(self.root / "analyses" / analysis_id for analysis_id in analysis_ids)
         for job_id in job_ids:
-            self._remove(self.root / "jobs" / job_id)
-            self._remove(self.root / "outputs" / job_id)
+            paths.append(self.root / "jobs" / job_id)
+            paths.append(self.root / "outputs" / job_id)
+        return paths
 
-    def delete_batch_artifacts(self, batch_id: str) -> None:
-        self._remove(self.root / "batches" / batch_id)
+    def batch_artifact_paths(
+        self,
+        batch_id: str,
+        document_artifacts: list[tuple[str, list[str], list[str]]],
+    ) -> list[Path]:
+        paths = [self.root / "batches" / batch_id]
+        for document_id, analysis_ids, job_ids in document_artifacts:
+            paths.extend(self.document_artifact_paths(document_id, analysis_ids, job_ids))
+        return paths
 
     def delete_job_artifacts(self, job_id: str) -> None:
         self._remove(self.root / "jobs" / job_id)
@@ -79,6 +86,7 @@ class LocalStorage:
             StorageCategoryId.JOB_AUDITS: [self.root / "jobs"],
             StorageCategoryId.OUTPUTS: [self.root / "outputs"],
             StorageCategoryId.BATCH_PACKAGES: [self.root / "batches"],
+            StorageCategoryId.PENDING_CLEANUP: [self.root / ".deletions"],
         }
         database_paths: list[Path] = []
         other_paths: list[Path] = []
@@ -134,28 +142,16 @@ class LocalStorage:
     def document_artifact_bytes(
         self, document_id: str, analysis_ids: list[str], job_ids: list[str]
     ) -> int:
-        paths = [self.root / "uploads" / document_id]
-        paths.extend(self.root / "analyses" / analysis_id for analysis_id in analysis_ids)
-        for job_id in job_ids:
-            paths.append(self.root / "jobs" / job_id)
-            paths.append(self.root / "outputs" / job_id)
-        return self.usage_for_paths(paths)[0]
+        return self.usage_for_paths(
+            self.document_artifact_paths(document_id, analysis_ids, job_ids)
+        )[0]
 
     def batch_artifact_bytes(
         self,
         batch_id: str,
         document_artifacts: list[tuple[str, list[str], list[str]]],
     ) -> int:
-        paths = [self.root / "batches" / batch_id]
-        for document_id, analysis_ids, job_ids in document_artifacts:
-            paths.append(self.root / "uploads" / document_id)
-            paths.extend(
-                self.root / "analyses" / analysis_id for analysis_id in analysis_ids
-            )
-            for job_id in job_ids:
-                paths.append(self.root / "jobs" / job_id)
-                paths.append(self.root / "outputs" / job_id)
-        return self.usage_for_paths(paths)[0]
+        return self.usage_for_paths(self.batch_artifact_paths(batch_id, document_artifacts))[0]
 
     def _remove(self, path: Path) -> None:
         resolved = path.resolve()
