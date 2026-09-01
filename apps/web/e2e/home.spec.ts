@@ -21,6 +21,15 @@ test("downloads a guarded complete workspace backup from settings", async ({ pag
   );
   const downloadedPath = await download.path();
   expect(downloadedPath).not.toBeNull();
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.reload();
+  await expect(page.getByText("安全可写余量")).toBeVisible();
+  await expect(page.getByText(/安全余量用于数据库提交和临时文件/)).toBeVisible();
+  await page.getByRole("heading", { name: "完整工作区备份" }).scrollIntoViewIfNeeded();
+  await expect(page.getByRole("link", { name: "下载完整备份" })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth))
+    .toBe(await page.evaluate(() => document.documentElement.clientWidth));
 });
 
 test("keeps advanced rules reachable in short desktop and mobile layouts", async ({ page }) => {

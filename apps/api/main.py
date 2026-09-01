@@ -28,8 +28,10 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy.exc import SQLAlchemyError
 
 from apps.api.batches import BatchService
+from apps.api.capacity import MEBIBYTE, WorkspaceCapacityGuard, is_capacity_error
 from apps.api.db import Database
 from apps.api.deliveries import DeliveryService
 from apps.api.diagnostics import DiagnosticService
@@ -71,11 +73,12 @@ def create_app(
     settings.data_dir.mkdir(parents=True, exist_ok=True)
     database = Database(settings.database_url)
     storage = LocalStorage(settings.data_dir)
-    service = ApiService(settings, database, storage)
-    batch_service = BatchService(service, settings, database, storage)
-    delivery_service = DeliveryService(service, batch_service, settings, storage)
-    workspace_service = WorkspaceService(database, storage, batch_service)
-    workspace_backup_service = WorkspaceBackupService(database, storage)
+    capacity = WorkspaceCapacityGuard(storage.root, reserve_bytes=settings.min_free_mb * MEBIBYTE)
+    service = ApiService(settings, database, storage, capacity)
+    batch_service = BatchService(service, settings, database, storage, capacity)
+    delivery_service = DeliveryService(service, batch_service, settings, storage, capacity)
+    workspace_service = WorkspaceService(database, storage, batch_service, capacity)
+    workspace_backup_service = WorkspaceBackupService(database, storage, capacity)
     diagnostic_service = DiagnosticService(settings, database, storage)
     runner = JobRunner(service, settings.job_concurrency)
 
@@ -97,6 +100,7 @@ def create_app(
     application.state.settings = settings
     application.state.database = database
     application.state.storage = storage
+    application.state.capacity = capacity
     application.state.service = service
     application.state.batch_service = batch_service
     application.state.delivery_service = delivery_service
@@ -115,6 +119,28 @@ def create_app(
     @application.exception_handler(ApiError)
     async def handle_api_error(_: Request, exc: ApiError) -> JSONResponse:
         return _error_response(exc.status_code, exc.code, exc.message, exc.details)
+
+    @application.exception_handler(OSError)
+    async def handle_os_error(_: Request, exc: OSError) -> JSONResponse:
+        if is_capacity_error(exc):
+            mapped = capacity.api_error(operation="local_write")
+            return _error_response(mapped.status_code, mapped.code, mapped.message, mapped.details)
+        return _error_response(
+            500,
+            "LOCAL_IO_FAILED",
+            "DocAlign could not complete a local file operation.",
+        )
+
+    @application.exception_handler(SQLAlchemyError)
+    async def handle_database_error(_: Request, exc: SQLAlchemyError) -> JSONResponse:
+        if is_capacity_error(exc):
+            mapped = capacity.api_error(operation="database_write")
+            return _error_response(mapped.status_code, mapped.code, mapped.message, mapped.details)
+        return _error_response(
+            500,
+            "DATABASE_OPERATION_FAILED",
+            "DocAlign could not complete a local database operation.",
+        )
 
     @application.exception_handler(DocxSafetyError)
     async def handle_docx_error(_: Request, exc: DocxSafetyError) -> JSONResponse:
@@ -161,6 +187,7 @@ def create_app(
             "safe_workspace_restore": True,
             "max_batch_files": settings.max_batch_files,
             "max_batch_total_mb": settings.max_batch_total_mb,
+            "min_free_mb": settings.min_free_mb,
             "max_delivery_package_mb": settings.max_batch_total_mb + 20,
             "max_upload_mb": settings.max_upload_mb,
             "max_rule_pack_import_kb": settings.max_rule_pack_import_kb,
@@ -466,18 +493,14 @@ def create_app(
     async def retry_batch_item(
         batch_id: str, item_id: str, request: BatchRetryRequest
     ) -> BatchAudit:
-        audit, job_ids = await batch_service.retry_item(
-            batch_id, item_id, request.request_id
-        )
+        audit, job_ids = await batch_service.retry_item(batch_id, item_id, request.request_id)
         for job_id in job_ids:
             await runner.enqueue(job_id)
         return audit
 
     @application.get("/api/v1/batches/{batch_id}/audit.json")
     def get_batch_audit(batch_id: str, response: Response) -> BatchAudit:
-        response.headers["Content-Disposition"] = (
-            f'attachment; filename="{batch_id}-audit.json"'
-        )
+        response.headers["Content-Disposition"] = f'attachment; filename="{batch_id}-audit.json"'
         return batch_service.get_batch(batch_id)
 
     @application.get("/api/v1/batches/{batch_id}/outputs.zip")

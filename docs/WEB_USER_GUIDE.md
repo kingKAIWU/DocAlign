@@ -298,20 +298,25 @@ uv run docalign verify-delivery delivery-package.zip --report verification.json
 
 需要换电脑、试运行清理策略或保留全部历史时，进入“设置 → 完整工作区备份”：
 
-1. 等待所有单文档任务和批次结束；活动任务期间按钮会显示原因并禁止下载，避免得到半成品工作区。
-2. 点击“下载完整备份”并阅读敏感数据确认。ZIP 包含源 DOCX、原文件名、分析、规则及其全部修订、
+1. 先查看“本地存储中心”的“安全可写余量”。DocAlign 默认从磁盘实际可用空间中保留 1 GiB
+   （1024 MB），供
+   SQLite 提交、排版临时稿和原子发布使用；这是安全判断线，不会锁定空间。余量不足时，新上传、
+   排版、批次打包或备份会在开始前停止，并明确提示本地容量不足，不会作为网络重连处理。
+2. 等待所有单文档任务和批次结束；活动任务期间按钮会显示原因并禁止下载，避免得到半成品工作区。
+3. 点击“下载完整备份”并阅读敏感数据确认。界面会显示估算所需临时空间；ZIP 包含源 DOCX、
+   原文件名、分析、规则及其全部修订、
    任务与批次记录、审计、格式化输出和数据库快照；不包含 `.env`、模型密钥、运行锁、进程元数据、
    SQLite WAL/SHM 或数据目录中的非 DocAlign 管理文件。
-3. 将 ZIP 保存在加密磁盘或其他符合原文档保密等级的位置。备份本身**未加密、未数字签名**；
+4. 将 ZIP 保存在加密磁盘或其他符合原文档保密等级的位置。备份本身**未加密、未数字签名**；
    SHA-256 能发现包内损坏或不一致，不能证明创建者身份。
-4. 收到或搬运备份后先校验：
+5. 收到或搬运备份后先校验：
 
    ```bash
    docalign verify-workspace-backup DocAlign-workspace-backup-*.zip \
      --report backup-verification.json
    ```
 
-5. 恢复前安全退出 DocAlign，再指定一个尚不存在的新目录：
+6. 恢复前安全退出 DocAlign，再指定一个尚不存在的新目录：
 
    ```bash
    docalign restore-workspace-backup DocAlign-workspace-backup-*.zip \
@@ -333,6 +338,8 @@ uv run docalign verify-delivery delivery-package.zip --report verification.json
 ## 四、数据与隐私
 
 - 上传文件、分析结果、规则、任务、批次、尝试历史和输出默认保存在本机 `DOCALIGN_DATA_DIR`。
+- 默认保留 1 GiB（1024 MB）安全工作空间，可通过 `DOCALIGN_MIN_FREE_MB` 调整。容量预检不会自动删除任何数据，
+  也不能阻止其他应用在预检后继续占用磁盘。
 - 源 DOCX 不会被直接覆盖，排版结果始终生成新文件。
 - 点击“删除本地文档”会删除当前文档及其分析、临时规则、任务和输出，且不可撤销。
 - 点击“删除本地批次”会精确删除该批次及全部关联文档和产物，且不可撤销；活动批次必须先取消并

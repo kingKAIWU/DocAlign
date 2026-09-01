@@ -88,6 +88,10 @@ export const errorLabels: Record<string, string> = {
   WORKSPACE_BACKUP_UNSAFE_SOURCE: "托管数据中发现符号链接或非常规文件，已停止备份。",
   WORKSPACE_BACKUP_SENSITIVE_SOURCE: "托管产物目录中发现环境或凭据文件，请先移出再备份。",
   WORKSPACE_BACKUP_FAILED: "无法创建完整工作区备份，请运行本机诊断后重试。",
+  WORKSPACE_CAPACITY_INSUFFICIENT:
+    "本地磁盘没有足够的安全工作空间。请到“设置与隐私边界”清理已完成任务，或释放磁盘空间后重试。",
+  LOCAL_IO_FAILED: "本地文件读写失败，请运行本机诊断后重试。",
+  DATABASE_OPERATION_FAILED: "本地数据库操作失败，请运行本机诊断并保留数据目录。",
   FORMATTING_SPEC_CONFLICT: "排版规则中存在互斥的段落设置，请重新编译规则后再试。",
   TABLE_FORMAT_VALIDATION_FAILED: "表格整体属性不符合当前规则。",
   TABLE_FONT_VALIDATION_FAILED: "表格内字体或字号不符合当前规则。",

@@ -46,6 +46,7 @@ class DiagnosticConfiguration(StrictModel):
     max_upload_mb: int = Field(ge=1)
     max_batch_files: int = Field(ge=1)
     max_batch_total_mb: int = Field(ge=1)
+    min_free_mb: int = Field(ge=1)
 
 
 class DiagnosticDataSummary(StrictModel):

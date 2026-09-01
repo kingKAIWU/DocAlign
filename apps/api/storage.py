@@ -170,13 +170,19 @@ def _looks_like_sqlite_file(filename: str) -> bool:
     return lowered.endswith((".db", ".sqlite", ".sqlite3", ".db-wal", ".db-shm"))
 
 
-def storage_pressure(total_bytes: int, free_bytes: int) -> StoragePressure:
+def storage_pressure(
+    total_bytes: int,
+    free_bytes: int,
+    *,
+    minimum_free_bytes: int = 1024**3,
+) -> StoragePressure:
     if total_bytes <= 0:
         return StoragePressure.NORMAL
+    minimum_free_bytes = max(0, minimum_free_bytes)
     free_ratio = free_bytes / total_bytes
-    if free_bytes < 1024**3 or free_ratio < 0.02:
+    if free_bytes <= minimum_free_bytes or free_ratio < 0.02:
         return StoragePressure.CRITICAL
-    if free_bytes < 5 * 1024**3 or free_ratio < 0.10:
+    if free_bytes < minimum_free_bytes + 4 * 1024**3 or free_ratio < 0.10:
         return StoragePressure.WARNING
     return StoragePressure.NORMAL
 

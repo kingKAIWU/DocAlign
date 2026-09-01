@@ -69,9 +69,15 @@ from docalign_core.validation.validator import DocumentValidator
 from fastapi import UploadFile
 from pydantic import ValidationError
 from sqlalchemy import delete, select
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from apps.api.capacity import (
+    WorkspaceCapacityGuard,
+    is_capacity_error,
+    processing_working_bytes,
+    upload_working_bytes,
+)
 from apps.api.change_summary import build_job_result_summary
 from apps.api.db import (
     AnalysisRecord,
@@ -102,10 +108,17 @@ logger = logging.getLogger(__name__)
 
 
 class ApiService:
-    def __init__(self, settings: Settings, database: Database, storage: LocalStorage) -> None:
+    def __init__(
+        self,
+        settings: Settings,
+        database: Database,
+        storage: LocalStorage,
+        capacity: WorkspaceCapacityGuard,
+    ) -> None:
         self.settings = settings
         self.database = database
         self.storage = storage
+        self.capacity = capacity
         self.safety_limits = SafetyLimits(
             max_file_bytes=settings.max_upload_mb * 1024 * 1024,
             max_uncompressed_bytes=settings.max_uncompressed_mb * 1024 * 1024,
@@ -134,6 +147,17 @@ class ApiService:
         filename = _display_filename(upload.filename or "document.docx")
         if not filename.lower().endswith(".docx"):
             raise ApiError(415, "UNSUPPORTED_FILE_TYPE", "Only .docx files are supported.")
+        size_hint = upload.size
+        if size_hint is not None and size_hint > self.safety_limits.max_file_bytes:
+            raise ApiError(
+                413,
+                "FILE_TOO_LARGE",
+                "The uploaded DOCX exceeds the configured limit.",
+            )
+        self.capacity.ensure(
+            upload_working_bytes(size_hint, self.safety_limits.max_file_bytes),
+            operation="document_upload",
+        )
         document_id = f"doc_{uuid.uuid4().hex}"
         target = self.storage.upload_path(document_id)
         size = 0
@@ -152,6 +176,11 @@ class ApiService:
         except (ApiError, DocxSafetyError):
             self.storage._remove(target.parent)
             raise
+        except OSError as exc:
+            self.storage._remove(target.parent)
+            if is_capacity_error(exc):
+                raise self.capacity.api_error(operation="document_upload") from exc
+            raise
         record = DocumentRecord(
             id=document_id,
             original_filename=filename,
@@ -159,8 +188,14 @@ class ApiService:
             sha256=sha256_file(target),
             size_bytes=size,
         )
-        with self.database.session_factory.begin() as session:
-            session.add(record)
+        try:
+            with self.database.session_factory.begin() as session:
+                session.add(record)
+        except SQLAlchemyError as exc:
+            self.storage._remove(target.parent)
+            if is_capacity_error(exc):
+                raise self.capacity.api_error(operation="document_upload") from exc
+            raise
         return self.document_payload(record)
 
     async def compile_template_candidate(self, upload: UploadFile) -> TemplateRuleCandidate:
@@ -187,6 +222,10 @@ class ApiService:
         display_name = _display_filename(filename)
         if not display_name.lower().endswith(".docx"):
             display_name = f"{display_name}.docx"
+        self.capacity.ensure(
+            upload_working_bytes(len(text.encode("utf-8")), self.safety_limits.max_file_bytes),
+            operation="text_document_import",
+        )
         document_id = f"doc_{uuid.uuid4().hex}"
         target = self.storage.upload_path(document_id)
         try:
@@ -198,6 +237,11 @@ class ApiService:
         except DocxSafetyError:
             self.storage._remove(target.parent)
             raise
+        except OSError as exc:
+            self.storage._remove(target.parent)
+            if is_capacity_error(exc):
+                raise self.capacity.api_error(operation="text_document_import") from exc
+            raise
         record = DocumentRecord(
             id=document_id,
             original_filename=display_name,
@@ -205,8 +249,14 @@ class ApiService:
             sha256=sha256_file(target),
             size_bytes=target.stat().st_size,
         )
-        with self.database.session_factory.begin() as session:
-            session.add(record)
+        try:
+            with self.database.session_factory.begin() as session:
+                session.add(record)
+        except SQLAlchemyError as exc:
+            self.storage._remove(target.parent)
+            if is_capacity_error(exc):
+                raise self.capacity.api_error(operation="text_document_import") from exc
+            raise
         return self.document_payload(record)
 
     def get_document(self, document_id: str) -> DocumentRecord:
@@ -268,6 +318,10 @@ class ApiService:
         self, document_id: str, mode: AnalysisMode = AnalysisMode.DETERMINISTIC
     ) -> tuple[str, AnalysisResult]:
         document = self.get_document(document_id)
+        self.capacity.ensure(
+            processing_working_bytes(document.size_bytes),
+            operation="document_analysis",
+        )
         analysis_id = f"analysis_{uuid.uuid4().hex}"
         document_ir = parse_docx(
             Path(document.stored_path),
@@ -294,15 +348,27 @@ class ApiService:
                 model=self.semantic_analyzer.model,
             )
         result_path = self.storage.analysis_path(analysis_id)
-        result_path.write_text(result.model_dump_json(indent=2), encoding="utf-8")
+        try:
+            result_path.write_text(result.model_dump_json(indent=2), encoding="utf-8")
+        except OSError as exc:
+            self.storage._remove(result_path.parent)
+            if is_capacity_error(exc):
+                raise self.capacity.api_error(operation="document_analysis") from exc
+            raise
         record = AnalysisRecord(
             id=analysis_id,
             document_id=document_id,
             source_sha256=document.sha256,
             result_path=str(result_path),
         )
-        with self.database.session_factory.begin() as session:
-            session.add(record)
+        try:
+            with self.database.session_factory.begin() as session:
+                session.add(record)
+        except SQLAlchemyError as exc:
+            self.storage._remove(result_path.parent)
+            if is_capacity_error(exc):
+                raise self.capacity.api_error(operation="document_analysis") from exc
+            raise
         return analysis_id, result
 
     def get_analysis_record(self, analysis_id: str) -> AnalysisRecord:
@@ -502,7 +568,8 @@ class ApiService:
             updated_at=created_at,
         )
         source_state = (
-            "本地已确认" if artifact.approval_status == RulePackApprovalStatus.LOCALLY_APPROVED
+            "本地已确认"
+            if artifact.approval_status == RulePackApprovalStatus.LOCALLY_APPROVED
             else "草稿"
         )
         version = self._new_rule_pack_version_record(
@@ -1027,15 +1094,9 @@ class ApiService:
     def _stored_rule_pack_import_source(
         version: RulePackVersionRecord,
     ) -> RulePackImportSource | None:
-        if (
-            version.import_source_json is None
-            and version.import_source_artifact_sha256 is None
-        ):
+        if version.import_source_json is None and version.import_source_artifact_sha256 is None:
             return None
-        if (
-            version.import_source_json is None
-            or version.import_source_artifact_sha256 is None
-        ):
+        if version.import_source_json is None or version.import_source_artifact_sha256 is None:
             raise ApiError(
                 500,
                 "RULE_PACK_INTEGRITY_FAILED",
@@ -1274,9 +1335,7 @@ class ApiService:
             analysis_id=record.analysis_id,
             spec_id=record.spec_id,
             processing_boundary_acknowledgment=(
-                ProcessingBoundaryAcknowledgmentMethod(
-                    record.processing_boundary_acknowledgment
-                )
+                ProcessingBoundaryAcknowledgmentMethod(record.processing_boundary_acknowledgment)
                 if record.processing_boundary_acknowledgment
                 else None
             ),
@@ -1309,6 +1368,10 @@ class ApiService:
                 return
             job = self.get_job(job_id)
             document = self.get_document(job.document_id)
+            self.capacity.ensure(
+                processing_working_bytes(document.size_bytes),
+                operation="document_processing",
+            )
             analysis_record = self.get_analysis_record(job.analysis_id)
             if (
                 analysis_record.source_sha256 != document.sha256
@@ -1335,9 +1398,7 @@ class ApiService:
                 job_id=job_id,
                 artifact_dir=artifacts,
                 processing_boundary_acknowledgment_method=(
-                    ProcessingBoundaryAcknowledgmentMethod(
-                        job.processing_boundary_acknowledgment
-                    )
+                    ProcessingBoundaryAcknowledgmentMethod(job.processing_boundary_acknowledgment)
                     if job.processing_boundary_acknowledgment
                     else None
                 ),
@@ -1357,6 +1418,17 @@ class ApiService:
             self._fail_job(job_id, exc.code, exc.message)
         except ApiError as exc:
             self._fail_job(job_id, exc.code, exc.message)
+        except OSError as exc:
+            if is_capacity_error(exc):
+                mapped = self.capacity.api_error(operation="document_processing")
+                self._fail_job(job_id, mapped.code, mapped.message)
+            else:
+                logger.exception("Local I/O failure", extra={"job_id": job_id})
+                self._fail_job(
+                    job_id,
+                    "FORMAT_APPLICATION_FAILED",
+                    "A local file operation failed during processing.",
+                )
         except ValidationError:
             logger.exception("Formatting specification conflict", extra={"job_id": job_id})
             self._fail_job(

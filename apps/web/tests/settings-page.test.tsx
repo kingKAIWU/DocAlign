@@ -35,6 +35,10 @@ const report: WorkspaceStorageReport = {
   reclaimable_bytes: 9 * 1024 * 1024,
   disk_total_bytes: 500 * 1024 * 1024 * 1024,
   disk_free_bytes: 200 * 1024 * 1024 * 1024,
+  minimum_free_reserve_bytes: 1024 * 1024 * 1024,
+  write_headroom_bytes: 199 * 1024 * 1024 * 1024,
+  estimated_backup_working_bytes: 88 * 1024 * 1024,
+  can_create_backup: true,
   pressure: "normal",
   categories: [
     { category: "source_documents", bytes: 4 * 1024 * 1024, file_count: 2 },
@@ -112,6 +116,7 @@ const diagnosticReport: SupportDiagnosticReport = {
     max_upload_mb: 20,
     max_batch_files: 20,
     max_batch_total_mb: 200,
+    min_free_mb: 1024,
   },
   data_summary: {
     docalign_bytes: 12 * 1024 * 1024,
@@ -193,6 +198,7 @@ describe("SettingsPage storage center", () => {
       max_upload_mb: 20,
       max_batch_files: 20,
       max_batch_total_mb: 200,
+      min_free_mb: 1024,
       max_delivery_package_mb: 220,
       verifiable_workspace_backup: true,
       safe_workspace_restore: true,
@@ -284,6 +290,24 @@ describe("SettingsPage storage center", () => {
     expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining("源 DOCX"));
   });
 
+  it("shows safe write headroom and blocks backup when estimated space is insufficient", async () => {
+    mocks.workspaceStorage.mockResolvedValueOnce({
+      ...report,
+      disk_free_bytes: 1024 * 1024 * 1024,
+      write_headroom_bytes: 0,
+      can_create_backup: false,
+    });
+    render(<SettingsPage />);
+
+    expect(await screen.findByText("安全可写余量")).toBeInTheDocument();
+    expect(screen.getByText(/保留 1 GB 安全余量/)).toBeInTheDocument();
+    expect(screen.getByText(/新上传或排版会在开始前停止/)).toBeInTheDocument();
+    expect(screen.getByText(/预计需要约 88 MB 临时空间/)).toBeInTheDocument();
+    const backup = screen.getByRole("link", { name: "下载完整备份" });
+    expect(backup).toHaveAttribute("aria-disabled", "true");
+    expect(fireEvent.click(backup)).toBe(false);
+  });
+
   it("verifies a delivery package locally and explains the unsigned boundary", async () => {
     render(<SettingsPage />);
 
@@ -307,6 +331,7 @@ describe("SettingsPage storage center", () => {
       max_upload_mb: 20,
       max_batch_files: 20,
       max_batch_total_mb: 200,
+      min_free_mb: 1024,
       max_delivery_package_mb: 220,
       verifiable_workspace_backup: true,
       safe_workspace_restore: true,

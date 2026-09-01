@@ -258,6 +258,25 @@
       "title": "Disk Free Bytes",
       "type": "integer"
     },
+    "minimum_free_reserve_bytes": {
+      "minimum": 0,
+      "title": "Minimum Free Reserve Bytes",
+      "type": "integer"
+    },
+    "write_headroom_bytes": {
+      "minimum": 0,
+      "title": "Write Headroom Bytes",
+      "type": "integer"
+    },
+    "estimated_backup_working_bytes": {
+      "minimum": 0,
+      "title": "Estimated Backup Working Bytes",
+      "type": "integer"
+    },
+    "can_create_backup": {
+      "title": "Can Create Backup",
+      "type": "boolean"
+    },
     "pressure": {
       "$ref": "#/$defs/StoragePressure"
     },
@@ -300,6 +319,10 @@
     "reclaimable_bytes",
     "disk_total_bytes",
     "disk_free_bytes",
+    "minimum_free_reserve_bytes",
+    "write_headroom_bytes",
+    "estimated_backup_working_bytes",
+    "can_create_backup",
     "pressure",
     "categories",
     "records",

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import sqlite3
 import stat
 import tempfile
 import uuid
@@ -26,6 +27,11 @@ from docalign_core.workspace_backup import (
 )
 from sqlalchemy import func, select
 
+from apps.api.capacity import (
+    WorkspaceCapacityGuard,
+    backup_working_bytes,
+    is_capacity_error,
+)
 from apps.api.db import BatchItemRecord, Database, JobRecord
 from apps.api.errors import ApiError
 from apps.api.storage import LocalStorage
@@ -60,14 +66,26 @@ class WorkspaceBackupArtifact:
 
 
 class WorkspaceBackupService:
-    def __init__(self, database: Database, storage: LocalStorage) -> None:
+    def __init__(
+        self,
+        database: Database,
+        storage: LocalStorage,
+        capacity: WorkspaceCapacityGuard,
+    ) -> None:
         self.database = database
         self.storage = storage
+        self.capacity = capacity
 
     def create(self) -> WorkspaceBackupArtifact:
         self._assert_quiescent()
         temporary_directory = Path(tempfile.mkdtemp(prefix="docalign-workspace-backup-"))
         try:
+            workspace_bytes = sum(item.bytes for item in self.storage.usage_categories())
+            self.capacity.ensure(
+                backup_working_bytes(workspace_bytes),
+                operation="workspace_backup",
+                path=temporary_directory,
+            )
             snapshot = temporary_directory / "docalign.db"
             self.database.backup_sqlite(snapshot)
             revision = normalize_workspace_database(snapshot)
@@ -108,6 +126,9 @@ class WorkspaceBackupService:
             package = build_workspace_backup(temporary_directory / filename, manifest, payloads)
             verify_workspace_backup(package)
             return WorkspaceBackupArtifact(package, filename, temporary_directory)
+        except ApiError:
+            shutil.rmtree(temporary_directory, ignore_errors=True)
+            raise
         except WorkspaceBackupError as exc:
             shutil.rmtree(temporary_directory, ignore_errors=True)
             status_code = (
@@ -123,8 +144,15 @@ class WorkspaceBackupService:
                 else 500
             )
             raise ApiError(status_code, exc.code, exc.message, exc.details) from exc
-        except (OSError, RuntimeError) as exc:
+        except (OSError, RuntimeError, sqlite3.Error) as exc:
+            mapped = (
+                self.capacity.api_error(operation="workspace_backup", path=temporary_directory)
+                if is_capacity_error(exc)
+                else None
+            )
             shutil.rmtree(temporary_directory, ignore_errors=True)
+            if mapped is not None:
+                raise mapped from exc
             raise ApiError(
                 500,
                 "WORKSPACE_BACKUP_FAILED",

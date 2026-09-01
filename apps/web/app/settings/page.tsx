@@ -157,7 +157,8 @@ export default function SettingsPage() {
   function confirmWorkspaceBackup(event: MouseEvent<HTMLAnchorElement>) {
     const blocked = !storage
       || storage.records.active_jobs > 0
-      || storage.records.active_batches > 0;
+      || storage.records.active_batches > 0
+      || !storage.can_create_backup;
     if (blocked) {
       event.preventDefault();
       return;
@@ -189,6 +190,7 @@ export default function SettingsPage() {
         <div className="setting-row"><span>上传限制</span><b>{capabilities?.max_upload_mb ?? 20} MB</b></div>
         <div className="setting-row"><span>单批文件数</span><b>{capabilities?.max_batch_files ?? 20} 个</b></div>
         <div className="setting-row"><span>单批总大小</span><b>{capabilities?.max_batch_total_mb ?? 200} MB</b></div>
+        <div className="setting-row"><span>安全空间保留</span><b>{capabilities?.min_free_mb ?? 1024} MB</b></div>
       </section>
 
       {capabilities?.desktop_app && <section className="settings-card app-lifecycle-card">
@@ -211,10 +213,14 @@ export default function SettingsPage() {
           <div className="storage-overview">
             <span><small>DocAlign 占用</small><strong>{formatBytes(storage.docalign_bytes)}</strong></span>
             <span><small>可逐项清理</small><strong>{formatBytes(storage.reclaimable_bytes)}</strong></span>
-            <span><small>磁盘可用</small><strong>{formatBytes(storage.disk_free_bytes)}</strong></span>
+            <span><small>安全可写余量</small><strong>{formatBytes(storage.write_headroom_bytes)}</strong></span>
             <span className={storage.pressure}><small>磁盘状态</small><strong>{storage.pressure === "normal" ? "空间正常" : storage.pressure === "warning" ? "空间偏低" : "空间紧张"}</strong></span>
           </div>
-          {storage.pressure !== "normal" && <div className={`storage-pressure ${storage.pressure}`}>{storage.pressure === "critical" ? "磁盘空间已接近不足。建议先下载需要留存的成果，再清理下方终态批次或独立文档。" : "磁盘可用空间偏低，建议检查下方占用较大的数据。"}</div>}
+          <div className="workspace-capacity-boundary">
+            <strong>实际可用 {formatBytes(storage.disk_free_bytes)}，保留 {formatBytes(storage.minimum_free_reserve_bytes)} 安全余量</strong>
+            <p>安全余量用于数据库提交和临时文件，不是磁盘锁定；其他程序仍可能占用空间。DocAlign 不会为了腾出空间自动删除文档。</p>
+          </div>
+          {(storage.pressure !== "normal" || storage.write_headroom_bytes === 0) && <div className={`storage-pressure ${storage.pressure}`}>{storage.write_headroom_bytes === 0 || storage.pressure === "critical" ? "磁盘空间已接近不足。新上传或排版会在开始前停止，请先备份需要留存的成果，再清理下方终态批次或独立文档。" : "磁盘可用空间偏低，建议检查下方占用较大的数据。"}</div>}
           <div className="storage-categories">
             {storage.categories.map((category) => <div key={category.category}>
               <span><b>{categoryLabels[category.category]}</b><small>{category.file_count} 个文件</small></span>
@@ -236,10 +242,10 @@ export default function SettingsPage() {
             <p>一次下载源文档、分析、规则、任务审计、输出、批次产物和一致的数据库快照；环境变量、密钥、运行锁及 SQLite 临时文件不会收录。</p>
           </div>
           <a
-            className={`button secondary ${!storage || storage.records.active_jobs > 0 || storage.records.active_batches > 0 ? "disabled" : ""}`}
+            className={`button secondary ${!storage || storage.records.active_jobs > 0 || storage.records.active_batches > 0 || !storage.can_create_backup ? "disabled" : ""}`}
             href={`${API_BASE}/workspace/backup`}
             download
-            aria-disabled={!storage || storage.records.active_jobs > 0 || storage.records.active_batches > 0}
+            aria-disabled={!storage || storage.records.active_jobs > 0 || storage.records.active_batches > 0 || !storage.can_create_backup}
             onClick={confirmWorkspaceBackup}
           >下载完整备份</a>
         </div>
@@ -249,6 +255,8 @@ export default function SettingsPage() {
         </div>
         {storage && (storage.records.active_jobs > 0 || storage.records.active_batches > 0)
           ? <p className="workspace-backup-wait">当前有 {storage.records.active_jobs} 个活动任务、{storage.records.active_batches} 个活动批次。全部结束后刷新占用，再下载备份。</p>
+          : storage && !storage.can_create_backup
+            ? <p className="workspace-backup-wait">预计需要约 {formatBytes(storage.estimated_backup_working_bytes)} 临时空间，当前安全可写余量不足。请先清理终态数据或释放磁盘空间。</p>
           : <p className="workspace-backup-restore">恢复时先安全退出 DocAlign，再执行 <code>docalign restore-workspace-backup 备份.zip --data-dir 新目录</code>；系统只允许恢复到尚不存在的目录，不会覆盖当前工作区。</p>}
       </section>
 

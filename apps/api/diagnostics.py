@@ -120,18 +120,14 @@ class DiagnosticService:
                     counts["failed_jobs"] = job_statuses.get(JobStatus.FAILED.value, 0)
                     error_codes = _recent_error_codes(session)
                     artifact_paths = [
-                        Path(value)
-                        for value in session.scalars(select(DocumentRecord.stored_path))
+                        Path(value) for value in session.scalars(select(DocumentRecord.stored_path))
                     ]
                     artifact_paths.extend(
-                        Path(value)
-                        for value in session.scalars(select(AnalysisRecord.result_path))
+                        Path(value) for value in session.scalars(select(AnalysisRecord.result_path))
                     )
                     completed_jobs = list(
                         session.scalars(
-                            select(JobRecord).where(
-                                JobRecord.status == JobStatus.COMPLETED.value
-                            )
+                            select(JobRecord).where(JobRecord.status == JobStatus.COMPLETED.value)
                         )
                     )
                     for job in completed_jobs:
@@ -163,9 +159,7 @@ class DiagnosticService:
 
         checks.append(self._schema_check(database_available))
         storage_values = self._storage_check(checks)
-        checks.append(
-            _artifact_check(artifact_paths, database_available, self.storage.root)
-        )
+        checks.append(_artifact_check(artifact_paths, database_available, self.storage.root))
         checks.append(self._model_check())
 
         overall = DiagnosticOverall.READY
@@ -191,6 +185,7 @@ class DiagnosticService:
                 max_upload_mb=self.settings.max_upload_mb,
                 max_batch_files=self.settings.max_batch_files,
                 max_batch_total_mb=self.settings.max_batch_total_mb,
+                min_free_mb=self.settings.min_free_mb,
             ),
             data_summary=DiagnosticDataSummary(**storage_values, **counts),
             checks=checks,
@@ -278,24 +273,29 @@ class DiagnosticService:
         try:
             categories = self.storage.usage_categories()
             total_bytes, free_bytes = self.storage.disk_capacity()
-            pressure = storage_pressure(total_bytes, free_bytes)
+            reserve_bytes = self.settings.min_free_mb * 1024 * 1024
+            pressure = storage_pressure(
+                total_bytes,
+                free_bytes,
+                minimum_free_bytes=reserve_bytes,
+            )
             values.update(
                 docalign_bytes=sum(category.bytes for category in categories),
                 disk_total_bytes=total_bytes,
                 disk_free_bytes=free_bytes,
                 storage_pressure=pressure,
             )
-            if pressure == StoragePressure.CRITICAL:
+            if free_bytes <= reserve_bytes:
                 checks.append(
                     _check(
                         "disk_capacity",
                         DiagnosticCheckStatus.FAIL,
                         "磁盘空间",
-                        "磁盘可用空间已接近不足。",
+                        "磁盘可用空间已进入 DocAlign 安全保留范围。",
                         "先下载需保留的成果，再从设置页清理不需要的终态数据。",
                     )
                 )
-            elif pressure == StoragePressure.WARNING:
+            elif pressure in {StoragePressure.WARNING, StoragePressure.CRITICAL}:
                 checks.append(
                     _check(
                         "disk_capacity",
@@ -394,9 +394,7 @@ def _recent_error_codes(session: Session) -> list[DiagnosticErrorCodeCount]:
     aggregated: Counter[str] = Counter()
     for code, count in rows:
         safe_code = (
-            code
-            if isinstance(code, str) and _SAFE_ERROR_CODE.fullmatch(code)
-            else "UNKNOWN_ERROR"
+            code if isinstance(code, str) and _SAFE_ERROR_CODE.fullmatch(code) else "UNKNOWN_ERROR"
         )
         aggregated[safe_code] += int(count)
     return [
@@ -448,9 +446,7 @@ def database_exists_without_connecting(settings: Settings) -> bool:
 
 def standalone_diagnostic_service(settings: Settings) -> DiagnosticService:
     database = (
-        Database(settings.database_url)
-        if database_exists_without_connecting(settings)
-        else None
+        Database(settings.database_url) if database_exists_without_connecting(settings) else None
     )
     storage = LocalStorage(settings.data_dir, create=False)
     return DiagnosticService(settings, database, storage)

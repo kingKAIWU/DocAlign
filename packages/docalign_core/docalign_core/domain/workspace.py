@@ -72,6 +72,10 @@ class WorkspaceStorageReport(StrictModel):
     reclaimable_bytes: int = Field(ge=0)
     disk_total_bytes: int = Field(ge=0)
     disk_free_bytes: int = Field(ge=0)
+    minimum_free_reserve_bytes: int = Field(ge=0)
+    write_headroom_bytes: int = Field(ge=0)
+    estimated_backup_working_bytes: int = Field(ge=0)
+    can_create_backup: bool
     pressure: StoragePressure
     categories: list[StorageCategory]
     records: StorageRecordCounts

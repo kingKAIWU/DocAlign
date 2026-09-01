@@ -1243,6 +1243,8 @@ export interface components {
             max_batch_files: number;
             /** Max Batch Total Mb */
             max_batch_total_mb: number;
+            /** Min Free Mb */
+            min_free_mb: number;
         };
         /** DiagnosticDataSummary */
         DiagnosticDataSummary: {
@@ -2463,6 +2465,14 @@ export interface components {
             disk_total_bytes: number;
             /** Disk Free Bytes */
             disk_free_bytes: number;
+            /** Minimum Free Reserve Bytes */
+            minimum_free_reserve_bytes: number;
+            /** Write Headroom Bytes */
+            write_headroom_bytes: number;
+            /** Estimated Backup Working Bytes */
+            estimated_backup_working_bytes: number;
+            /** Can Create Backup */
+            can_create_backup: boolean;
             pressure: components["schemas"]["StoragePressure"];
             /** Categories */
             categories: components["schemas"]["StorageCategory"][];

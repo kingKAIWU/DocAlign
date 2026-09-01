@@ -95,6 +95,7 @@ export type Capabilities = {
   safe_workspace_restore: boolean;
   max_batch_files: number;
   max_batch_total_mb: number;
+  min_free_mb: number;
   max_delivery_package_mb: number;
   max_upload_mb: number;
   max_rule_pack_import_kb: number;

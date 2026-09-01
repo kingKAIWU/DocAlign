@@ -29,6 +29,11 @@ from fastapi import UploadFile
 from pydantic import ValidationError
 
 from apps.api.batches import BatchService
+from apps.api.capacity import (
+    WorkspaceCapacityGuard,
+    is_capacity_error,
+    package_working_bytes,
+)
 from apps.api.db import JobRecord, as_utc
 from apps.api.errors import ApiError
 from apps.api.service import ApiService
@@ -42,11 +47,13 @@ class DeliveryService:
         batches: BatchService,
         settings: Settings,
         storage: LocalStorage,
+        capacity: WorkspaceCapacityGuard,
     ) -> None:
         self.core = core
         self.batches = batches
         self.settings = settings
         self.storage = storage
+        self.capacity = capacity
         self.limits = DeliveryPackageLimits(
             max_file_bytes=(settings.max_batch_total_mb + 20) * 1024 * 1024,
             max_uncompressed_bytes=(settings.max_batch_total_mb + 40) * 1024 * 1024,
@@ -80,8 +87,17 @@ class DeliveryService:
             items=[item],
         )
         target = self.storage.job_delivery_package_path(job.id)
-        build_delivery_package(target, manifest, payloads)
-        verify_delivery_package(target, self.limits)
+        self.capacity.ensure(
+            package_working_bytes(sum(item.size_bytes for item in files)),
+            operation="job_delivery_package",
+        )
+        try:
+            build_delivery_package(target, manifest, payloads)
+            verify_delivery_package(target, self.limits)
+        except OSError as exc:
+            if is_capacity_error(exc):
+                raise self.capacity.api_error(operation="job_delivery_package") from exc
+            raise
         return target
 
     def build_batch_package(self, batch_id: str) -> Path:
@@ -149,8 +165,17 @@ class DeliveryService:
             batch_audit_path=batch_audit_path,
         )
         target = self.storage.batch_delivery_package_path(batch.batch_id)
-        build_delivery_package(target, manifest, payloads)
-        verify_delivery_package(target, self.limits)
+        self.capacity.ensure(
+            package_working_bytes(sum(item.size_bytes for item in files)),
+            operation="batch_delivery_package",
+        )
+        try:
+            build_delivery_package(target, manifest, payloads)
+            verify_delivery_package(target, self.limits)
+        except OSError as exc:
+            if is_capacity_error(exc):
+                raise self.capacity.api_error(operation="batch_delivery_package") from exc
+            raise
         return target
 
     async def verify_upload(self, upload: UploadFile) -> DeliveryPackageVerification:
@@ -212,10 +237,7 @@ class DeliveryService:
         output_sha256 = sha256_file(output)
         audit_json_sha256 = sha256_file(audit_json)
         audit_markdown_sha256 = sha256_file(audit_markdown)
-        if (
-            audit.job_id != job.id
-            or audit.output_sha256 != output_sha256
-        ):
+        if audit.job_id != job.id or audit.output_sha256 != output_sha256:
             raise ApiError(
                 409,
                 "DELIVERY_PACKAGE_EVIDENCE_MISMATCH",

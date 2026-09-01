@@ -14,6 +14,7 @@ from sqlalchemy import exists, func, select
 from sqlalchemy.orm import Session
 
 from apps.api.batches import BatchService
+from apps.api.capacity import WorkspaceCapacityGuard, backup_working_bytes
 from apps.api.db import (
     AnalysisRecord,
     BatchItemRecord,
@@ -52,14 +53,18 @@ class WorkspaceService:
         database: Database,
         storage: LocalStorage,
         batches: BatchService,
+        capacity: WorkspaceCapacityGuard,
     ) -> None:
         self.database = database
         self.storage = storage
         self.batches = batches
+        self.capacity = capacity
 
     def storage_report(self, *, item_limit: int = 50) -> WorkspaceStorageReport:
         categories = self.storage.usage_categories()
-        disk_total, disk_free = self.storage.disk_capacity()
+        capacity = self.capacity.snapshot()
+        disk_total = capacity.total_bytes
+        disk_free = capacity.free_bytes
 
         with self.database.session_factory() as session:
             document_count = self._count(session, DocumentRecord)
@@ -79,9 +84,7 @@ class WorkspaceService:
             unbatched_documents = list(
                 session.scalars(
                     select(DocumentRecord).where(
-                        ~exists().where(
-                            BatchItemRecord.document_id == DocumentRecord.id
-                        )
+                        ~exists().where(BatchItemRecord.document_id == DocumentRecord.id)
                     )
                 )
             )
@@ -143,13 +146,22 @@ class WorkspaceService:
         terminal_batches.sort(key=lambda item: (item.bytes, item.updated_at), reverse=True)
         document_items.sort(key=lambda item: (item.bytes, item.created_at), reverse=True)
         docalign_bytes = sum(category.bytes for category in categories)
+        estimated_backup_bytes = backup_working_bytes(docalign_bytes)
         return WorkspaceStorageReport(
             generated_at=utcnow(),
             docalign_bytes=docalign_bytes,
             reclaimable_bytes=min(reclaimable_bytes, docalign_bytes),
             disk_total_bytes=disk_total,
             disk_free_bytes=disk_free,
-            pressure=storage_pressure(disk_total, disk_free),
+            minimum_free_reserve_bytes=capacity.reserve_bytes,
+            write_headroom_bytes=capacity.write_headroom_bytes,
+            estimated_backup_working_bytes=estimated_backup_bytes,
+            can_create_backup=capacity.write_headroom_bytes >= estimated_backup_bytes,
+            pressure=storage_pressure(
+                disk_total,
+                disk_free,
+                minimum_free_bytes=capacity.reserve_bytes,
+            ),
             categories=categories,
             records=StorageRecordCounts(
                 documents=document_count,
@@ -181,26 +193,18 @@ class WorkspaceService:
             if document_id is None:
                 continue
             analysis_ids, jobs = self._document_relations(document_id)
-            artifacts.append(
-                (document_id, analysis_ids, [job.id for job in jobs])
-            )
+            artifacts.append((document_id, analysis_ids, [job.id for job in jobs]))
         return self.storage.batch_artifact_bytes(batch_id, artifacts)
 
-    def _document_relations(
-        self, document_id: str
-    ) -> tuple[list[str], list[JobRecord]]:
+    def _document_relations(self, document_id: str) -> tuple[list[str], list[JobRecord]]:
         with self.database.session_factory() as session:
             analysis_ids = list(
                 session.scalars(
-                    select(AnalysisRecord.id).where(
-                        AnalysisRecord.document_id == document_id
-                    )
+                    select(AnalysisRecord.id).where(AnalysisRecord.document_id == document_id)
                 )
             )
             jobs = list(
-                session.scalars(
-                    select(JobRecord).where(JobRecord.document_id == document_id)
-                )
+                session.scalars(select(JobRecord).where(JobRecord.document_id == document_id))
             )
             for job in jobs:
                 session.expunge(job)

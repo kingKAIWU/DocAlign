@@ -86,6 +86,11 @@
           "minimum": 1,
           "title": "Max Batch Total Mb",
           "type": "integer"
+        },
+        "min_free_mb": {
+          "minimum": 1,
+          "title": "Min Free Mb",
+          "type": "integer"
         }
       },
       "required": [
@@ -94,7 +99,8 @@
         "job_concurrency",
         "max_upload_mb",
         "max_batch_files",
-        "max_batch_total_mb"
+        "max_batch_total_mb",
+        "min_free_mb"
       ],
       "title": "DiagnosticConfiguration",
       "type": "object"

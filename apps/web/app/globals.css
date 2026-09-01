@@ -455,6 +455,9 @@ a { color: inherit; }
 .storage-pressure { margin-top: 10px; padding: 10px 12px; border-left: 3px solid; font-size: 10px; line-height: 1.6; }
 .storage-pressure.warning { border-color: var(--amber); color: #725119; background: #fff8ed; }
 .storage-pressure.critical { border-color: var(--red); color: var(--red); background: #fff4f2; }
+.workspace-capacity-boundary { margin-top: 10px; padding: 10px 12px; display: grid; gap: 3px; border: 1px solid var(--line); background: var(--surface-2); }
+.workspace-capacity-boundary strong { color: var(--ink); font-size: 9px; }
+.workspace-capacity-boundary p { margin: 0; color: var(--muted); font-size: 9px; line-height: 1.6; }
 .storage-categories { margin-top: 18px; display: grid; gap: 8px; }
 .storage-categories > div { display: grid; grid-template-columns: minmax(130px, .8fr) minmax(180px, 2fr) 80px; align-items: center; gap: 12px; }
 .storage-categories > div > span { min-width: 0; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }

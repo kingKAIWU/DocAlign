@@ -25,6 +25,12 @@ from fastapi import UploadFile
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 
+from apps.api.capacity import (
+    WorkspaceCapacityGuard,
+    is_capacity_error,
+    package_working_bytes,
+    upload_working_bytes,
+)
 from apps.api.db import (
     AnalysisRecord,
     BatchAttemptRecord,
@@ -53,11 +59,13 @@ class BatchService:
         settings: Settings,
         database: Database,
         storage: LocalStorage,
+        capacity: WorkspaceCapacityGuard,
     ) -> None:
         self.core = core
         self.settings = settings
         self.database = database
         self.storage = storage
+        self.capacity = capacity
 
     async def create_batch(
         self,
@@ -87,6 +95,16 @@ class BatchService:
                 "BATCH_FILE_COUNT_INVALID",
                 f"A batch must contain 1 to {self.settings.max_batch_files} files.",
             )
+        self.capacity.ensure(
+            sum(
+                upload_working_bytes(
+                    upload.size,
+                    self.settings.max_upload_mb * 1024 * 1024,
+                )
+                for upload in files
+            ),
+            operation="batch_upload",
+        )
 
         filenames = [self._filename(file) for file in files]
         manifest = json.dumps(filenames, ensure_ascii=False, separators=(",", ":"))
@@ -550,6 +568,17 @@ class BatchService:
         completed = [item for item in audit.items if item.status == BatchItemStatus.COMPLETED]
         if not completed:
             raise ApiError(409, "BATCH_HAS_NO_OUTPUTS", "This batch has no completed documents.")
+        output_bytes = 0
+        for item in completed:
+            if not item.job_id:
+                continue
+            job = self.core.get_job(item.job_id)
+            if job.output_path and Path(job.output_path).is_file():
+                output_bytes += Path(job.output_path).stat().st_size
+        self.capacity.ensure(
+            package_working_bytes(output_bytes),
+            operation="batch_output_package",
+        )
         target = self.storage.batch_output_zip_path(batch_id)
         temporary = target.with_suffix(".zip.tmp")
         try:
@@ -580,6 +609,10 @@ class BatchService:
                         arcname=f"{item.position:03d}_{self._safe_output_name(item.filename)}",
                     )
             os.replace(temporary, target)
+        except OSError as exc:
+            if is_capacity_error(exc):
+                raise self.capacity.api_error(operation="batch_output_package") from exc
+            raise
         finally:
             temporary.unlink(missing_ok=True)
         return target

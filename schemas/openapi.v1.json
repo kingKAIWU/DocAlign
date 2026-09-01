@@ -3016,6 +3016,11 @@
             "type": "integer",
             "minimum": 1.0,
             "title": "Max Batch Total Mb"
+          },
+          "min_free_mb": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Min Free Mb"
           }
         },
         "additionalProperties": false,
@@ -3026,7 +3031,8 @@
           "job_concurrency",
           "max_upload_mb",
           "max_batch_files",
-          "max_batch_total_mb"
+          "max_batch_total_mb",
+          "min_free_mb"
         ],
         "title": "DiagnosticConfiguration"
       },
@@ -6444,6 +6450,25 @@
             "minimum": 0.0,
             "title": "Disk Free Bytes"
           },
+          "minimum_free_reserve_bytes": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Minimum Free Reserve Bytes"
+          },
+          "write_headroom_bytes": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Write Headroom Bytes"
+          },
+          "estimated_backup_working_bytes": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Estimated Backup Working Bytes"
+          },
+          "can_create_backup": {
+            "type": "boolean",
+            "title": "Can Create Backup"
+          },
           "pressure": {
             "$ref": "#/components/schemas/StoragePressure"
           },
@@ -6488,6 +6513,10 @@
           "reclaimable_bytes",
           "disk_total_bytes",
           "disk_free_bytes",
+          "minimum_free_reserve_bytes",
+          "write_headroom_bytes",
+          "estimated_backup_working_bytes",
+          "can_create_backup",
           "pressure",
           "categories",
           "records",
